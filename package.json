@@ -1,0 +1,19 @@
+{
+  "name": "learnpulse-elearning-platform",
+  "version": "1.0.0",
+  "description": "Modern Video-Based E-Learning Platform with Interactive Post-Video Q&A and Verifiable Certification Generation",
+  "main": "index.html",
+  "scripts": {
+    "start": "start index.html",
+    "serve": "npx serve ."
+  },
+  "keywords": [
+    "e-learning",
+    "video-learning",
+    "interactive-quiz",
+    "certification",
+    "education-platform"
+  ],
+  "author": "Sachin Chauhan",
+  "license": "MIT"
+}

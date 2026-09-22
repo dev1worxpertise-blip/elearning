@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LearnPulse - Video-Based E-Learning & Certification Platform</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4f46e5',
+            accent: '#06b6d4',
+            surfaceDark: '#0f172a',
+            cardDark: '#1e293b'
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+
+  <!-- ======================================================================
+       Top Navigation Bar
+       ====================================================================== -->
+  <header class="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 transition">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="window.app.navigate('catalog')">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-600/30">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+          </div>
+          <div>
+            <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+              LearnPulse
+            </span>
+            <span class="hidden sm:inline-block text-[10px] font-bold uppercase tracking-widest text-indigo-400 ml-1.5 px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20">
+              Academy
+            </span>
+          </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="hidden md:flex items-center space-x-1 sm:space-x-4">
+          <button 
+            data-nav-target="catalog" 
+            class="px-3.5 py-2 rounded-lg text-sm font-semibold transition text-indigo-400 border-b-2 border-indigo-500 hover:text-white"
+          >
+            Programs Catalog
+          </button>
+          <button 
+            data-nav-target="dashboard" 
+            class="px-3.5 py-2 rounded-lg text-sm font-semibold transition text-slate-400 hover:text-white"
+          >
+            My Learning
+          </button>
+          <button 
+            data-nav-target="certificates" 
+            class="px-3.5 py-2 rounded-lg text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1.5"
+          >
+            <span>Certificates</span>
+            <span id="headerCertCount" class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-slate-950">0</span>
+          </button>
+        </nav>
+
+        <!-- User Profile & Action Tools -->
+        <div class="flex items-center space-x-3">
+          <button 
+            id="btnResetProgress" 
+            title="Reset demo progress for evaluation" 
+            class="hidden sm:flex text-xs px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition items-center space-x-1"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span>Reset Demo</span>
+          </button>
+
+          <!-- Student Profile Pill -->
+          <div class="flex items-center space-x-2 pl-2 border-l border-slate-800">
+            <img 
+              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" 
+              alt="Avatar" 
+              class="w-8 h-8 rounded-full border border-slate-700 object-cover"
+            />
+            <div class="hidden lg:block text-left">
+              <div id="headerStudentName" class="text-xs font-bold text-white truncate max-w-[120px]">Sachin Chauhan</div>
+              <div class="text-[10px] text-emerald-400 font-medium">Verified Learner</div>
+            </div>
+            <button 
+              id="btnEditProfile" 
+              title="Edit Student Name (Changes name on Certificate)" 
+              class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================================================================
+       VIEW: CATALOG / PROGRAM SELECTION
+       ====================================================================== -->
+  <main id="viewCatalog" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+    <!-- Hero Banner -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-950 via-slate-900 to-slate-900 border border-indigo-900/40 p-8 sm:p-12 shadow-2xl">
+      <div class="max-w-2xl space-y-4 relative z-10">
+        <span class="inline-flex items-center space-x-2 text-xs font-extrabold uppercase tracking-widest text-indigo-400 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+          <span>🚀 Video-Driven Interactive Learning</span>
+        </span>
+        <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+          Master Modern Tech Skills & Get Certified.
+        </h1>
+        <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+          Enroll in industry-standard programs, watch in-depth video modules, pass interactive post-video Q&A assessments, and receive verified digital credentials.
+        </p>
+
+        <div class="flex flex-wrap gap-4 pt-2">
+          <button 
+            onclick="document.getElementById('programSearchInput').focus();"
+            class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 transition transform hover:scale-105"
+          >
+            Explore All Programs
+          </button>
+          <button 
+            onclick="window.app.navigate('dashboard')"
+            class="px-6 py-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 font-bold text-sm border border-slate-700 transition"
+          >
+            Go to My Learning
+          </button>
+        </div>
+      </div>
+
+      <!-- Subtle background decoration -->
+      <div class="absolute right-0 top-0 bottom-0 w-1/2 opacity-20 pointer-events-none bg-gradient-to-l from-indigo-500 via-cyan-500 to-transparent"></div>
+    </div>
+
+    <!-- Filters & Search Toolbar -->
+    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+      <!-- Search Input -->
+      <div class="relative w-full md:w-80">
+        <svg class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input 
+          type="text" 
+          id="programSearchInput"
+          placeholder="Search programs, topics, skills..." 
+          class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+        />
+      </div>
+
+      <!-- Category Filter Pills -->
+      <div class="flex flex-wrap gap-2 w-full md:w-auto">
+        <button data-category-filter="all" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md">
+          All Programs
+        </button>
+        <button data-category-filter="Web Development" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white">
+          Web Development
+        </button>
+        <button data-category-filter="Artificial Intelligence" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white">
+          Artificial Intelligence
+        </button>
+        <button data-category-filter="Cybersecurity" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white">
+          Cybersecurity
+        </button>
+      </div>
+    </div>
+
+    <!-- Program Cards Grid -->
+    <div id="catalogGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- Injected dynamically via app.js -->
+    </div>
+  </main>
+
+  <!-- ======================================================================
+       VIEW: LEARNING CLASSROOM / VIDEO PLAYER & MODULES
+       ====================================================================== -->
+  <main id="viewLearning" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- Breadcrumb Navigation -->
+    <div id="learningBreadcrumb" class="text-xs text-slate-400 font-medium">
+      <!-- Injected dynamically -->
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Main Content (Left 2 Columns) -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Video Player Mount -->
+        <div id="videoPlayerMount">
+          <!-- Injected dynamically via player.js -->
+        </div>
+
+        <!-- Program Full Completion / Certificate Available Banner -->
+        <div id="programCertificateBanner" class="hidden">
+          <!-- Injected dynamically -->
+        </div>
+
+        <!-- Lesson Details & Tabs -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+          <div>
+            <h3 class="text-lg font-bold text-white">About This Lesson</h3>
+            <p id="lessonDescription" class="text-sm text-slate-300 mt-2 leading-relaxed">
+              <!-- Injected dynamically -->
+            </p>
+          </div>
+
+          <div>
+            <h4 class="text-xs uppercase font-bold text-indigo-400 tracking-wider">Key Learning Takeaways</h4>
+            <ul id="lessonTakeaways" class="mt-3 space-y-2">
+              <!-- Injected dynamically -->
+            </ul>
+          </div>
+
+          <div>
+            <h4 class="text-xs uppercase font-bold text-slate-400 tracking-wider">Downloadable Lesson Resources</h4>
+            <div id="lessonResources" class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Injected dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Curriculum Playlist Sidebar (Right 1 Column) -->
+      <div class="space-y-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+            <h4 class="text-sm font-bold text-white uppercase tracking-wider">Course Curriculum</h4>
+            <span class="text-xs text-slate-400">Step-by-Step</span>
+          </div>
+
+          <div id="modulesPlaylist" class="space-y-3">
+            <!-- Injected dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ======================================================================
+       VIEW: MY LEARNING / STUDENT DASHBOARD
+       ====================================================================== -->
+  <main id="viewDashboard" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+    <div class="space-y-2">
+      <h2 class="text-3xl font-extrabold text-white">Student Learning Dashboard</h2>
+      <p class="text-sm text-slate-400">Track your enrolled programs, completed modules, quiz records, and certificate credentials.</p>
+    </div>
+
+    <!-- Stats Row -->
+    <div id="dashboardStats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Injected dynamically -->
+    </div>
+
+    <!-- Enrolled Programs List -->
+    <div class="space-y-4">
+      <h3 class="text-xl font-bold text-white">Enrolled Programs</h3>
+      <div id="dashboardEnrolledList" class="space-y-4">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+  </main>
+
+  <!-- ======================================================================
+       VIEW: DIGITAL CERTIFICATES LOCKER
+       ====================================================================== -->
+  <main id="viewCertificates" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div class="space-y-2">
+      <h2 class="text-3xl font-extrabold text-white">Digital Certificate Locker</h2>
+      <p class="text-sm text-slate-400">All certificates issued to you following successful completion of coursework and post-video assessments.</p>
+    </div>
+
+    <div id="certificatesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- Injected dynamically -->
+    </div>
+  </main>
+
+  <!-- ======================================================================
+       MODAL: INTERACTIVE POST-VIDEO Q&A QUIZ
+       ====================================================================== -->
+  <div id="quizModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="relative bg-slate-900 border border-slate-800 rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl overflow-hidden">
+      <!-- Close button -->
+      <button 
+        onclick="window.quizController.closeQuiz()" 
+        class="absolute top-6 right-6 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <div id="quizContentArea">
+        <!-- Injected dynamically via quiz.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL: OFFICIAL CERTIFICATE STUDIO & EXPORT
+       ====================================================================== -->
+  <div id="certificateModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/90 backdrop-blur-lg flex items-center justify-center p-4">
+    <div class="relative bg-slate-900 border border-slate-800 rounded-3xl max-w-5xl w-full p-6 sm:p-8 shadow-2xl overflow-hidden">
+      <div id="certificateModalContent">
+        <!-- Injected dynamically via certificate.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL: SYLLABUS DETAILS
+       ====================================================================== -->
+  <div id="syllabusModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="relative bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl overflow-hidden">
+      <div id="syllabusModalContent">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       Footer
+       ====================================================================== -->
+  <footer class="mt-auto border-t border-slate-900 bg-slate-950/60 py-8 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <span class="font-bold text-slate-400">LearnPulse</span> © 2026. Video-Based E-Learning & Certification Platform.
+      </div>
+      <div class="flex items-center space-x-6 text-slate-400">
+        <span>Curriculum Verified</span>
+        <span>•</span>
+        <span>Automatic Credentialing</span>
+        <span>•</span>
+        <span>Offline Persistent</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts: Ordered Dependencies -->
+  <script src="js/data.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/certificate.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
