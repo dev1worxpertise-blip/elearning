@@ -21,6 +21,32 @@ class App {
     this.bindGlobalEvents();
     this.render();
 
+    // Check backend health and sync with PostgreSQL
+    if (window.apiService) {
+      setTimeout(async () => {
+        try {
+          const res = await window.apiService.getPrograms();
+          if (res && res.success && res.programs && res.programs.length > 0) {
+            // Populate full syllabus modules for the active programs
+            for (const p of res.programs) {
+              const detail = await window.apiService.getProgramDetails(p.id);
+              if (detail && detail.success && detail.program) {
+                const existingIdx = (window.COURSES_DATA || []).findIndex(cp => cp.id === p.id);
+                if (existingIdx >= 0) {
+                  window.COURSES_DATA[existingIdx] = { ...window.COURSES_DATA[existingIdx], ...detail.program };
+                } else {
+                  window.COURSES_DATA.push(detail.program);
+                }
+              }
+            }
+            this.renderCatalogGrid();
+          }
+        } catch (e) {
+          console.log('Using local curriculum cache.');
+        }
+      }, 500);
+    }
+
     // Subscribe to state changes to update stats & UI
     window.appState.subscribe(() => {
       this.updateHeaderProfile();
@@ -32,11 +58,11 @@ class App {
     document.querySelectorAll("[data-category-filter]").forEach(btn => {
       btn.addEventListener("click", (e) => {
         document.querySelectorAll("[data-category-filter]").forEach(b => {
-          b.classList.remove("bg-indigo-600", "text-white");
+          b.classList.remove("bg-[#dd1f36]", "text-white");
           b.classList.add("bg-slate-800", "text-slate-400");
         });
         btn.classList.remove("bg-slate-800", "text-slate-400");
-        btn.classList.add("bg-indigo-600", "text-white");
+        btn.classList.add("bg-[#dd1f36]", "text-white");
         this.selectedCategory = btn.getAttribute("data-category-filter");
         this.renderCatalogGrid();
       });
@@ -94,10 +120,10 @@ class App {
     // Update active nav styling
     document.querySelectorAll("[data-nav-target]").forEach(el => {
       if (el.getAttribute("data-nav-target") === viewName) {
-        el.classList.add("text-indigo-400", "border-b-2", "border-indigo-500");
+        el.classList.add("text-[#dd1f36]", "border-b-2", "border-[#dd1f36]");
         el.classList.remove("text-slate-400");
       } else {
-        el.classList.remove("text-indigo-400", "border-b-2", "border-indigo-500");
+        el.classList.remove("text-[#dd1f36]", "border-b-2", "border-[#dd1f36]");
         el.classList.add("text-slate-400");
       }
     });
@@ -119,12 +145,14 @@ class App {
     const learningView = document.getElementById("viewLearning");
     const dashboardView = document.getElementById("viewDashboard");
     const certificatesView = document.getElementById("viewCertificates");
+    const instructorView = document.getElementById("viewInstructor");
 
     // Hide all
     if (catalogView) catalogView.classList.add("hidden");
     if (learningView) learningView.classList.add("hidden");
     if (dashboardView) dashboardView.classList.add("hidden");
     if (certificatesView) certificatesView.classList.add("hidden");
+    if (instructorView) instructorView.classList.add("hidden");
 
     this.updateHeaderProfile();
 
@@ -140,6 +168,9 @@ class App {
     } else if (this.currentView === "certificates") {
       if (certificatesView) certificatesView.classList.remove("hidden");
       this.renderCertificatesView();
+    } else if (this.currentView === "instructor") {
+      if (instructorView) instructorView.classList.remove("hidden");
+      if (window.instructorStudio) window.instructorStudio.switchTab(window.instructorStudio.activeTab || "programs");
     }
   }
 
@@ -199,7 +230,7 @@ class App {
             <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
             
             <div class="absolute top-3 left-3">
-              <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-600/90 text-white backdrop-blur-md">
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-[#dd1f36]/90 text-white backdrop-blur-md">
                 ${program.category}
               </span>
             </div>
@@ -231,7 +262,7 @@ class App {
                 <span>${program.level}</span>
               </div>
 
-              <h3 class="text-xl font-bold text-white leading-snug group-hover:text-indigo-400 transition">
+              <h3 class="text-xl font-bold text-white leading-snug group-hover:text-[#dd1f36] transition">
                 ${program.title}
               </h3>
 
@@ -263,10 +294,10 @@ class App {
                 <div class="space-y-1.5">
                   <div class="flex justify-between text-[11px]">
                     <span class="text-slate-400">Your Progress</span>
-                    <span class="text-indigo-400 font-bold">${progress.percentage}%</span>
+                    <span class="text-[#dd1f36] font-bold">${progress.percentage}%</span>
                   </div>
                   <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                    <div class="bg-indigo-500 h-full rounded-full" style="width: ${progress.percentage}%"></div>
+                    <div class="bg-[#dd1f36] h-full rounded-full" style="width: ${progress.percentage}%"></div>
                   </div>
                 </div>
               ` : ''}
@@ -276,7 +307,7 @@ class App {
                 ${isEnrolled ? `
                   <button 
                     onclick="window.app.startProgram('${program.id}')"
-                    class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 transition flex items-center justify-center space-x-1.5"
+                    class="flex-1 py-2.5 px-4 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/20 transition flex items-center justify-center space-x-1.5"
                   >
                     <span>${progress.percentage === 100 ? 'Review Modules' : 'Resume Learning'}</span>
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
@@ -293,7 +324,7 @@ class App {
                 ` : `
                   <button 
                     onclick="window.app.enrollInProgram('${program.id}')"
-                    class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-accent hover:from-indigo-500 hover:to-cyan-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 transition flex items-center justify-center space-x-1.5"
+                    class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#dd1f36] to-[#9744cc] hover:from-[#b81427] hover:to-[#8235b5] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/20 transition flex items-center justify-center space-x-1.5"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                     <span>Enroll in Program (Free)</span>
@@ -346,7 +377,7 @@ class App {
         <span class="mx-2">/</span>
         <span class="text-slate-300 font-semibold">${this.activeProgram.title}</span>
         <span class="mx-2">/</span>
-        <span class="text-indigo-400 font-bold">${this.activeModule.title}</span>
+        <span class="text-[#dd1f36] font-bold">${this.activeModule.title}</span>
       `;
     }
 
@@ -365,11 +396,11 @@ class App {
         return `
           <div 
             onclick="window.app.switchModule('${mod.id}')"
-            class="p-4 rounded-xl border transition cursor-pointer ${isActive ? 'bg-indigo-950/40 border-indigo-500 shadow-md' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'}"
+            class="p-4 rounded-xl border transition cursor-pointer ${isActive ? 'bg-[#dd1f36]/10 border-[#dd1f36] shadow-md' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'}"
           >
             <div class="flex items-start justify-between gap-3">
               <div class="flex items-start space-x-3">
-                <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 shrink-0 ${isCompleted ? 'bg-emerald-500 text-white' : isActive ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}">
+                <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 shrink-0 ${isCompleted ? 'bg-emerald-500 text-white' : isActive ? 'bg-[#dd1f36] text-white' : 'bg-slate-800 text-slate-400'}">
                   ${isCompleted ? '✓' : idx + 1}
                 </div>
                 <div>
@@ -453,7 +484,7 @@ class App {
       resourcesContainer.innerHTML = this.activeModule.resources.map(r => `
         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs">
           <div class="flex items-center space-x-2 text-slate-300">
-            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <svg class="w-4 h-4 text-[#dd1f36]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             <span>${r.name}</span>
           </div>
           <span class="text-slate-500 font-mono">${r.size || 'External'}</span>
@@ -504,7 +535,7 @@ class App {
     if (statsContainer) {
       statsContainer.innerHTML = `
         <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 flex items-center space-x-4">
-          <div class="w-12 h-12 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold text-xl">📚</div>
+          <div class="w-12 h-12 rounded-xl bg-[#dd1f36]/20 text-[#dd1f36] flex items-center justify-center font-bold text-xl">📚</div>
           <div>
             <div class="text-2xl font-extrabold text-white">${totalEnrolled}</div>
             <div class="text-xs text-slate-400 font-medium">Enrolled Programs</div>
@@ -547,7 +578,7 @@ class App {
           <p class="text-xs mt-1">Browse our program catalog and enroll in your first certification track today.</p>
           <button 
             onclick="window.app.navigate('catalog')" 
-            class="mt-4 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs"
+            class="mt-4 px-5 py-2.5 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs"
           >
             Browse Programs
           </button>
@@ -566,7 +597,7 @@ class App {
             <img src="${program.thumbnail}" class="w-20 h-20 rounded-xl object-cover border border-slate-800 shrink-0" />
             <div>
               <div class="flex items-center space-x-2">
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-600/20 text-indigo-400">${program.category}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#dd1f36]/20 text-[#dd1f36]">${program.category}</span>
                 ${hasCert ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">🎓 Certified</span>' : ''}
               </div>
               <h4 class="text-lg font-bold text-white mt-1">${program.title}</h4>
@@ -577,17 +608,17 @@ class App {
           <div class="w-full md:w-64 space-y-2">
             <div class="flex justify-between text-xs font-semibold">
               <span class="text-slate-400">Curriculum Progress</span>
-              <span class="text-indigo-400">${progress.percentage}%</span>
+              <span class="text-[#dd1f36] font-bold">${progress.percentage}%</span>
             </div>
             <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div class="bg-indigo-500 h-full rounded-full transition-all" style="width: ${progress.percentage}%"></div>
+              <div class="bg-[#dd1f36] h-full rounded-full transition-all" style="width: ${progress.percentage}%"></div>
             </div>
           </div>
 
           <div class="flex items-center space-x-3 shrink-0">
             <button 
               onclick="window.app.startProgram('${program.id}')"
-              class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 transition"
+              class="px-5 py-2.5 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/20 transition"
             >
               ${progress.percentage === 100 ? 'Review Course' : 'Resume Learning'}
             </button>
@@ -622,7 +653,7 @@ class App {
           </p>
           <button 
             onclick="window.app.navigate('catalog')" 
-            class="mt-6 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg transition"
+            class="mt-6 px-6 py-2.5 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs shadow-lg transition"
           >
             Explore Available Programs
           </button>
@@ -679,7 +710,7 @@ class App {
       <div class="space-y-6">
         <div class="flex items-start justify-between border-b border-slate-800 pb-4">
           <div>
-            <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">${prog.category} Program</span>
+            <span class="text-xs font-bold text-[#dd1f36] uppercase tracking-wider">${prog.category} Program</span>
             <h3 class="text-2xl font-extrabold text-white mt-1">${prog.title}</h3>
             <p class="text-xs text-slate-400 mt-1">${prog.tagline}</p>
           </div>
@@ -695,7 +726,7 @@ class App {
                 <span class="text-xs font-mono text-slate-400">⏱ ${m.duration}</span>
               </div>
               <p class="text-xs text-slate-400">${m.description}</p>
-              <div class="text-[11px] text-indigo-400 font-semibold">✓ Includes Video Lesson + ${m.quiz.questions.length}-Question Assessment</div>
+              <div class="text-[11px] text-[#dd1f36] font-semibold">✓ Includes Video Lesson + ${m.quiz.questions.length}-Question Assessment</div>
             </div>
           `).join("")}
         </div>
@@ -704,7 +735,7 @@ class App {
           <button onclick="document.getElementById('syllabusModal').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white">Close</button>
           <button 
             onclick="document.getElementById('syllabusModal').classList.add('hidden'); window.app.enrollInProgram('${prog.id}');"
-            class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg transition"
+            class="px-6 py-2.5 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs shadow-lg transition"
           >
             Enroll in this Program
           </button>
@@ -719,7 +750,7 @@ class App {
   showToast(message, type = "info") {
     const toast = document.createElement("div");
     toast.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold text-white transition-all transform translate-y-4 opacity-0 flex items-center space-x-2 border ${
-      type === "success" ? "bg-emerald-600 border-emerald-400 shadow-emerald-600/30" : "bg-indigo-600 border-indigo-400 shadow-indigo-600/30"
+      type === "success" ? "bg-emerald-600 border-emerald-400 shadow-emerald-600/30" : "bg-[#dd1f36] border-[#dd1f36]/50 shadow-[#dd1f36]/30"
     }`;
     toast.innerHTML = `<span>${message}</span>`;
     document.body.appendChild(toast);
@@ -736,7 +767,7 @@ class App {
 
   // Celebratory confetti
   triggerConfetti() {
-    const colors = ["#4f46e5", "#06b6d4", "#f59e0b", "#10b981", "#ec4899"];
+    const colors = ["#dd1f36", "#9744cc", "#f59e0b", "#10b981", "#ef4444"];
     for (let i = 0; i < 40; i++) {
       const piece = document.createElement("div");
       piece.className = "confetti-piece";

@@ -1,7 +1,7 @@
 @echo off
-title LearnPulse E-Learning Platform
+title Worxpertise Academy - Corporate E-Learning Platform
 echo ===================================================
-echo   Launching LearnPulse Video E-Learning Platform...
+echo   Launching Worxpertise Corporate E-Learning...
 echo ===================================================
 echo.
 echo Opening index.html in your default web browser...

@@ -50,7 +50,7 @@ class QuizController {
         <!-- Quiz Header Info -->
         <div class="flex items-center justify-between border-b border-slate-800 pb-4">
           <div>
-            <span class="text-xs uppercase font-bold tracking-wider text-indigo-400">Post-Video Q&A Assessment</span>
+            <span class="text-xs uppercase font-bold tracking-wider text-[#dd1f36]">Post-Video Q&A Assessment</span>
             <h3 class="text-xl font-bold text-white mt-1">${this.quiz.title}</h3>
           </div>
           <div class="text-right">
@@ -61,7 +61,7 @@ class QuizController {
 
         <!-- Progress Bar -->
         <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-          <div class="bg-gradient-to-r from-indigo-500 to-accent h-full transition-all duration-300" style="width: ${progressPercent}%"></div>
+          <div class="bg-gradient-to-r from-[#dd1f36] to-[#9744cc] h-full transition-all duration-300" style="width: ${progressPercent}%"></div>
         </div>
 
         <!-- Question Card -->
@@ -80,12 +80,12 @@ class QuizController {
                   onclick="window.quizController.selectAnswer('${question.id}', ${idx})"
                 >
                   <div class="flex items-center space-x-3.5">
-                    <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
+                    <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${isSelected ? 'bg-[#dd1f36] text-white' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
                       ${String.fromCharCode(65 + idx)}
                     </span>
-                    <span class="text-sm font-medium ${isSelected ? 'text-indigo-200' : 'text-slate-300'}">${option}</span>
+                    <span class="text-sm font-medium ${isSelected ? 'text-white' : 'text-slate-300'}">${option}</span>
                   </div>
-                  <div class="w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? 'border-indigo-500 bg-indigo-600' : 'border-slate-700'}">
+                  <div class="w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? 'border-[#dd1f36] bg-[#dd1f36]' : 'border-slate-700'}">
                     ${isSelected ? '<span class="w-2 h-2 rounded-full bg-white"></span>' : ''}
                   </div>
                 </div>
@@ -107,7 +107,7 @@ class QuizController {
             ${this.currentIndex < totalQuestions - 1 ? `
               <button 
                 onclick="window.quizController.nextQuestion()" 
-                class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-lg shadow-indigo-600/25 transition"
+                class="px-6 py-2.5 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white text-sm font-bold shadow-lg shadow-[#dd1f36]/25 transition"
               >
                 Next Question →
               </button>
@@ -211,7 +211,7 @@ class QuizController {
             ` : passed ? `
               <button 
                 onclick="window.quizController.closeQuiz(); window.app.onModulePassed('${this.currentModule.id}');"
-                class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition flex items-center space-x-2"
+                class="px-6 py-3 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold transition flex items-center space-x-2"
               >
                 <span>Continue to Next Lesson →</span>
               </button>
@@ -250,7 +250,7 @@ class QuizController {
                 </div>
 
                 <div class="mt-2 p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300">
-                  <span class="font-bold text-indigo-400">Explanation:</span> ${q.explanation}
+                  <span class="font-bold text-[#dd1f36]">Explanation:</span> ${q.explanation}
                 </div>
               </div>
             `;

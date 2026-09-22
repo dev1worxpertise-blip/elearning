@@ -1,4 +1,4 @@
-# LearnPulse - Video-Based E-Learning & Certification Platform
+# Worxpertise Academy - Video-Based E-Learning & Certification Platform
 
 A modern, comprehensive, video-driven e-learning platform where learners can enroll in industry-accredited programs, watch structured video lessons with completion tracking, complete interactive post-video Q&A assessments, and generate official, verifiable certificates.
 

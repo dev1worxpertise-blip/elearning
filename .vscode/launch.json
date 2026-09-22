@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch LearnPulse in Chrome",
+      "request": "launch",
+      "type": "chrome",
+      "file": "${workspaceFolder}/index.html"
+    },
+    {
+      "name": "Launch LearnPulse in Edge",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/index.html"
+    }
+  ]
+}

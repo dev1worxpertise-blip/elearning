@@ -34,7 +34,7 @@ class VideoPlayerController {
           </video>
 
           <!-- Big Play Overlay if paused -->
-          <button id="videoPlayOverlay" class="absolute inset-0 m-auto w-20 h-20 bg-indigo-600/90 hover:bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-2xl transition transform hover:scale-110 active:scale-95 focus:outline-none z-10 backdrop-blur-sm">
+          <button id="videoPlayOverlay" class="absolute inset-0 m-auto w-20 h-20 bg-[#dd1f36]/90 hover:bg-[#dd1f36] text-white rounded-full flex items-center justify-center shadow-2xl transition transform hover:scale-110 active:scale-95 focus:outline-none z-10 backdrop-blur-sm">
             <svg class="w-10 h-10 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
           </button>
         </div>
@@ -42,7 +42,7 @@ class VideoPlayerController {
         <!-- Custom Player Control Bar -->
         <div class="p-4 bg-slate-900/95 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center space-x-3">
-            <button id="ctrlPlayPause" class="p-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition">
+            <button id="ctrlPlayPause" class="p-2.5 rounded-lg bg-[#dd1f36] hover:bg-[#b81427] text-white transition">
               <svg id="playIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               <svg id="pauseIcon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
             </button>
@@ -60,16 +60,16 @@ class VideoPlayerController {
             <button 
               id="btnFastTrack" 
               title="Instantly mark this video as watched to unlock the Q&A quiz immediately" 
-              class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 hover:border-indigo-500 transition flex items-center space-x-1.5 font-medium"
+              class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 hover:border-[#dd1f36] transition flex items-center space-x-1.5 font-medium"
             >
-              <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              <svg class="w-3.5 h-3.5 text-[#dd1f36]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
               <span>Instant Complete (Test Mode)</span>
             </button>
           </div>
 
           <!-- Controls Right: Speed & Fullscreen -->
           <div class="flex items-center space-x-2">
-            <select id="ctrlSpeed" class="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+            <select id="ctrlSpeed" class="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-[#dd1f36] focus:outline-none">
               <option value="0.75">0.75x</option>
               <option value="1.0" selected>1.0x Normal</option>
               <option value="1.25">1.25x</option>
@@ -84,7 +84,7 @@ class VideoPlayerController {
 
         <!-- Video Progress scrubber bar -->
         <div class="w-full bg-slate-800 h-1.5 cursor-pointer relative" id="videoProgressBarContainer">
-          <div id="videoProgressBar" class="h-full bg-indigo-500 transition-all duration-150" style="width: ${initialPercent}%"></div>
+          <div id="videoProgressBar" class="h-full bg-[#dd1f36] transition-all duration-150" style="width: ${initialPercent}%"></div>
         </div>
       </div>
 

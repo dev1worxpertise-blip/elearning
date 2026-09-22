@@ -1,27 +1,28 @@
 /* ==========================================================================
-   LearnPulse E-Learning Platform - Custom Stylesheet
+   Worxpertise Academy - Corporate E-Learning Platform Stylesheet
+   Brand Colors: Crimson Red (#dd1f36), Accent Purple (#9744cc), Dark Slate (#0d111a)
    ========================================================================== */
 
 :root {
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-light: #e0e7ff;
-  --accent: #06b6d4;
+  --primary: #dd1f36;
+  --primary-hover: #b81427;
+  --primary-light: #fee2e2;
+  --accent: #9744cc;
   --accent-gold: #f59e0b;
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
-  --surface-dark: #0f172a;
-  --surface-card: #1e293b;
-  --surface-border: #334155;
+  --surface-dark: #0d111a;
+  --surface-card: #151b27;
+  --surface-border: #232c3d;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
 }
 
 /* Base resets & typography */
 body {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background-color: #0b0f19;
+  font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #0a0d15;
   color: var(--text-main);
   min-height: 100vh;
   margin: 0;
@@ -35,22 +36,22 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #0d111a;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #232c3d;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #334155;
 }
 
 /* Subtle glow effects */
 .glow-primary {
-  box-shadow: 0 0 25px -5px rgba(79, 70, 229, 0.35);
+  box-shadow: 0 0 25px -5px rgba(221, 31, 54, 0.4);
 }
 .glow-accent {
-  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.35);
+  box-shadow: 0 0 25px -5px rgba(151, 68, 204, 0.4);
 }
 .glow-gold {
   box-shadow: 0 0 30px -5px rgba(245, 158, 11, 0.4);
@@ -93,14 +94,14 @@ body {
 }
 
 .quiz-option:hover {
-  border-color: #6366f1;
+  border-color: #dd1f36;
   background: #27354f;
   transform: translateY(-2px);
 }
 
 .quiz-option.selected {
-  border-color: #4f46e5;
-  background: rgba(79, 70, 229, 0.18);
+  border-color: #dd1f36;
+  background: rgba(221, 31, 54, 0.18);
 }
 
 .quiz-option.correct {
@@ -150,6 +151,49 @@ body {
   justify-content: center;
   box-shadow: 0 10px 15px -3px rgba(180, 83, 9, 0.4);
   border: 3px dashed #fff;
+}
+
+/* Certificate Design Themes */
+.theme-worxpertise-red .certificate-border-outer {
+  border-color: #dd1f36;
+}
+.theme-worxpertise-red .certificate-border-inner {
+  border-color: #9744cc;
+}
+.theme-worxpertise-red .certificate-seal {
+  background: radial-gradient(circle, #dd1f36 0%, #9744cc 100%);
+  box-shadow: 0 10px 15px -3px rgba(221, 31, 54, 0.4);
+}
+
+.theme-modern-indigo .certificate-border-outer {
+  border-color: #312e81;
+}
+.theme-modern-indigo .certificate-border-inner {
+  border-color: #6366f1;
+}
+.theme-modern-indigo .certificate-seal {
+  background: radial-gradient(circle, #6366f1 0%, #312e81 100%);
+  box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+}
+
+.theme-executive-emerald .certificate-border-outer {
+  border-color: #064e3b;
+}
+.theme-executive-emerald .certificate-border-inner {
+  border-color: #059669;
+}
+.theme-executive-emerald .certificate-seal {
+  background: radial-gradient(circle, #10b981 0%, #064e3b 100%);
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4);
+}
+
+/* Official Academic Transcript Paper */
+.transcript-paper {
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
 /* Print Styles for Certificate */

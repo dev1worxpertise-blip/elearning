@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LearnPulse - Video-Based E-Learning & Certification Platform</title>
+  <title>Worxpertise Academy - Execute. Enable. Excel.</title>
 
-  <!-- Google Fonts: Plus Jakarta Sans -->
+  <!-- Google Fonts: Montserrat (Official Worxpertise Typography) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -18,13 +18,14 @@
       theme: {
         extend: {
           colors: {
-            primary: '#4f46e5',
-            accent: '#06b6d4',
-            surfaceDark: '#0f172a',
-            cardDark: '#1e293b'
+            primary: '#dd1f36',
+            primaryHover: '#b81427',
+            accent: '#9744cc',
+            surfaceDark: '#0d111a',
+            cardDark: '#151b27'
           },
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            sans: ['"Montserrat"', 'sans-serif'],
           }
         }
       }
@@ -34,28 +35,30 @@
   <!-- Custom Stylesheet -->
   <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+<body class="bg-[#0a0d15] text-slate-100 min-h-screen flex flex-col antialiased">
 
   <!-- ======================================================================
        Top Navigation Bar
        ====================================================================== -->
-  <header class="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 transition">
+  <header class="sticky top-0 z-40 bg-[#0d111a]/95 backdrop-blur-xl border-b border-[#232c3d] transition shadow-lg shadow-black/20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
-        <!-- Logo -->
+        <!-- Worxpertise Brand Logo -->
         <div class="flex items-center space-x-3 cursor-pointer" onclick="window.app.navigate('catalog')">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-600/30">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-            </svg>
+          <div class="bg-white/95 px-3 py-1.5 rounded-xl border border-slate-700/50 shadow-sm flex items-center">
+            <img 
+              src="https://worxpertise.com/wp-content/themes/worxpertise/assets/images/worx-header-logo.png" 
+              alt="Worxpertise Logo" 
+              class="h-7 w-auto object-contain"
+            />
           </div>
-          <div>
-            <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-              LearnPulse
-            </span>
-            <span class="hidden sm:inline-block text-[10px] font-bold uppercase tracking-widest text-indigo-400 ml-1.5 px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20">
+          <div class="hidden sm:block">
+            <span class="text-xs font-black uppercase tracking-wider text-white">
               Academy
             </span>
+            <div class="text-[9px] font-bold uppercase tracking-widest text-[#dd1f36]">
+              Execute. Enable. Excel.
+            </div>
           </div>
         </div>
 
@@ -63,7 +66,7 @@
         <nav class="hidden md:flex items-center space-x-1 sm:space-x-4">
           <button 
             data-nav-target="catalog" 
-            class="px-3.5 py-2 rounded-lg text-sm font-semibold transition text-indigo-400 border-b-2 border-indigo-500 hover:text-white"
+            class="px-3.5 py-2 rounded-lg text-sm font-semibold transition text-[#dd1f36] border-b-2 border-[#dd1f36] hover:text-white"
           >
             Programs Catalog
           </button>
@@ -80,6 +83,13 @@
             <span>Certificates</span>
             <span id="headerCertCount" class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-slate-950">0</span>
           </button>
+          <button 
+            data-nav-target="instructor" 
+            class="px-3.5 py-2 rounded-lg text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1.5"
+          >
+            <span>Instructor Studio</span>
+            <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#dd1f36]/20 text-[#dd1f36] border border-[#dd1f36]/30">Creator</span>
+          </button>
         </nav>
 
         <!-- User Profile & Action Tools -->
@@ -92,6 +102,12 @@
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             <span>Reset Demo</span>
           </button>
+
+          <!-- Backend Connection Badge -->
+          <div id="backendStatusBadge" class="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700">
+            <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+            <span class="text-[10px] text-slate-400 font-medium">Standalone Mode</span>
+          </div>
 
           <!-- Student Profile Pill -->
           <div class="flex items-center space-x-2 pl-2 border-l border-slate-800">
@@ -122,24 +138,24 @@
        ====================================================================== -->
   <main id="viewCatalog" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
     <!-- Hero Banner -->
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-950 via-slate-900 to-slate-900 border border-indigo-900/40 p-8 sm:p-12 shadow-2xl">
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#1b0a0e] via-[#121622] to-[#121622] border border-[#dd1f36]/30 p-8 sm:p-12 shadow-2xl">
       <div class="max-w-2xl space-y-4 relative z-10">
-        <span class="inline-flex items-center space-x-2 text-xs font-extrabold uppercase tracking-widest text-indigo-400 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">
-          <span>🚀 Video-Driven Interactive Learning</span>
+        <span class="inline-flex items-center space-x-2 text-xs font-extrabold uppercase tracking-widest text-[#dd1f36] px-3.5 py-1 rounded-full bg-[#dd1f36]/10 border border-[#dd1f36]/30">
+          <span>Worxpertise Enterprise Enablement</span>
         </span>
-        <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-          Master Modern Tech Skills & Get Certified.
+        <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+          Execute. Enable. Excel.
         </h1>
-        <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
-          Enroll in industry-standard programs, watch in-depth video modules, pass interactive post-video Q&A assessments, and receive verified digital credentials.
+        <p class="text-sm sm:text-base text-slate-300 leading-relaxed font-normal">
+          Driving Business Excellence (BX) and Customer Value through specialized video curricula, rigorous post-video Q&A evaluations, and corporate-accredited certifications.
         </p>
 
         <div class="flex flex-wrap gap-4 pt-2">
           <button 
             onclick="document.getElementById('programSearchInput').focus();"
-            class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 transition transform hover:scale-105"
+            class="px-6 py-3 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-sm shadow-xl shadow-[#dd1f36]/30 transition transform hover:scale-105"
           >
-            Explore All Programs
+            Explore Corporate Programs
           </button>
           <button 
             onclick="window.app.navigate('dashboard')"
@@ -150,8 +166,8 @@
         </div>
       </div>
 
-      <!-- Subtle background decoration -->
-      <div class="absolute right-0 top-0 bottom-0 w-1/2 opacity-20 pointer-events-none bg-gradient-to-l from-indigo-500 via-cyan-500 to-transparent"></div>
+      <!-- Subtle background decoration with Worxpertise Red & Purple -->
+      <div class="absolute right-0 top-0 bottom-0 w-1/2 opacity-25 pointer-events-none bg-gradient-to-l from-[#dd1f36] via-[#9744cc] to-transparent"></div>
     </div>
 
     <!-- Filters & Search Toolbar -->
@@ -163,15 +179,15 @@
         </svg>
         <input 
           type="text" 
-          id="programSearchInput"
+          id="programSearchInput" 
           placeholder="Search programs, topics, skills..." 
-          class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+          class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#dd1f36] transition"
         />
       </div>
 
       <!-- Category Filter Pills -->
       <div class="flex flex-wrap gap-2 w-full md:w-auto">
-        <button data-category-filter="all" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-md">
+        <button data-category-filter="all" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-[#dd1f36] text-white shadow-md">
           All Programs
         </button>
         <button data-category-filter="Web Development" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white">
@@ -224,7 +240,7 @@
           </div>
 
           <div>
-            <h4 class="text-xs uppercase font-bold text-indigo-400 tracking-wider">Key Learning Takeaways</h4>
+            <h4 class="text-xs uppercase font-bold text-[#dd1f36] tracking-wider">Key Learning Takeaways</h4>
             <ul id="lessonTakeaways" class="mt-3 space-y-2">
               <!-- Injected dynamically -->
             </ul>
@@ -293,6 +309,209 @@
   </main>
 
   <!-- ======================================================================
+       VIEW: INSTRUCTOR & ADMIN COURSE STUDIO
+       ====================================================================== -->
+  <main id="viewInstructor" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+      <div>
+        <span class="text-xs uppercase font-extrabold tracking-widest text-[#dd1f36]">Content Authoring & Curriculum Management</span>
+        <h2 class="text-3xl font-extrabold text-white mt-1">Instructor & Admin Studio</h2>
+        <p class="text-xs text-slate-400 mt-1">Create courses, configure video lessons, and author post-video Q&A assessments with PostgreSQL storage.</p>
+      </div>
+
+      <!-- Studio Navigation Tabs -->
+      <div class="flex flex-wrap gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800">
+        <button data-instructor-tab="programs" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-[#dd1f36] text-white">
+          1. Publish Program
+        </button>
+        <button data-instructor-tab="modules" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white">
+          2. Add Video Lessons
+        </button>
+        <button data-instructor-tab="quiz" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white">
+          3. Author Quizzes
+        </button>
+        <button data-instructor-tab="overview" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white">
+          4. My Courses
+        </button>
+      </div>
+    </div>
+
+    <!-- PANE 1: CREATE PROGRAM -->
+    <div id="paneCreateProgram" class="max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
+      <div class="border-b border-slate-800 pb-4">
+        <h3 class="text-lg font-bold text-white">Publish a New Certification Program</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Fill in program details to add a new curriculum track to the platform and PostgreSQL.</p>
+      </div>
+
+      <form id="formCreateProgram" onsubmit="window.instructorStudio.handleCreateProgram(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Program Title *</label>
+          <input type="text" id="instProgTitle" placeholder="e.g. Next.js 15 & Full-Stack Serverless Architecture" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#dd1f36]" required />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Tagline & Summary *</label>
+          <textarea id="instProgTagline" rows="2" placeholder="Brief elevator pitch highlighting what students will build and master..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" required></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Category *</label>
+            <input type="text" id="instProgCategory" placeholder="e.g. Web Development" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Difficulty Level</label>
+            <select id="instProgLevel" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]">
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate" selected>Intermediate</option>
+              <option value="Advanced">Advanced</option>
+              <option value="All Levels">All Levels</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Est. Duration *</label>
+            <input type="text" id="instProgDuration" placeholder="e.g. 6 Hours" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" required />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Thumbnail Image URL *</label>
+          <input type="url" id="instProgThumbnail" value="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" required />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Key Skills (Comma separated)</label>
+          <input type="text" id="instProgSkills" placeholder="e.g. Next.js, Server Actions, PostgreSQL, Prisma, Tailwind" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" />
+        </div>
+
+        <div class="pt-4 border-t border-slate-800 flex justify-end">
+          <button type="submit" class="px-6 py-3 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/30 transition flex items-center space-x-2">
+            <span>Publish Program & Proceed to Lessons →</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- PANE 2: ADD MODULE / VIDEO LESSON -->
+    <div id="paneAddModule" class="hidden max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
+      <div class="border-b border-slate-800 pb-4">
+        <h3 class="text-lg font-bold text-white">Add Video Lesson / Module</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Attach a high-definition video lesson to an existing program.</p>
+      </div>
+
+      <form id="formAddModule" onsubmit="window.instructorStudio.handleAddModule(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Target Program *</label>
+          <select id="instModuleProgSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" required>
+            <!-- Injected dynamically -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Lesson Title *</label>
+            <input type="text" id="instModTitle" placeholder="e.g. Server-Side Rendering & Streaming Suspense" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Duration *</label>
+            <input type="text" id="instModDuration" placeholder="e.g. 14:30" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" required />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Video Stream URL (MP4 / WebM) *</label>
+          <input type="url" id="instModVideoUrl" value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" required />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">YouTube ID Fallback (Optional)</label>
+          <input type="text" id="instModYoutubeId" placeholder="e.g. bMknfKXIFA8" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Lesson Description *</label>
+          <textarea id="instModDescription" rows="3" placeholder="What core concepts are explained in this video lesson..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" required></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Key Takeaways (One per line)</label>
+          <textarea id="instModTakeaways" rows="3" placeholder="Understand SSR vs CSR&#10;Implement dynamic streaming with Suspense&#10;Optimize Core Web Vitals" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]"></textarea>
+        </div>
+
+        <div class="pt-4 border-t border-slate-800 flex justify-end">
+          <button type="submit" class="px-6 py-3 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/30 transition flex items-center space-x-2">
+            <span>Save Lesson & Configure Quiz →</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- PANE 3: AUTHOR QUIZ -->
+    <div id="paneAuthorQuiz" class="hidden max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
+      <div class="border-b border-slate-800 pb-4 flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-bold text-white">Author Post-Video Q&A Assessment</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Students must pass this quiz with 80% to earn credit for the video lesson.</p>
+        </div>
+        <button type="button" onclick="window.instructorStudio.addQuestionCard()" class="px-3.5 py-1.5 rounded-xl bg-[#dd1f36]/20 text-[#dd1f36] hover:bg-[#dd1f36]/30 border border-[#dd1f36]/30 text-xs font-bold transition">
+          + Add Question
+        </button>
+      </div>
+
+      <form id="formAuthorQuiz" onsubmit="window.instructorStudio.handleSaveQuiz(event)" class="space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">1. Select Program *</label>
+            <select id="instQuizProgSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" required></select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">2. Select Video Lesson / Module *</label>
+            <select id="instQuizModSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" required></select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Quiz Assessment Title</label>
+            <input type="text" id="instQuizTitle" value="Module Knowledge Verification Assessment" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Passing Score (%)</label>
+            <input type="number" id="instQuizPassingScore" value="80" min="50" max="100" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" required />
+          </div>
+        </div>
+
+        <!-- Dynamic Questions Builder -->
+        <div id="quizQuestionsBuilder" class="space-y-4">
+          <!-- Injected dynamically via instructor.js -->
+        </div>
+
+        <div class="pt-4 border-t border-slate-800 flex items-center justify-between">
+          <button type="button" onclick="window.instructorStudio.addQuestionCard()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
+            + Add Another Question
+          </button>
+          <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 transition">
+            Save Quiz to Database
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- PANE 4: MY COURSES OVERVIEW -->
+    <div id="paneInstructorOverview" class="hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-bold text-white">Curriculum Library Overview</h3>
+        <button onclick="window.instructorStudio.switchTab('programs')" class="px-4 py-2 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white text-xs font-bold transition">
+          + Create New Course
+        </button>
+      </div>
+      <div id="instructorCoursesList" class="space-y-4">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+  </main>
+
+  <!-- ======================================================================
        MODAL: INTERACTIVE POST-VIDEO Q&A QUIZ
        ====================================================================== -->
   <div id="quizModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -339,14 +558,14 @@
   <footer class="mt-auto border-t border-slate-900 bg-slate-950/60 py-8 text-center text-xs text-slate-500">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div>
-        <span class="font-bold text-slate-400">LearnPulse</span> © 2026. Video-Based E-Learning & Certification Platform.
+        <span class="font-bold text-slate-300">Worxpertise Academy</span> © 2026. <span class="text-[#dd1f36] font-semibold">Execute. Enable. Excel.</span>
       </div>
       <div class="flex items-center space-x-6 text-slate-400">
-        <span>Curriculum Verified</span>
+        <span>Corporate Verified</span>
         <span>•</span>
-        <span>Automatic Credentialing</span>
+        <span>Continuous Enablement</span>
         <span>•</span>
-        <span>Offline Persistent</span>
+        <span>PostgreSQL Integrated</span>
       </div>
     </div>
   </footer>
@@ -354,9 +573,11 @@
   <!-- Scripts: Ordered Dependencies -->
   <script src="js/data.js"></script>
   <script src="js/state.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/player.js"></script>
   <script src="js/quiz.js"></script>
   <script src="js/certificate.js"></script>
+  <script src="js/instructor.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
