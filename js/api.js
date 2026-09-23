@@ -204,6 +204,40 @@ class ApiService {
     });
     return res.json();
   }
+
+  async updateProgram(programId, payload) {
+    const res = await fetch(`${API_BASE_URL}/instructor/programs/${programId}`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return res.json();
+  }
+
+  async deleteProgram(programId) {
+    const res = await fetch(`${API_BASE_URL}/instructor/programs/${programId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return res.json();
+  }
+
+  async updateModule(moduleId, payload) {
+    const res = await fetch(`${API_BASE_URL}/instructor/modules/${moduleId}`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return res.json();
+  }
+
+  async deleteModule(moduleId) {
+    const res = await fetch(`${API_BASE_URL}/instructor/modules/${moduleId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return res.json();
+  }
 }
 
 window.apiService = new ApiService();

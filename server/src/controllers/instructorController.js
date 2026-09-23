@@ -6,8 +6,20 @@ const db = require('../db');
 exports.createProgram = async (req, res) => {
   try {
     const { title, tagline, category_name, level = 'All Levels', duration, thumbnail_url, skills = [] } = req.body;
-    const instructorId = req.user.id;
-    const instructorName = req.user.name;
+    let instructorId = (req.user && req.user.id) || null;
+    const instructorName = (req.user && req.user.name) || 'Lead Instructor';
+    const instructorAvatar = (req.user && req.user.avatar_url) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200';
+
+    if (instructorId) {
+      const userCheck = await db.query('SELECT id FROM users WHERE id = $1', [instructorId]);
+      if (userCheck.rows.length === 0) {
+        const anyInst = await db.query("SELECT id FROM users WHERE role = 'instructor' LIMIT 1");
+        instructorId = anyInst.rows.length > 0 ? anyInst.rows[0].id : null;
+      }
+    } else {
+      const anyInst = await db.query("SELECT id FROM users WHERE role = 'instructor' LIMIT 1");
+      instructorId = anyInst.rows.length > 0 ? anyInst.rows[0].id : null;
+    }
 
     if (!title || !category_name || !duration || !thumbnail_url) {
       return res.status(400).json({ success: false, message: 'Title, category, duration, and thumbnail are required.' });
@@ -50,7 +62,7 @@ exports.createProgram = async (req, res) => {
       instructorId,
       instructorName,
       'Lead Instructor',
-      req.user.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+      instructorAvatar,
       JSON.stringify(skills),
     ]);
 
@@ -129,5 +141,131 @@ exports.createOrUpdateQuiz = async (req, res) => {
   } catch (err) {
     console.error('createOrUpdateQuiz error:', err);
     res.status(500).json({ success: false, message: 'Failed to save quiz.', error: err.message });
+  }
+};
+
+exports.updateProgram = async (req, res) => {
+  try {
+    const { programId } = req.params;
+    const { title, tagline, category_name, level, duration, thumbnail_url, skills } = req.body;
+
+    const slug = title ? title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : undefined;
+
+    let catId = undefined;
+    if (category_name) {
+      catId = 'cat_' + category_name.toLowerCase().replace(/\s+/g, '');
+      await db.query('INSERT INTO categories (id, name, slug) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [
+        catId, category_name, category_name.toLowerCase().replace(/\s+/g, '-')
+      ]);
+    }
+
+    const query = `
+      UPDATE programs
+      SET 
+        title = COALESCE($1, title),
+        slug = COALESCE($2, slug),
+        tagline = COALESCE($3, tagline),
+        category_name = COALESCE($4, category_name),
+        category_id = COALESCE($5, category_id),
+        level = COALESCE($6, level),
+        duration = COALESCE($7, duration),
+        thumbnail_url = COALESCE($8, thumbnail_url),
+        skills = CASE WHEN $9::jsonb IS NOT NULL THEN $9::jsonb ELSE skills END,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $10
+      RETURNING *
+    `;
+
+    const result = await db.query(query, [
+      title || null,
+      slug || null,
+      tagline || null,
+      category_name || null,
+      catId || null,
+      level || null,
+      duration || null,
+      thumbnail_url || null,
+      skills ? JSON.stringify(skills) : null,
+      programId
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Program not found.' });
+    }
+
+    res.json({ success: true, message: 'Program updated successfully!', program: result.rows[0] });
+  } catch (err) {
+    console.error('updateProgram error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update program.', error: err.message });
+  }
+};
+
+exports.deleteProgram = async (req, res) => {
+  try {
+    const { programId } = req.params;
+    const result = await db.query('DELETE FROM programs WHERE id = $1 RETURNING id, title', [programId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Program not found.' });
+    }
+    res.json({ success: true, message: 'Program deleted successfully!', program: result.rows[0] });
+  } catch (err) {
+    console.error('deleteProgram error:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete program.', error: err.message });
+  }
+};
+
+exports.updateModule = async (req, res) => {
+  try {
+    const { moduleId } = req.params;
+    const { title, duration, video_url, youtube_id, description, takeaways, resources } = req.body;
+
+    const query = `
+      UPDATE modules
+      SET 
+        title = COALESCE($1, title),
+        duration = COALESCE($2, duration),
+        video_url = COALESCE($3, video_url),
+        youtube_id = COALESCE($4, youtube_id),
+        description = COALESCE($5, description),
+        takeaways = CASE WHEN $6::jsonb IS NOT NULL THEN $6::jsonb ELSE takeaways END,
+        resources = CASE WHEN $7::jsonb IS NOT NULL THEN $7::jsonb ELSE resources END,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $8
+      RETURNING *
+    `;
+
+    const result = await db.query(query, [
+      title || null,
+      duration || null,
+      video_url || null,
+      youtube_id || null,
+      description || null,
+      takeaways ? JSON.stringify(takeaways) : null,
+      resources ? JSON.stringify(resources) : null,
+      moduleId
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Module not found.' });
+    }
+
+    res.json({ success: true, message: 'Module updated successfully!', module: result.rows[0] });
+  } catch (err) {
+    console.error('updateModule error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update module.', error: err.message });
+  }
+};
+
+exports.deleteModule = async (req, res) => {
+  try {
+    const { moduleId } = req.params;
+    const result = await db.query('DELETE FROM modules WHERE id = $1 RETURNING id, title', [moduleId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Module not found.' });
+    }
+    res.json({ success: true, message: 'Module deleted successfully!', module: result.rows[0] });
+  } catch (err) {
+    console.error('deleteModule error:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete module.', error: err.message });
   }
 };
