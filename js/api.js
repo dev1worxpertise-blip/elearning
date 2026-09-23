@@ -7,24 +7,64 @@ const API_BASE_URL = 'http://localhost:5000/api';
 
 class ApiService {
   constructor() {
-    this.token = localStorage.getItem('learnpulse_jwt_token') || null;
+    this.token = localStorage.getItem('worxpertise_jwt_token') || localStorage.getItem('learnpulse_jwt_token') || null;
     this.isBackendOnline = false;
+    this.init();
+  }
+
+  init() {
     this.checkHealth();
+
+    // Auto-poll health every 3s if offline, every 20s if online
+    setInterval(() => {
+      this.checkHealth();
+    }, 3000);
+
+    // Interactive status badge click to test
+    const setupBadgeClick = () => {
+      const badge = document.getElementById('backendStatusBadge');
+      if (badge && !badge.dataset.bound) {
+        badge.dataset.bound = 'true';
+        badge.style.cursor = 'pointer';
+        badge.title = 'Click to test PostgreSQL connection';
+        badge.addEventListener('click', async () => {
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span><span class="text-[10px] text-amber-300 font-medium">Testing DB...</span>`;
+          await this.checkHealth();
+          if (window.app && window.app.showToast) {
+            if (this.isBackendOnline) {
+              window.app.showToast('✅ PostgreSQL Backend is Online & Connected!', 'success');
+            } else {
+              window.app.showToast('⚠️ Backend not reachable. Running in Standalone Mode. Double-click start.bat to launch backend.', 'info');
+            }
+          }
+        });
+      }
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupBadgeClick);
+    } else {
+      setupBadgeClick();
+    }
   }
 
   async checkHealth() {
     try {
       const res = await fetch(`${API_BASE_URL}/health`, { signal: AbortSignal.timeout(2000) });
       if (res.ok) {
+        const wasOffline = !this.isBackendOnline;
         this.isBackendOnline = true;
-        console.log('✅ Connected to LearnPulse PostgreSQL Backend API');
         this.notifyStatus(true);
+        if (wasOffline) {
+          console.log('✅ Connected to Worxpertise PostgreSQL Backend API');
+        }
       } else {
         this.isBackendOnline = false;
+        this.notifyStatus(false);
       }
     } catch (e) {
       this.isBackendOnline = false;
-      // console.log('Running in client-side standalone mode');
+      this.notifyStatus(false);
     }
   }
 
@@ -32,7 +72,7 @@ class ApiService {
     const badge = document.getElementById('backendStatusBadge');
     if (badge) {
       badge.innerHTML = online 
-        ? `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span class="text-[10px] text-emerald-400 font-bold">PostgreSQL Connected</span>`
+        ? `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span class="text-[10px] text-emerald-400 font-bold">PostgreSQL Connected</span>`
         : `<span class="w-2 h-2 rounded-full bg-slate-500"></span><span class="text-[10px] text-slate-400 font-medium">Standalone Mode</span>`;
     }
   }
