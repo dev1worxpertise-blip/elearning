@@ -49,6 +49,16 @@ INSERT INTO users (id, name, email, password_hash, role, avatar_url, headline, b
     'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
     'Full-Stack Developer & Cloud Architect',
     'Passionate about building scalable modern software systems.'
+),
+(
+    'usr_instructor_4',
+    'Advocate Ananya Deshmukh',
+    'ananya.deshmukh@worxpertise.com',
+    '$2b$10$abcdef1234567890examplehashforsecurity',
+    'instructor',
+    'https://images.unsplash.com/photo-1573496799652-408c2ac9fe98?w=200&auto=format&fit=crop&q=80',
+    'Head of Legal & POSH External IC Member',
+    'Senior Corporate Legal Counsel and External IC Advisor with 15+ years specializing in POSH Act compliance, workplace ethics, and sensitivity governance.'
 );
 
 -- -----------------------------------------------------------------------------
@@ -57,7 +67,8 @@ INSERT INTO users (id, name, email, password_hash, role, avatar_url, headline, b
 INSERT INTO categories (id, name, slug, description, icon) VALUES
 ('cat_webdev', 'Web Development', 'web-development', 'Modern web technologies, frontend frameworks, and backend architectures.', 'code'),
 ('cat_ai', 'Artificial Intelligence', 'artificial-intelligence', 'Machine Learning, Deep Learning, Large Language Models, and Autonomous Agents.', 'cpu'),
-('cat_cyber', 'Cybersecurity', 'cybersecurity', 'Defensive security, penetration testing, ethical hacking, and cryptography.', 'shield');
+('cat_cyber', 'Cybersecurity', 'cybersecurity', 'Defensive security, penetration testing, ethical hacking, and cryptography.', 'shield'),
+('cat_compliance', 'Corporate Compliance', 'corporate-compliance', 'Mandatory workplace compliance, statutory governance, POSH Act 2013, and corporate ethics.', 'shield-check');
 
 -- -----------------------------------------------------------------------------
 -- 3. SEED PROGRAMS
@@ -122,6 +133,25 @@ INSERT INTO programs (
     'Certified Information Systems Security Professional',
     'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
     '["Vulnerability Assessment", "OWASP Top 10", "Network Penetration", "Cryptographic Defense", "Zero Trust"]'::jsonb,
+    TRUE
+),
+(
+    'prog-posh-compliance',
+    'POSH: Prevention of Sexual Harassment at Workplace (Corporate Compliance)',
+    'posh-workplace-compliance',
+    'Official corporate compliance program covering the POSH Act 2013, employee rights, identifying workplace harassment, bystander intervention, and Internal Committee (IC) redressal protocols.',
+    'cat_compliance',
+    'Corporate Compliance',
+    'All Levels',
+    '45 Mins',
+    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=80',
+    4.95,
+    18540,
+    'usr_instructor_4',
+    'Advocate Ananya Deshmukh',
+    'Head of Legal & POSH External IC Member',
+    'https://images.unsplash.com/photo-1573496799652-408c2ac9fe98?w=200&auto=format&fit=crop&q=80',
+    '["POSH Act 2013", "Workplace Ethics & Sensitivity", "Hostile Work Environment Prevention", "Bystander Intervention (4Ds)", "Internal Committee (IC) Redressal"]'::jsonb,
     TRUE
 );
 
