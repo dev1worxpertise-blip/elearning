@@ -1,131 +1,113 @@
 # Worxpertise Academy - Video-Based E-Learning & Certification Platform
 
-A modern, comprehensive, video-driven e-learning platform where learners can enroll in industry-accredited programs, watch structured video lessons with completion tracking, complete interactive post-video Q&A assessments, and generate official, verifiable certificates.
+A modern, enterprise-grade, video-driven e-learning platform branded for **Worxpertise Academy** (`#dd1f36` crimson, `#9744cc` purple). Learners can enroll in accredited programs, stream structured video lessons, pass interactive post-video assessments, and generate official, verifiable certificates. Instructors and administrators can publish, edit, and manage programs and lessons directly with real-time **PostgreSQL** database synchronization.
 
+[![GitHub Repo](https://img.shields.io/badge/GitHub-dev1worxpertise--blip%2Felearning-blue?logo=github)](https://github.com/dev1worxpertise-blip/elearning.git)
+![Database](https://img.shields.io/badge/Database-PostgreSQL%2016-336791?logo=postgresql)
+![Backend](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-green?logo=node.js)
 ![Platform](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-![Zero-Dependency](https://img.shields.io/badge/Dependencies-Zero%20Setup-blue)
-![Format](https://img.shields.io/badge/Certificate-High--Res%20PNG%20%2B%20PDF-gold)
+![Certificate](https://img.shields.io/badge/Certificate-High--Res%20PNG%20%2B%20PDF-gold)
 
 ---
 
 ## 🌟 Key Features
 
-1. **Program Catalog & 1-Click Enrollment**
-   - Filter programs by category (Web Development, Artificial Intelligence, Cybersecurity).
-   - Search by program title, topic, or target skills.
-   - Comprehensive syllabus view detailing modules, duration, and assessment requirements.
+### 1. Program Catalog & 1-Click Enrollment
+- Categorized by Web Development, Artificial Intelligence, Cybersecurity, Cloud, and DevOps.
+- Instant search filter by program title, topic, or required skillset.
+- Detailed syllabus breakdown detailing module durations, video streaming sources, and quiz requirements.
 
-2. **Video-Based Learning Player**
-   - High-definition HTML5 video playback with custom controls, scrubbing, and speed adjustment (0.75x, 1x, 1.25x, 1.5x, 2x).
-   - **Video Completion Gate**: Post-video assessment remains securely locked until the video lesson is completed.
-   - **Test Mode**: Includes an *"Instant Complete (Test Mode)"* button for rapid evaluation of quizzes and certificate generation without waiting for long videos.
+### 2. Video Player & Watch Completion Gate
+- Custom video playback controls with scrubbing and speed multipliers (0.75x, 1x, 1.25x, 1.5x, 2x).
+- **Completion Gate**: Post-video quiz remains securely locked until the video is finished.
+- **Instant Test Mode**: Rapid evaluation button for testing quizzes and certificates without waiting for long videos.
 
-3. **Interactive Post-Video Q&A Engine**
-   - Step-by-step card-based quiz with progress indicator.
-   - Instant scoring against an 80% passing threshold.
-   - Comprehensive feedback with question-by-question review, selected answers, and conceptual explanations.
-   - Unlimited retries if the passing criteria is not initially met.
+### 3. Interactive Post-Video Q&A Assessment
+- Card-based interactive quiz engine with instant scoring against an 80% passing threshold.
+- Question-by-question review with answer explanations reinforcing the lesson's core concepts.
+- Unlimited retries with immediate feedback.
 
-4. **Digital Certificate Studio & Export**
-   - Automatically issued when all modules in a program are completed and passed.
-   - Verified Credential ID, issue timestamp, verification hash, and honors grade.
-   - **1-Click High-Res PNG Export**: Renders a 1600×1100 ultra-crisp certificate using HTML5 Canvas.
-   - **Print to PDF**: Built-in `@media print` layout for saving clean, high-resolution PDFs.
-   - Real-time recipient name editor for personalization.
+### 4. Instructor & Admin Studio (Course & Lesson Authoring & Editing)
+- **Publish Programs**: Create new programs with custom title, tagline, category, difficulty, duration, thumbnail, and skills.
+- **Edit Programs**: Click `✏️ Edit Course` under *My Courses* to update course details; changes persist to PostgreSQL.
+- **Video Lesson Management**: Add and edit video lessons (MP4/WebM direct URLs, YouTube fallback, descriptions, and takeaways).
+- **Interactive Quiz Authoring**: Add, edit, or remove assessment questions and explanations per lesson.
+- **Delete Management**: Delete courses or individual lessons with clean database cascade.
 
-5. **Student Learning Dashboard**
-   - Central hub displaying active enrollments, completed lessons count, quiz average, and certificate count.
-   - Resume learning button returning directly to the next incomplete module.
+### 5. Verifiable Digital Certificate Studio
+- Automatically issued upon completing 100% of video lessons and passing all module quizzes.
+- Unique Credential ID, issue timestamp, verification hash, and honors grade.
+- **1-Click High-Res PNG Export**: Renders a crisp 1600×1100 certificate using HTML5 Canvas.
+- **Print to PDF**: Built-in `@media print` layout for saving high-resolution PDFs.
+- Live recipient name customization.
 
-6. **Zero-Setup Offline Persistence**
-   - All enrolled programs, video watch positions, quiz scores, and issued certificates persist in `localStorage`.
+### 6. PostgreSQL Backend & Resilient Fallback
+- Connected to PostgreSQL database `elearning_db` running on port 5432.
+- Express REST API running on port 5000 with auto-reconnecting heartbeat.
+- Dual-layer persistence: Seamlessly functions with PostgreSQL online or in standalone mode with LocalStorage.
 
 ---
 
 ## 🚀 Getting Started
 
-### Method 1: Double-Click Launcher (Windows)
-Double-click `start.bat` in the `C:\Users\sachin.chauhan\Downloads\elearning` folder. It will open the application immediately in your default browser.
+### Windows One-Click Launcher
+Double-click `start.bat` in the project folder. It will:
+1. Verify if port 5000 is running; if not, automatically launches the Node.js backend.
+2. Verify PostgreSQL database connection (`elearning_db`).
+3. Open `index.html` in your default browser.
 
-### Method 2: Open Directly in Any Web Browser
-Right-click `index.html` and select **Open with Google Chrome**, **Microsoft Edge**, or **Firefox**.
+```cmd
+start.bat
+```
+
+### Manual Start
+
+1. **Start the API Server**:
+   ```cmd
+   cd server
+   node server.js
+   ```
+
+2. **Open the Platform**:
+   Open `index.html` in any modern web browser (Chrome, Edge, Firefox, Safari).
 
 ---
 
-## 📁 Project Architecture
+## 📁 Repository Structure
 
 ```
-C:\Users\sachin.chauhan\Downloads\elearning\
-├── index.html                   # Central Single Page Application shell
-├── start.bat                    # One-click Windows launcher
-├── package.json                 # Project configuration
-├── README.md                    # Platform documentation
+elearning/
+├── index.html                           # Single Page Application frontend
+├── start.bat                            # Windows auto-launch script
+├── package.json                         # Client metadata
+├── README.md                            # Documentation
 ├── css/
-│   └── styles.css               # Dark theme, glassmorphism, quiz cards & certificate styling
-└── js/
-    ├── data.js                  # Preloaded curriculum, modules, video streams & quiz questions
-    ├── state.js                 # State manager & localStorage persistence layer
-    ├── player.js                # Video player controller & watch-time completion gate
-    ├── quiz.js                  # Post-video interactive Q&A assessment engine
-    ├── certificate.js           # Certificate rendering, canvas PNG export & PDF printing
-    └── app.js                   # Application coordinator, routing, modals & toast alerts
+│   └── styles.css                       # Worxpertise styling, glassmorphism & certificates
+├── js/
+│   ├── api.js                           # REST API client & DB health status polling
+│   ├── app.js                           # Application coordinator, routing & toasts
+│   ├── certificate.js                   # Certificate rendering, canvas PNG export & PDF
+│   ├── data.js                          # Curriculum data & default courses
+│   ├── instructor.js                    # Instructor studio: course & quiz authoring/editing
+│   ├── player.js                        # Video player controller & completion gate
+│   ├── quiz.js                          # Post-video assessment engine
+│   └── state.js                         # State manager & localStorage persistence
+├── database/
+│   ├── schema.sql                       # PostgreSQL database DDL schema
+│   └── seed.sql                         # Initial course & user seed data
+└── server/
+    ├── .env                             # Database connection credentials
+    ├── server.js                        # Express server entry point (Port 5000)
+    └── src/
+        ├── controllers/                 # Route controllers (programs, modules, quiz, auth)
+        ├── db/                          # pg pool configuration
+        ├── middleware/                  # JWT auth & error handlers
+        └── routes/                      # REST API routes
 ```
 
 ---
 
-## 🎓 Included Programs & Modules
+## 🔗 GitHub Repository
 
-1. **Full-Stack Web Development Mastery** (Dr. Sarah Chen)
-   - Module 1: Modern Frontend Architecture & Component Systems
-   - Module 2: RESTful & GraphQL API Design with Node.js
-   - Module 3: Cloud Deployment, Containers & CI/CD Pipelines
-2. **Mastering Artificial Intelligence & LLMs** (Alex Rivera)
-   - Module 1: Deep Learning Foundations & Neural Networks
-   - Module 2: Transformer Architecture & Advanced Prompt Engineering
-   - Module 3: Autonomous AI Agents & Tool Calling Workflows
-3. **Cybersecurity Defense & Ethical Hacking** (Marcus Vance)
-   - Module 1: Network Reconnaissance & Vulnerability Assessment
-   - Module 2: Web Application Security & OWASP Top 10
-   - Module 3: Cryptographic Systems & Secure Communication
-
----
-
-## 🛠 Adding New Courses
-
-To add new programs or modules, edit [js/data.js](file:///C:/Users/sachin.chauhan/Downloads/elearning/js/data.js). Follow the schema:
-```javascript
-{
-  id: "prog-my-course",
-  title: "Course Title",
-  category: "Web Development",
-  duration: "4 Hours",
-  thumbnail: "https://...",
-  instructor: { name: "Instructor Name", role: "Title", avatar: "https://..." },
-  skills: ["Skill 1", "Skill 2"],
-  modules: [
-    {
-      id: "mod-1",
-      title: "Module 1 Title",
-      duration: "10:00",
-      videoUrl: "https://...mp4",
-      description: "Description",
-      takeaways: ["Takeaway 1", "Takeaway 2"],
-      resources: [{ name: "Resource.pdf", size: "1 MB" }],
-      quiz: {
-        id: "quiz-1",
-        title: "Module Quiz",
-        passingScore: 80,
-        questions: [
-          {
-            id: "q1",
-            question: "Question text?",
-            options: ["Option A", "Option B", "Option C", "Option D"],
-            correctAnswer: 1, // index of correct option
-            explanation: "Detailed reason why Option B is correct."
-          }
-        ]
-      }
-    }
-  ]
-}
-```
+- **Repository**: [https://github.com/dev1worxpertise-blip/elearning.git](https://github.com/dev1worxpertise-blip/elearning.git)
+- **Branch**: `main`
