@@ -382,7 +382,7 @@ class App {
     }
 
     // Initialize Video Player
-    window.videoPlayer.init("videoPlayerMount", this.activeModule);
+    window.videoPlayer.init("videoPlayerMount", this.activeModule, this.activeProgram);
 
     // Render Module Curriculum Playlist
     const playlistContainer = document.getElementById("modulesPlaylist");

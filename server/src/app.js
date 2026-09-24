@@ -10,11 +10,15 @@ const progressRoutes = require('./routes/progressRoutes');
 const certificateRoutes = require('./routes/certificateRoutes');
 const instructorRoutes = require('./routes/instructorRoutes');
 
+const path = require('path');
 const app = express();
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
+
+// Serve static frontend assets and local video streams
+app.use(express.static(path.join(__dirname, '../../')));
 
 // API Health Check
 app.get('/api/health', (req, res) => {

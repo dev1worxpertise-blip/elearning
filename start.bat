@@ -18,7 +18,7 @@ if %errorlevel% neq 0 (
 
 echo.
 echo Opening Worxpertise Academy in your default web browser...
-start "" "%~dp0index.html"
+start "" "http://localhost:5000"
 echo.
 echo Platform is ready!
 timeout /t 2 >nul

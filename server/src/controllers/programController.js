@@ -92,7 +92,9 @@ exports.getProgramById = async (req, res) => {
         order: m.module_order,
         duration: m.duration,
         video_url: m.video_url,
+        videoUrl: m.video_url,
         youtube_id: m.youtube_id,
+        youtubeId: m.youtube_id,
         description: m.description,
         takeaways: m.takeaways,
         resources: m.resources,
@@ -101,6 +103,7 @@ exports.getProgramById = async (req, res) => {
               id: m.quiz_id,
               title: m.quiz_title,
               passing_score: m.passing_score,
+              passingScore: m.passing_score,
               questions: m.quiz_questions,
             }
           : null,
@@ -116,6 +119,7 @@ exports.getProgramById = async (req, res) => {
       success: true,
       program: {
         ...program,
+        thumbnail: program.thumbnail_url,
         is_enrolled: isEnrolled,
         modules,
       },

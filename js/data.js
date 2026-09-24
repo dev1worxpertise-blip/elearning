@@ -28,8 +28,8 @@ window.COURSES_DATA = [
         title: "POSH Act 2013 Framework & Defining Workplace Harassment",
         order: 1,
         duration: "14:20",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-        youtubeId: "f9U6m25v_d0",
+        videoUrl: "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4",
+        youtubeId: "aqz-KE-bpKQ",
         description: "An essential introduction to the Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013. Learn the legal definition of sexual harassment, physical vs. non-physical misconduct, the expanded definition of the 'extended workplace' (including remote work, virtual calls, and official travel), and the difference between Quid Pro Quo and Hostile Work Environment.",
         takeaways: [
           "Understand the statutory definition of sexual harassment under Indian law and corporate standards.",
@@ -102,7 +102,7 @@ window.COURSES_DATA = [
         title: "Workplace Culture, Professional Boundaries & Bystander Intervention",
         order: 2,
         duration: "15:10",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
         youtubeId: "3JZ_D3ELwOQ",
         description: "Fostering a culture of psychological safety, zero tolerance, and mutual respect. Learn how to maintain clear professional boundaries, avoid conscious and unconscious gender biases, and effectively practice active bystander intervention through the 4Ds (Direct, Distract, Delegate, Delay).",
         takeaways: [
@@ -176,7 +176,7 @@ window.COURSES_DATA = [
         title: "Redressal Mechanism: Internal Committee (IC) Mandate, Inquiries & Protection",
         order: 3,
         duration: "16:00",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        videoUrl: "https://media.w3.org/2010/05/sintel/trailer.mp4",
         youtubeId: "aqz-KE-bpKQ",
         description: "An in-depth guide to the complaints and inquiry process. Understand the formation and composition of the Internal Committee (IC), the 90-day filing timeline, conciliation options, the formal inquiry procedure (which follows principles of natural justice and powers of a Civil Court), interim relief, strict confidentiality obligations under Section 16, and zero-tolerance protection against retaliation.",
         takeaways: [
@@ -272,7 +272,7 @@ window.COURSES_DATA = [
         title: "Modern Frontend Architecture & Component Systems",
         order: 1,
         duration: "10:15",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
         youtubeId: "bMknfKXIFA8",
         description: "Explore the core fundamentals of declarative UI, unidirectional data flow, component lifecycle, and modern hooks in web development.",
         takeaways: [
@@ -345,7 +345,7 @@ window.COURSES_DATA = [
         title: "RESTful & GraphQL API Design with Node.js",
         order: 2,
         duration: "12:40",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
         youtubeId: "Oe421EPjeBE",
         description: "Master backend API design principles, stateless authentication with JWT, input sanitization, and structured error handling.",
         takeaways: [
@@ -418,7 +418,7 @@ window.COURSES_DATA = [
         title: "Cloud Deployment, Containers & CI/CD Pipelines",
         order: 3,
         duration: "15:00",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        videoUrl: "https://media.w3.org/2010/05/sintel/trailer.mp4",
         youtubeId: "31ieHmcTUOk",
         description: "Containerize your full-stack application using Docker, configure automated testing pipelines, and deploy with zero downtime.",
         takeaways: [
@@ -512,7 +512,7 @@ window.COURSES_DATA = [
         title: "Deep Learning Foundations & Neural Networks",
         order: 1,
         duration: "14:20",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
         youtubeId: "aircAruvnKk",
         description: "Unpack the mathematical intuition behind forward propagation, backpropagation, gradient descent, and loss optimization.",
         takeaways: [
@@ -585,7 +585,7 @@ window.COURSES_DATA = [
         title: "Transformer Architecture & Advanced Prompt Engineering",
         order: 2,
         duration: "16:45",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+        videoUrl: "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4",
         youtubeId: "wjZofJX0v4U",
         description: "Deep dive into Self-Attention mechanisms, tokenization, positional embeddings, and state-of-the-art prompt design techniques.",
         takeaways: [
@@ -658,7 +658,7 @@ window.COURSES_DATA = [
         title: "Autonomous AI Agents & Tool Calling Workflows",
         order: 3,
         duration: "18:10",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4",
+        videoUrl: "https://media.w3.org/2010/05/sintel/trailer.mp4",
         youtubeId: "2xxziIWmaSA",
         description: "Build autonomous agents capable of planning, utilizing external tools via function calling, maintaining memory, and executing multi-step goals.",
         takeaways: [
@@ -752,7 +752,7 @@ window.COURSES_DATA = [
         title: "Network Reconnaissance & Vulnerability Assessment",
         order: 1,
         duration: "11:30",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
         youtubeId: "inWWhr5tnEA",
         description: "Learn systematic discovery methodologies, network port scanning, banner grabbing, and Common Vulnerabilities & Exposures (CVE) identification.",
         takeaways: [
@@ -825,7 +825,7 @@ window.COURSES_DATA = [
         title: "Web Application Security & OWASP Top 10",
         order: 2,
         duration: "13:50",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+        videoUrl: "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4",
         youtubeId: "2_lswM1S264",
         description: "Examine critical web vulnerabilities including SQL Injection, Cross-Site Scripting (XSS), Insecure Direct Object References (IDOR), and CSRF.",
         takeaways: [
@@ -898,7 +898,7 @@ window.COURSES_DATA = [
         title: "Cryptographic Systems & Secure Communication",
         order: 3,
         duration: "15:20",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+        videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
         youtubeId: "jhXCTbFnK8o",
         description: "Understand asymmetric vs symmetric cryptography, TLS 1.3 handshakes, digital signatures, password hashing algorithms, and Zero Trust architecture.",
         takeaways: [
