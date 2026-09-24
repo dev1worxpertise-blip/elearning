@@ -30,7 +30,7 @@ class VideoPlayerController {
 
     const isWatched = window.appState.isVideoFinished(moduleData.id);
     const initialPercent = window.appState.getVideoPercent(moduleData.id);
-    this.maxWatchedTime = isWatched ? Infinity : (window.appState.getMaxWatchedSeconds(moduleData.id) || 0);
+    this.maxWatchedTime = 0; // Strict anti-skip: always starts at 0 for session playback
     this.lastSeekWarningTime = 0;
     const posterUrl = (this.currentProgram && this.currentProgram.thumbnail) 
       ? this.currentProgram.thumbnail 
@@ -175,9 +175,9 @@ class VideoPlayerController {
               <span id="videoWatchText">${isWatched ? 'Video Completed ✓' : `Watching (${initialPercent}%)`}</span>
             </div>
 
-            <div id="antiSkipBadge" class="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${isWatched ? 'bg-slate-800/80 text-slate-400 border border-slate-700/60' : 'bg-purple-950/40 text-purple-300 border border-purple-800/40'}">
-              <span>${isWatched ? '🔓' : '🔒'}</span>
-              <span>${isWatched ? 'Seeking Unlocked' : 'Anti-Skip Enforced'}</span>
+            <div id="antiSkipBadge" class="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-rose-950/40 text-rose-300 border border-rose-800/40">
+              <span>🔒</span>
+              <span>Anti-Skip Locked</span>
             </div>
 
             <!-- Fast-Track / Test Mode Button -->
@@ -192,15 +192,15 @@ class VideoPlayerController {
             </button>
 
             <!-- Reset Watch Status (For Testing Anti-Skip) -->
-            ${isWatched ? `
+            ${(isWatched || initialPercent > 0) ? `
               <button 
                 id="btnResetLesson" 
                 type="button"
                 title="Reset this module back to unwatched to test anti-skip gate" 
-                class="text-xs px-2.5 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-amber-400 border border-slate-700/70 transition flex items-center space-x-1"
+                class="text-xs px-2.5 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-rose-400 border border-slate-700/70 transition flex items-center space-x-1"
               >
                 <span>↺</span>
-                <span class="hidden md:inline">Reset Watch</span>
+                <span class="hidden md:inline">Reset Watch (0%)</span>
               </button>
             ` : ''}
           </div>
@@ -229,13 +229,13 @@ class VideoPlayerController {
         <div 
           class="w-full bg-slate-800 h-2 cursor-pointer relative overflow-hidden group select-none transition-all" 
           id="videoProgressBarContainer" 
-          title="${isWatched ? 'Seek freely (unlocked)' : 'Seek restricted: Click to rewind or replay watched segments (forward skipping locked)'}"
+          title="Rewind only: Click behind playhead to re-watch. Forward seeking is strictly locked."
         >
           <!-- Watched range track (allowed seek range) -->
           <div 
             id="videoWatchedRangeBar" 
             class="h-full bg-slate-600/70 absolute left-0 top-0 transition-all duration-150" 
-            style="width: ${isWatched ? '100%' : `${initialPercent}%`}"
+            style="width: 0%"
           ></div>
           <!-- Current playback position -->
           <div 
@@ -355,23 +355,10 @@ class VideoPlayerController {
         timeDisplay.textContent = `${formatTime(this.videoElement.currentTime)} / ${formatTime(duration)}`;
       }
 
-      const isFinished = window.appState.isVideoFinished(this.currentModule.id);
-      if (isFinished) {
-        this.maxWatchedTime = duration || Infinity;
-      } else {
-        const savedMax = window.appState.getMaxWatchedSeconds(this.currentModule.id);
-        const savedPercent = window.appState.getVideoPercent(this.currentModule.id);
-        if (savedMax > 0 && duration > 0) {
-          this.maxWatchedTime = Math.min(savedMax, duration);
-        } else if (savedPercent > 0 && duration > 0) {
-          this.maxWatchedTime = Math.min((savedPercent / 100) * duration, duration * 0.95);
-        }
-      }
-
+      this.maxWatchedTime = 0;
       const watchedRangeBar = document.getElementById("videoWatchedRangeBar");
-      if (watchedRangeBar && duration > 0) {
-        const watchedPercent = isFinished ? 100 : Math.min(100, (this.maxWatchedTime / duration) * 100);
-        watchedRangeBar.style.width = `${watchedPercent}%`;
+      if (watchedRangeBar) {
+        watchedRangeBar.style.width = "0%";
       }
     });
 
@@ -388,10 +375,7 @@ class VideoPlayerController {
 
     // Trap native seeking to prevent skipping forward past watched territory
     this.videoElement.addEventListener("seeking", () => {
-      const isFinished = window.appState.isVideoFinished(this.currentModule.id);
-      if (isFinished) return;
-
-      if (this.videoElement.currentTime > this.maxWatchedTime + 1.5) {
+      if (this.videoElement.currentTime > this.maxWatchedTime + 0.5) {
         // Clamp back to highest watched position
         this.videoElement.currentTime = this.maxWatchedTime;
         this.showSkipRestrictedNotice();
@@ -409,9 +393,9 @@ class VideoPlayerController {
       // Only advance maxWatchedTime during legitimate natural forward playback
       if (!this.videoElement.paused) {
         if (current > this.maxWatchedTime) {
-          if (current - this.maxWatchedTime <= 3.0 || isFinished) {
+          if (current - this.maxWatchedTime <= 3.0) {
             this.maxWatchedTime = current;
-          } else if (!isFinished) {
+          } else {
             // Sudden jump detected - revert back
             this.videoElement.currentTime = this.maxWatchedTime;
             return;
@@ -486,7 +470,7 @@ class VideoPlayerController {
       }
     });
 
-    // Seek via progress container click (Gated: only allow seeking within watched range)
+    // Seek via progress container click (Gated: only allow seeking backwards or within watched range)
     progressContainer?.addEventListener("click", (e) => {
       if (this.activeMode !== "html5") return;
       const duration = this.videoElement.duration;
@@ -496,16 +480,13 @@ class VideoPlayerController {
       const clickX = Math.max(0, e.clientX - rect.left);
       const ratio = Math.max(0, Math.min(1, clickX / rect.width));
       const targetTime = ratio * duration;
-      const isFinished = window.appState.isVideoFinished(this.currentModule.id);
 
-      if (!isFinished) {
-        // Anti-skip rule: Seeking backwards or within already watched bounds is permitted.
-        // Forward scrubbing beyond the highest watched position is blocked.
-        if (targetTime > this.maxWatchedTime + 1.0) {
-          this.videoElement.currentTime = this.maxWatchedTime;
-          this.showSkipRestrictedNotice();
-          return;
-        }
+      // Anti-skip rule: Seeking backwards or within already watched bounds is permitted.
+      // Forward scrubbing beyond the highest watched position is strictly blocked!
+      if (targetTime > this.maxWatchedTime + 0.5) {
+        this.videoElement.currentTime = this.maxWatchedTime;
+        this.showSkipRestrictedNotice();
+        return;
       }
 
       this.videoElement.currentTime = targetTime;
@@ -513,12 +494,10 @@ class VideoPlayerController {
 
     // Reset Watch Status (Allows instructors / testers to re-test the anti-skip gate)
     btnResetLesson?.addEventListener("click", () => {
-      if (confirm("Reset this lesson's progress to 0% to test the anti-skip watch gate?")) {
-        window.appState.resetVideoProgress(this.currentModule.id);
-        this.init("videoPlayerContainer", this.currentModule, this.currentProgram);
-        if (window.app && window.app.showToast) {
-          window.app.showToast("Lesson progress reset. Anti-skip lock is active for testing.", "info");
-        }
+      window.appState.resetVideoProgress(this.currentModule.id);
+      this.init("videoPlayerContainer", this.currentModule, this.currentProgram);
+      if (window.app && window.app.showToast) {
+        window.app.showToast("Lesson watch progress reset to 0%. Locked & ready for testing.", "info");
       }
     });
 
@@ -673,8 +652,8 @@ class VideoPlayerController {
       watchText.textContent = "Video Completed ✓";
     }
     if (antiSkipBadge) {
-      antiSkipBadge.className = "hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-800/80 text-slate-400 border border-slate-700/60";
-      antiSkipBadge.innerHTML = "<span>🔓</span><span>Seeking Unlocked</span>";
+      antiSkipBadge.className = "hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-950/40 text-emerald-300 border border-emerald-800/40";
+      antiSkipBadge.innerHTML = "<span>✓</span><span>Completed (Anti-Skip Verified)</span>";
     }
     if (quizBanner) {
       quizBanner.className = "mt-6 p-5 rounded-3xl border transition-all duration-300 bg-emerald-950/40 border-emerald-800/60 shadow-lg";

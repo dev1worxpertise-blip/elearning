@@ -47,6 +47,17 @@ class AppState {
         if (parsed.quizResults) this.quizResults = parsed.quizResults;
         if (Array.isArray(parsed.completedModules)) this.completedModules = parsed.completedModules;
         if (Array.isArray(parsed.certificates)) this.certificates = parsed.certificates;
+
+        // Auto-reset any previously skipped videos where quiz was not passed
+        if (!localStorage.getItem("lp_antiskip_v2")) {
+          Object.keys(this.videoStatus).forEach(modId => {
+            if (!this.quizResults[modId] || !this.quizResults[modId].passed) {
+              this.videoStatus[modId] = { percent: 0, isFinished: false, maxWatchedSeconds: 0 };
+            }
+          });
+          localStorage.setItem("lp_antiskip_v2", "true");
+          this.save();
+        }
       } else {
         // Pre-enroll in the first program as an interactive welcome demo
         if (window.COURSES_DATA && window.COURSES_DATA.length > 0) {
