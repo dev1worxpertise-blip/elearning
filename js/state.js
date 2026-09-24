@@ -108,14 +108,16 @@ class AppState {
     this.save();
   }
 
-  recordVideoProgress(moduleId, percent, isFinished) {
-    const current = this.videoStatus[moduleId] || { percent: 0, isFinished: false };
-    const newPercent = Math.max(current.percent, Math.min(100, Math.round(percent)));
-    const finished = current.isFinished || isFinished || newPercent >= 98;
+  recordVideoProgress(moduleId, percent, isFinished, maxWatchedSeconds) {
+    const current = this.videoStatus[moduleId] || { percent: 0, isFinished: false, maxWatchedSeconds: 0 };
+    const newPercent = Math.max(current.percent || 0, Math.min(100, Math.round(percent)));
+    const finished = current.isFinished || isFinished === true;
+    const updatedMaxSec = Math.max(current.maxWatchedSeconds || 0, maxWatchedSeconds || 0);
     
     this.videoStatus[moduleId] = {
-      percent: newPercent,
-      isFinished: finished
+      percent: finished ? 100 : newPercent,
+      isFinished: finished,
+      maxWatchedSeconds: updatedMaxSec
     };
     this.save();
   }
@@ -126,6 +128,25 @@ class AppState {
 
   getVideoPercent(moduleId) {
     return this.videoStatus[moduleId] ? this.videoStatus[moduleId].percent : 0;
+  }
+
+  getMaxWatchedSeconds(moduleId) {
+    return (this.videoStatus[moduleId] && this.videoStatus[moduleId].maxWatchedSeconds) || 0;
+  }
+
+  resetVideoProgress(moduleId) {
+    if (this.videoStatus[moduleId]) {
+      this.videoStatus[moduleId] = {
+        percent: 0,
+        isFinished: false,
+        maxWatchedSeconds: 0
+      };
+    }
+    // Remove from completed modules if quiz wasn't passed
+    if (!this.quizResults[moduleId] || !this.quizResults[moduleId].passed) {
+      this.completedModules = this.completedModules.filter(id => id !== moduleId);
+    }
+    this.save();
   }
 
   recordQuizSubmission(moduleId, score, total) {

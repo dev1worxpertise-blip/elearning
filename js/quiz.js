@@ -14,6 +14,15 @@ class QuizController {
 
   openQuiz(moduleData) {
     if (!moduleData || !moduleData.quiz) return;
+
+    // Strict watch gate: video must be completed before quiz can be accessed
+    if (window.appState && !window.appState.isVideoFinished(moduleData.id)) {
+      if (window.app && window.app.showToast) {
+        window.app.showToast("⚠️ Please watch the complete video lesson first to unlock the assessment.", "info");
+      }
+      return;
+    }
+
     this.currentModule = moduleData;
     this.quiz = moduleData.quiz;
     this.currentIndex = 0;
