@@ -744,6 +744,7 @@ class App {
     `;
 
     modal.classList.remove("hidden");
+    modal.scrollTop = 0;
   }
 
   // Toast notifications

@@ -28,6 +28,7 @@ class CertificateStudio {
     if (!modal || !container) return;
 
     modal.classList.remove("hidden");
+    modal.scrollTop = 0;
     document.body.classList.add("overflow-hidden");
 
     this.render();

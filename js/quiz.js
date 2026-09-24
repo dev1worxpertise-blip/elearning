@@ -33,6 +33,7 @@ class QuizController {
     if (!modal) return;
 
     modal.classList.remove("hidden");
+    modal.scrollTop = 0;
     document.body.classList.add("overflow-hidden");
     this.renderCurrentQuestion();
   }
@@ -144,6 +145,8 @@ class QuizController {
     if (this.currentIndex < this.quiz.questions.length - 1) {
       this.currentIndex++;
       this.renderCurrentQuestion();
+      const modal = document.getElementById("quizModal");
+      if (modal) modal.scrollTop = 0;
     }
   }
 
@@ -151,6 +154,8 @@ class QuizController {
     if (this.currentIndex > 0) {
       this.currentIndex--;
       this.renderCurrentQuestion();
+      const modal = document.getElementById("quizModal");
+      if (modal) modal.scrollTop = 0;
     }
   }
 
@@ -179,6 +184,9 @@ class QuizController {
   renderResults(score, total, percentage, passed) {
     const container = document.getElementById("quizContentArea");
     if (!container) return;
+
+    const modal = document.getElementById("quizModal");
+    if (modal) modal.scrollTop = 0;
 
     const parentProgram = window.appState.getProgramForModule(this.currentModule.id);
     const isProgramComplete = parentProgram ? window.appState.isProgramCompleted(parentProgram.id) : false;
