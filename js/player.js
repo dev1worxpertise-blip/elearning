@@ -320,6 +320,17 @@ class VideoPlayerController {
       }
 
       if (this.videoElement.paused) {
+        // Guarantee YouTube iframe is silent before playing MP4
+        const ytFrame = document.getElementById("youtubePlayerFrame");
+        if (ytFrame) {
+          try {
+            ytFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+          } catch (e) {}
+          if (ytFrame.src && ytFrame.src !== "about:blank") {
+            ytFrame.src = "about:blank";
+          }
+        }
+
         const playPromise = this.videoElement.play();
         if (playPromise !== undefined) {
           playPromise.catch(err => {
@@ -530,7 +541,7 @@ class VideoPlayerController {
     const playPauseBtn = document.getElementById("ctrlPlayPause");
 
     if (mode === "youtube") {
-      // Pause HTML5 video
+      // 1. Immediately pause and silence HTML5 video
       if (this.videoElement && !this.videoElement.paused) {
         this.videoElement.pause();
       }
@@ -546,8 +557,14 @@ class VideoPlayerController {
       }
 
       // Activate YouTube iframe
-      if (ytFrame && ytFrame.dataset.src && ytFrame.src !== ytFrame.dataset.src) {
-        ytFrame.src = ytFrame.dataset.src;
+      if (ytFrame && ytFrame.dataset.src) {
+        if (!ytFrame.src || ytFrame.src === "about:blank" || ytFrame.src === window.location.href) {
+          ytFrame.src = ytFrame.dataset.src;
+        } else {
+          try {
+            ytFrame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+          } catch (e) {}
+        }
       }
 
       // Hide or disable direct play button in control bar when in YouTube mode
@@ -569,9 +586,20 @@ class VideoPlayerController {
 
       if (playPauseBtn) playPauseBtn.classList.remove("opacity-40", "pointer-events-none");
 
+      // 1. Stop simulated YouTube progress tracker
       if (this.ytProgressInterval) {
         clearInterval(this.ytProgressInterval);
         this.ytProgressInterval = null;
+      }
+
+      // 2. CRITICAL: Instantly stop and silence YouTube iframe so audio never leaks into MP4 playback
+      if (ytFrame) {
+        try {
+          ytFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+          ytFrame.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+        } catch (e) {}
+        // Setting to about:blank terminates all background media streams in all browsers
+        ytFrame.src = "about:blank";
       }
     }
   }
