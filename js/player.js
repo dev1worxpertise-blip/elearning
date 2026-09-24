@@ -11,10 +11,22 @@ class VideoPlayerController {
     this.videoElement = null;
     this.playbackSpeed = 1.0;
     this.activeMode = "html5"; // "html5" | "youtube"
-    this.ytProgressInterval = null;
-    this.ytCurrentSeconds = 0;
     this.maxWatchedTime = 0; // High-water mark of cumulative legitimate watch time
     this.lastSeekWarningTime = 0; // Throttles skip warning notifications
+
+    // YouTube API Integration State
+    this.ytPlayer = null;
+    this.ytReady = false;
+    this.ytVideoId = null;
+    this.ytSyncInterval = null;
+  }
+
+  // Format seconds to MM:SS string
+  formatTime(secs) {
+    if (isNaN(secs) || secs < 0) return "00:00";
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = Math.floor(secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
   }
 
   init(containerId, moduleData, programData = null) {
@@ -23,10 +35,16 @@ class VideoPlayerController {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    if (this.ytProgressInterval) {
-      clearInterval(this.ytProgressInterval);
-      this.ytProgressInterval = null;
+    if (this.ytSyncInterval) {
+      clearInterval(this.ytSyncInterval);
+      this.ytSyncInterval = null;
     }
+    if (this.ytPlayer && typeof this.ytPlayer.destroy === "function") {
+      try { this.ytPlayer.destroy(); } catch (e) {}
+    }
+    this.ytPlayer = null;
+    this.ytReady = false;
+    this.activeMode = "html5";
 
     const isWatched = window.appState.isVideoFinished(moduleData.id);
     const initialPercent = window.appState.getVideoPercent(moduleData.id);
@@ -38,6 +56,7 @@ class VideoPlayerController {
 
     const videoUrl = moduleData.videoUrl || moduleData.video_url || "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4";
     const youtubeId = moduleData.youtubeId || moduleData.youtube_id || "aqz-KE-bpKQ";
+    this.ytVideoId = youtubeId;
     const hasYouTube = Boolean(youtubeId);
 
     container.innerHTML = `
@@ -135,16 +154,9 @@ class VideoPlayerController {
           </div>
 
           <!-- 2. YouTube IFrame Player Container (Hidden by default) -->
-          <div id="youtubeVideoContainer" class="hidden w-full h-full relative bg-black">
+          <div id="youtubeVideoContainer" class="hidden w-full h-full relative bg-black flex items-center justify-center overflow-hidden">
             ${hasYouTube ? `
-              <iframe 
-                id="youtubePlayerFrame" 
-                src=""
-                data-src="https://www.youtube-nocookie.com/embed/${youtubeId}?enablejsapi=1&autoplay=1&rel=0" 
-                class="w-full h-full border-0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                allowfullscreen
-              ></iframe>
+              <div id="youtubePlayerFrame" class="w-full h-full"></div>
             ` : `
               <div class="w-full h-full flex items-center justify-center text-slate-400 text-xs">
                 No YouTube stream associated with this module.
@@ -313,22 +325,24 @@ class VideoPlayerController {
       return `${m}:${s}`;
     };
 
-    // Safe toggle play
+    // Safe toggle play across both HTML5 and YouTube streams
     const togglePlay = () => {
       if (this.activeMode === "youtube") {
-        return; // YouTube controls are handled directly inside iframe
+        if (this.ytPlayer && typeof this.ytPlayer.getPlayerState === "function") {
+          const state = this.ytPlayer.getPlayerState();
+          if (state === 1) { // Playing -> Pause
+            this.ytPlayer.pauseVideo();
+          } else { // Paused -> Play
+            this.ytPlayer.playVideo();
+          }
+        }
+        return;
       }
 
       if (this.videoElement.paused) {
-        // Guarantee YouTube iframe is silent before playing MP4
-        const ytFrame = document.getElementById("youtubePlayerFrame");
-        if (ytFrame) {
-          try {
-            ytFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-          } catch (e) {}
-          if (ytFrame.src && ytFrame.src !== "about:blank") {
-            ytFrame.src = "about:blank";
-          }
+        // Guarantee YouTube player is paused before playing MP4
+        if (this.ytPlayer && typeof this.ytPlayer.pauseVideo === "function") {
+          try { this.ytPlayer.pauseVideo(); } catch (e) {}
         }
 
         const playPromise = this.videoElement.play();
@@ -463,10 +477,15 @@ class VideoPlayerController {
       }
     });
 
-    // Speed selector
+    // Speed selector (Applies to both HTML5 and YouTube streams)
     speedSelect?.addEventListener("change", (e) => {
       this.playbackSpeed = parseFloat(e.target.value);
-      this.videoElement.playbackRate = this.playbackSpeed;
+      if (this.videoElement) {
+        this.videoElement.playbackRate = this.playbackSpeed;
+      }
+      if (this.ytPlayer && typeof this.ytPlayer.setPlaybackRate === "function") {
+        this.ytPlayer.setPlaybackRate(this.playbackSpeed);
+      }
     });
 
     // Fullscreen
@@ -481,10 +500,15 @@ class VideoPlayerController {
       }
     });
 
-    // Seek via progress container click (Gated: only allow seeking backwards or within watched range)
+    // Seek via progress container click (Gated: only allow seeking backwards or within watched range for both MP4 and YouTube)
     progressContainer?.addEventListener("click", (e) => {
-      if (this.activeMode !== "html5") return;
-      const duration = this.videoElement.duration;
+      let duration = 0;
+      if (this.activeMode === "html5") {
+        duration = this.videoElement ? this.videoElement.duration : 0;
+      } else if (this.activeMode === "youtube" && this.ytPlayer && typeof this.ytPlayer.getDuration === "function") {
+        duration = this.ytPlayer.getDuration();
+      }
+
       if (!duration || isNaN(duration)) return;
 
       const rect = progressContainer.getBoundingClientRect();
@@ -495,17 +519,33 @@ class VideoPlayerController {
       // Anti-skip rule: Seeking backwards or within already watched bounds is permitted.
       // Forward scrubbing beyond the highest watched position is strictly blocked!
       if (targetTime > this.maxWatchedTime + 0.5) {
-        this.videoElement.currentTime = this.maxWatchedTime;
+        if (this.activeMode === "html5" && this.videoElement) {
+          this.videoElement.currentTime = this.maxWatchedTime;
+        } else if (this.activeMode === "youtube" && this.ytPlayer && typeof this.ytPlayer.seekTo === "function") {
+          this.ytPlayer.seekTo(this.maxWatchedTime, true);
+        }
         this.showSkipRestrictedNotice();
         return;
       }
 
-      this.videoElement.currentTime = targetTime;
+      // Allowed rewind seek
+      if (this.activeMode === "html5" && this.videoElement) {
+        this.videoElement.currentTime = targetTime;
+      } else if (this.activeMode === "youtube" && this.ytPlayer && typeof this.ytPlayer.seekTo === "function") {
+        this.ytPlayer.seekTo(targetTime, true);
+      }
     });
 
     // Reset Watch Status (Allows instructors / testers to re-test the anti-skip gate)
     btnResetLesson?.addEventListener("click", () => {
       window.appState.resetVideoProgress(this.currentModule.id);
+      this.maxWatchedTime = 0;
+      if (this.activeMode === "youtube" && this.ytPlayer && typeof this.ytPlayer.seekTo === "function") {
+        try {
+          this.ytPlayer.seekTo(0, true);
+          this.ytPlayer.pauseVideo();
+        } catch (e) {}
+      }
       this.init("videoPlayerContainer", this.currentModule, this.currentProgram);
       if (window.app && window.app.showToast) {
         window.app.showToast("Lesson watch progress reset to 0%. Locked & ready for testing.", "info");
@@ -535,10 +575,12 @@ class VideoPlayerController {
     this.activeMode = mode;
     const html5Box = document.getElementById("html5VideoContainer");
     const ytBox = document.getElementById("youtubeVideoContainer");
-    const ytFrame = document.getElementById("youtubePlayerFrame");
     const btnHtml5 = document.getElementById("btnModeHtml5");
     const btnYT = document.getElementById("btnModeYouTube");
     const playPauseBtn = document.getElementById("ctrlPlayPause");
+    const playIcon = document.getElementById("playIcon");
+    const pauseIcon = document.getElementById("pauseIcon");
+    const timeDisplay = document.getElementById("timeDisplay");
 
     if (mode === "youtube") {
       // 1. Immediately pause and silence HTML5 video
@@ -556,22 +598,8 @@ class VideoPlayerController {
         btnYT.className = "px-3 py-1 rounded-lg font-bold text-xs transition bg-[#dd1f36] text-white shadow-sm flex items-center space-x-1";
       }
 
-      // Activate YouTube iframe
-      if (ytFrame && ytFrame.dataset.src) {
-        if (!ytFrame.src || ytFrame.src === "about:blank" || ytFrame.src === window.location.href) {
-          ytFrame.src = ytFrame.dataset.src;
-        } else {
-          try {
-            ytFrame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-          } catch (e) {}
-        }
-      }
-
-      // Hide or disable direct play button in control bar when in YouTube mode
-      if (playPauseBtn) playPauseBtn.classList.add("opacity-40", "pointer-events-none");
-
-      // Start simulated watch progress tracker in YouTube mode
-      this.startYouTubeProgressTracker();
+      // Initialize or play real YouTube player API
+      this.initYouTubePlayer();
     } else {
       // Switch back to HTML5
       if (ytBox) ytBox.classList.add("hidden");
@@ -584,59 +612,207 @@ class VideoPlayerController {
         btnYT.className = "px-3 py-1 rounded-lg font-bold text-xs transition bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center space-x-1";
       }
 
-      if (playPauseBtn) playPauseBtn.classList.remove("opacity-40", "pointer-events-none");
+      // Stop YouTube sync loop
+      this.stopYouTubeSync();
 
-      // 1. Stop simulated YouTube progress tracker
-      if (this.ytProgressInterval) {
-        clearInterval(this.ytProgressInterval);
-        this.ytProgressInterval = null;
+      // Pause YouTube stream immediately
+      if (this.ytPlayer && typeof this.ytPlayer.pauseVideo === "function") {
+        try {
+          this.ytPlayer.pauseVideo();
+        } catch (e) {}
       }
 
-      // 2. CRITICAL: Instantly stop and silence YouTube iframe so audio never leaks into MP4 playback
-      if (ytFrame) {
-        try {
-          ytFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-          ytFrame.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
-        } catch (e) {}
-        // Setting to about:blank terminates all background media streams in all browsers
-        ytFrame.src = "about:blank";
+      // Update Play/Pause icon to reflect HTML5 state
+      if (this.videoElement && !this.videoElement.paused) {
+        playIcon?.classList.add("hidden");
+        pauseIcon?.classList.remove("hidden");
+      } else {
+        playIcon?.classList.remove("hidden");
+        pauseIcon?.classList.add("hidden");
+      }
+
+      // Restore time display for HTML5
+      if (timeDisplay && this.videoElement && !isNaN(this.videoElement.duration) && this.videoElement.duration > 0) {
+        timeDisplay.textContent = `${this.formatTime(this.videoElement.currentTime)} / ${this.formatTime(this.videoElement.duration)}`;
       }
     }
   }
 
-  startYouTubeProgressTracker() {
-    if (this.ytProgressInterval) clearInterval(this.ytProgressInterval);
+  initYouTubePlayer() {
+    if (!this.ytVideoId) return;
+
+    if (this.ytPlayer && this.ytReady && typeof this.ytPlayer.loadVideoById === "function") {
+      try {
+        this.ytPlayer.loadVideoById(this.ytVideoId);
+        this.startYouTubeSync();
+      } catch (e) {
+        console.warn("Could not load video in existing YT player:", e);
+      }
+      return;
+    }
+
+    const setupPlayer = () => {
+      if (!window.YT || !window.YT.Player) {
+        setTimeout(setupPlayer, 150);
+        return;
+      }
+
+      const container = document.getElementById("youtubeVideoContainer");
+      if (!container) return;
+      container.innerHTML = `<div id="youtubePlayerFrame" class="w-full h-full"></div>`;
+
+      try {
+        this.ytPlayer = new window.YT.Player("youtubePlayerFrame", {
+          videoId: this.ytVideoId,
+          playerVars: {
+            autoplay: 1,
+            controls: 0, // Hides native YouTube progress bar so learner cannot fast forward to cheat
+            disablekb: 1, // Disables keyboard skipping
+            modestbranding: 1,
+            rel: 0,
+            playsinline: 1,
+            origin: window.location.origin || "http://localhost:5000"
+          },
+          events: {
+            onReady: (event) => {
+              this.ytReady = true;
+              event.target.playVideo();
+              this.startYouTubeSync();
+            },
+            onStateChange: (event) => {
+              this.onYouTubeStateChange(event);
+            },
+            onError: (event) => {
+              console.warn("YouTube player error:", event);
+              const errorBanner = document.getElementById("videoErrorBanner");
+              if (errorBanner) errorBanner.classList.remove("hidden");
+            }
+          }
+        });
+      } catch (err) {
+        console.error("Failed to instantiate YT.Player:", err);
+      }
+    };
+
+    if (window.YT && window.YT.Player) {
+      setupPlayer();
+    } else {
+      if (!document.getElementById("yt-iframe-api")) {
+        const tag = document.createElement("script");
+        tag.id = "yt-iframe-api";
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+      }
+      const prevCallback = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (prevCallback) prevCallback();
+        setupPlayer();
+      };
+    }
+  }
+
+  onYouTubeStateChange(event) {
+    const playOverlay = document.getElementById("videoPlayOverlay");
+    const playIcon = document.getElementById("playIcon");
+    const pauseIcon = document.getElementById("pauseIcon");
+    const errorBanner = document.getElementById("videoErrorBanner");
+
+    // event.data values:
+    // 1 (playing), 2 (paused), 0 (ended), 3 (buffering), -1 (unstarted)
+    if (event.data === 1) { // Playing
+      if (playOverlay) playOverlay.classList.add("hidden");
+      if (playIcon) playIcon.classList.add("hidden");
+      if (pauseIcon) pauseIcon.classList.remove("hidden");
+      if (errorBanner) errorBanner.classList.add("hidden");
+      this.startYouTubeSync();
+    } else if (event.data === 2) { // Paused
+      if (playIcon) playIcon.classList.remove("hidden");
+      if (pauseIcon) pauseIcon.classList.add("hidden");
+    } else if (event.data === 0) { // Ended
+      if (playIcon) playIcon.classList.remove("hidden");
+      if (pauseIcon) pauseIcon.classList.add("hidden");
+      const duration = this.ytPlayer && typeof this.ytPlayer.getDuration === "function" ? this.ytPlayer.getDuration() : 0;
+      if (this.maxWatchedTime >= duration * 0.90 || window.appState.isVideoFinished(this.currentModule.id)) {
+        this.maxWatchedTime = duration;
+        this.onVideoCompleted();
+      }
+    }
+  }
+
+  startYouTubeSync() {
+    this.stopYouTubeSync();
 
     const progressBar = document.getElementById("videoProgressBar");
+    const watchedRangeBar = document.getElementById("videoWatchedRangeBar");
     const watchText = document.getElementById("videoWatchText");
     const timeDisplay = document.getElementById("timeDisplay");
 
-    // Standard assumed 10 minute duration for progress simulation
-    const totalDuration = 600;
-    let current = Math.round((window.appState.getVideoPercent(this.currentModule.id) / 100) * totalDuration);
-
-    this.ytProgressInterval = setInterval(() => {
-      current += 2;
-      const percent = Math.min(100, (current / totalDuration) * 100);
-
-      if (progressBar) progressBar.style.width = `${percent}%`;
-      if (watchText && !window.appState.isVideoFinished(this.currentModule.id)) {
-        watchText.textContent = `Watching (${Math.round(percent)}%)`;
+    this.ytSyncInterval = setInterval(() => {
+      if (this.activeMode !== "youtube" || !this.ytPlayer || typeof this.ytPlayer.getCurrentTime !== "function") {
+        return;
       }
+
+      const current = this.ytPlayer.getCurrentTime() || 0;
+      const duration = this.ytPlayer.getDuration() || 0;
+      const state = typeof this.ytPlayer.getPlayerState === "function" ? this.ytPlayer.getPlayerState() : -1;
+
+      if (!duration || duration <= 0) return;
+
+      // Anti-skip enforcement for YouTube:
+      // While playing naturally (state === 1)
+      if (state === 1) {
+        if (current > this.maxWatchedTime) {
+          if (current - this.maxWatchedTime <= 3.0) {
+            this.maxWatchedTime = current;
+          } else {
+            // Sudden skip forward detected! Snap back immediately
+            this.ytPlayer.seekTo(this.maxWatchedTime, true);
+            this.showSkipRestrictedNotice();
+            return;
+          }
+        }
+      }
+
+      const playheadPercent = Math.min(100, (current / duration) * 100);
+      const watchedPercent = Math.min(100, (this.maxWatchedTime / duration) * 100);
+
       if (timeDisplay) {
-        const m = Math.floor(current / 60).toString().padStart(2, '0');
-        const s = Math.floor(current % 60).toString().padStart(2, '0');
-        timeDisplay.textContent = `${m}:${s} / 10:00 (YouTube Stream)`;
+        timeDisplay.textContent = `${this.formatTime(current)} / ${this.formatTime(duration)} (YouTube Stream)`;
+      }
+      if (progressBar) {
+        progressBar.style.width = `${playheadPercent}%`;
+      }
+      if (watchedRangeBar) {
+        watchedRangeBar.style.width = `${watchedPercent}%`;
       }
 
-      window.appState.recordVideoProgress(this.currentModule.id, percent, percent >= 95);
+      const hasCompletedWatching = watchedPercent >= 98;
+      window.appState.recordVideoProgress(
+        this.currentModule.id,
+        watchedPercent,
+        hasCompletedWatching,
+        this.maxWatchedTime
+      );
 
-      if (percent >= 95) {
-        clearInterval(this.ytProgressInterval);
-        this.ytProgressInterval = null;
+      if (watchText && !window.appState.isVideoFinished(this.currentModule.id)) {
+        if (hasCompletedWatching) {
+          watchText.textContent = "Video Completed ✓";
+        } else {
+          watchText.textContent = `Watching (${Math.round(watchedPercent)}%)`;
+        }
+      }
+
+      if (hasCompletedWatching && !window.appState.isVideoFinished(this.currentModule.id)) {
         this.onVideoCompleted();
       }
-    }, 2000);
+    }, 250);
+  }
+
+  stopYouTubeSync() {
+    if (this.ytSyncInterval) {
+      clearInterval(this.ytSyncInterval);
+      this.ytSyncInterval = null;
+    }
   }
 
   showSkipRestrictedNotice() {
