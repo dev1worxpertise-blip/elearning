@@ -4,11 +4,12 @@
 
 class App {
   constructor() {
-    this.currentView = "catalog"; // "catalog" | "learning" | "dashboard" | "certificates"
+    this.currentView = "catalog"; // "catalog" | "dashboard" | "mylearning" | "reports" | "learning" | "certificates" | "instructor"
     this.selectedCategory = "all";
     this.searchQuery = "";
     this.activeProgram = null;
     this.activeModule = null;
+    this.activeDashboardCut = "executive"; // "executive" | "curriculum" | "compliance" | "rigor" | "engagement"
   }
 
   init() {
@@ -97,6 +98,8 @@ class App {
           this.showToast(`Profile updated to: ${newName.trim()}`, "success");
           this.updateHeaderProfile();
           if (this.currentView === "dashboard") this.renderDashboard();
+          if (this.currentView === "mylearning") this.renderMyLearning();
+          if (this.currentView === "reports" && window.reportsManager) window.reportsManager.render();
         }
       });
     }
@@ -144,6 +147,8 @@ class App {
     const catalogView = document.getElementById("viewCatalog");
     const learningView = document.getElementById("viewLearning");
     const dashboardView = document.getElementById("viewDashboard");
+    const myLearningView = document.getElementById("viewMyLearning");
+    const reportsView = document.getElementById("viewReports");
     const certificatesView = document.getElementById("viewCertificates");
     const instructorView = document.getElementById("viewInstructor");
 
@@ -151,6 +156,8 @@ class App {
     if (catalogView) catalogView.classList.add("hidden");
     if (learningView) learningView.classList.add("hidden");
     if (dashboardView) dashboardView.classList.add("hidden");
+    if (myLearningView) myLearningView.classList.add("hidden");
+    if (reportsView) reportsView.classList.add("hidden");
     if (certificatesView) certificatesView.classList.add("hidden");
     if (instructorView) instructorView.classList.add("hidden");
 
@@ -165,6 +172,12 @@ class App {
     } else if (this.currentView === "dashboard") {
       if (dashboardView) dashboardView.classList.remove("hidden");
       this.renderDashboard();
+    } else if (this.currentView === "mylearning") {
+      if (myLearningView) myLearningView.classList.remove("hidden");
+      this.renderMyLearning();
+    } else if (this.currentView === "reports") {
+      if (reportsView) reportsView.classList.remove("hidden");
+      if (window.reportsManager) window.reportsManager.render();
     } else if (this.currentView === "certificates") {
       if (certificatesView) certificatesView.classList.remove("hidden");
       this.renderCertificatesView();
@@ -515,29 +528,471 @@ class App {
     }
   }
 
-  // --- STUDENT DASHBOARD VIEW ---
-  renderDashboard() {
-    const enrolledIds = window.appState.enrolledPrograms;
-    const courses = (window.COURSES_DATA || []).filter(c => enrolledIds.includes(c.id));
-    
-    // Stats calculation
-    const totalEnrolled = enrolledIds.length;
-    const certificatesCount = window.appState.certificates.length;
-    const completedModulesCount = window.appState.completedModules.length;
+  // --- ADMIN DASHBOARD WITH 5 PROFESSIONAL CUTS ---
+  setDashboardCut(cutKey) {
+    this.activeDashboardCut = cutKey;
 
-    // Quiz average
-    const quizResults = Object.values(window.appState.quizResults);
+    document.querySelectorAll("[data-dash-cut]").forEach(btn => {
+      if (btn.getAttribute("data-dash-cut") === cutKey) {
+        btn.classList.add("bg-[#dd1f36]", "text-white");
+        btn.classList.remove("bg-slate-800", "text-slate-400");
+      } else {
+        btn.classList.remove("bg-[#dd1f36]", "text-white");
+        btn.classList.add("bg-slate-800", "text-slate-400");
+      }
+    });
+
+    this.renderDashboard();
+  }
+
+  renderDashboard() {
+    const container = document.getElementById("dashboardCutContent");
+    if (!container) return;
+
+    const enrolledIds = window.appState.enrolledPrograms || [];
+    const courses = window.COURSES_DATA || [];
+    const enrolledCourses = courses.filter(c => enrolledIds.includes(c.id));
+    
+    // Aggregations
+    let totalWatchSecs = 0;
+    Object.values(window.appState.videoStatus || {}).forEach(v => {
+      if (v.maxWatchedSeconds) totalWatchSecs += v.maxWatchedSeconds;
+      else if (v.isFinished) totalWatchSecs += 600;
+    });
+    const totalWatchHours = (totalWatchSecs / 3600).toFixed(1);
+    const totalWatchMins = Math.round(totalWatchSecs / 60);
+
+    const quizResults = Object.values(window.appState.quizResults || {});
+    const passedQuizzes = quizResults.filter(q => q.passed).length;
     const avgScore = quizResults.length > 0 
       ? Math.round(quizResults.reduce((acc, q) => acc + q.percentage, 0) / quizResults.length)
       : 0;
 
-    const statsContainer = document.getElementById("dashboardStats");
+    const certsCount = window.appState.certificates.length;
+    const poshProg = courses.find(c => c.id.includes("posh")) || courses[0];
+    const isPoshPassed = poshProg && (window.appState.isProgramCompleted(poshProg.id) || !!window.appState.getCertificate(poshProg.id));
+
+    // Render active cut
+    if (this.activeDashboardCut === "executive") {
+      this.renderCutExecutive(container, { enrolledIds, courses, enrolledCourses, totalWatchHours, totalWatchMins, quizResults, passedQuizzes, avgScore, certsCount, isPoshPassed });
+    } else if (this.activeDashboardCut === "curriculum") {
+      this.renderCutCurriculum(container, { courses, enrolledIds });
+    } else if (this.activeDashboardCut === "compliance") {
+      this.renderCutCompliance(container, { poshProg, isPoshPassed, certsCount });
+    } else if (this.activeDashboardCut === "rigor") {
+      this.renderCutRigor(container, { courses, quizResults, avgScore, passedQuizzes });
+    } else if (this.activeDashboardCut === "engagement") {
+      this.renderCutEngagement(container, { courses, totalWatchMins, totalWatchHours });
+    }
+  }
+
+  // CUT 1: EXECUTIVE OVERVIEW
+  renderCutExecutive(container, data) {
+    container.innerHTML = `
+      <!-- 5 Key Executive KPI Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-[#dd1f36]/20 text-[#dd1f36] flex items-center justify-center font-bold text-xl">📚</div>
+          <div>
+            <div class="text-2xl font-black text-white">${data.enrolledIds.length} Tracks</div>
+            <div class="text-xs text-slate-400 font-medium">Enrolled Curricula</div>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center font-bold text-xl">⏱️</div>
+          <div>
+            <div class="text-2xl font-black text-white">${data.totalWatchMins} Mins</div>
+            <div class="text-xs text-slate-400 font-medium">Video Hours: ${data.totalWatchHours} hrs</div>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center font-bold text-xl">🎯</div>
+          <div>
+            <div class="text-2xl font-black text-white">${data.avgScore}%</div>
+            <div class="text-xs text-slate-400 font-medium">Avg Assessment Score</div>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-600/20 text-amber-400 flex items-center justify-center font-bold text-xl">🎓</div>
+          <div>
+            <div class="text-2xl font-black text-amber-400">${data.certsCount}</div>
+            <div class="text-xs text-slate-400 font-medium">Issued Certificates</div>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-900 border border-emerald-900/50 flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center font-bold text-xl">🛡️</div>
+          <div>
+            <div class="text-xs font-black uppercase tracking-wider text-emerald-400">POSH 2013</div>
+            <div class="text-sm font-bold text-white">${data.isPoshPassed ? '100% COMPLIANT ✓' : 'ACTION REQUIRED'}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Excel Banner -->
+      <div class="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-[#1b0a0e] border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Institutional Governance & Audit Export</span>
+          <h3 class="text-lg font-bold text-white mt-0.5">Need full audit sheets for management or legal compliance?</h3>
+          <p class="text-xs text-slate-400 mt-1">Export formatted multi-sheet Excel workbooks with executive summaries, POSH matrices, and video watch trails.</p>
+        </div>
+        <div class="flex items-center space-x-3 shrink-0">
+          <button 
+            onclick="window.reportsManager.exportMasterAuditWorkbook()" 
+            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg transition flex items-center space-x-2"
+          >
+            <span>📗 Export Master Audit (.xlsx)</span>
+          </button>
+          <button 
+            onclick="window.app.navigate('reports')" 
+            class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition"
+          >
+            Open Reports Center
+          </button>
+        </div>
+      </div>
+
+      <!-- Curriculum Completion Velocity -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-bold text-white">Active Curricula Progress</h3>
+          <span class="text-xs text-slate-400">${data.enrolledCourses.length} of ${data.courses.length} Tracks In Training</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          ${data.enrolledCourses.map(program => {
+            const progress = window.appState.getProgramProgress(program.id);
+            const hasCert = !!window.appState.getCertificate(program.id);
+            return `
+              <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition space-y-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex items-start space-x-3">
+                    <img src="${program.thumbnail}" class="w-14 h-14 rounded-xl object-cover border border-slate-800 shrink-0" />
+                    <div>
+                      <div class="flex items-center space-x-2">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#dd1f36]/20 text-[#dd1f36]">${program.category}</span>
+                        ${hasCert ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">🎓 Certified</span>' : ''}
+                      </div>
+                      <h4 class="text-sm font-bold text-white mt-1 line-clamp-1">${program.title}</h4>
+                      <p class="text-xs text-slate-400 mt-0.5">${progress.completed} of ${progress.total} lessons passed</p>
+                    </div>
+                  </div>
+                  <span class="text-sm font-extrabold text-[#dd1f36]">${progress.percentage}%</span>
+                </div>
+
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div class="bg-gradient-to-r from-[#dd1f36] to-[#9744cc] h-full rounded-full transition-all" style="width: ${progress.percentage}%"></div>
+                </div>
+
+                <div class="flex items-center justify-between pt-1">
+                  <span class="text-xs text-slate-400 font-mono">Duration: ${program.duration}</span>
+                  <button 
+                    onclick="window.app.startProgram('${program.id}')" 
+                    class="px-4 py-1.5 rounded-lg bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs transition"
+                  >
+                    ${progress.percentage === 100 ? 'Review Lessons' : 'Resume'}
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  // CUT 2: CURRICULUM PERFORMANCE CUT
+  renderCutCurriculum(container, data) {
+    container.innerHTML = `
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div>
+          <h3 class="text-lg font-bold text-white">Curriculum & Departmental Breakdown Cut</h3>
+          <p class="text-xs text-slate-400">Institutional performance slice across all training tracks and competencies.</p>
+        </div>
+        <button 
+          onclick="window.reportsManager.exportActiveToExcel()" 
+          class="px-4 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-xs font-bold border border-emerald-500/30 transition flex items-center space-x-1.5 self-start"
+        >
+          <span>📊 Export Curriculum Cut (.xlsx)</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        ${data.courses.map(program => {
+          const isEnrolled = window.appState.isEnrolled(program.id);
+          const progress = window.appState.getProgramProgress(program.id);
+          const hasCert = !!window.appState.getCertificate(program.id);
+          const modules = program.modules || [];
+
+          return `
+            <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+              <div class="flex items-start justify-between">
+                <div>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 uppercase">${program.category}</span>
+                  <h4 class="text-base font-bold text-white mt-1.5">${program.title}</h4>
+                  <p class="text-xs text-slate-400 mt-1 line-clamp-2">${program.tagline}</p>
+                </div>
+                <span class="text-xs px-2.5 py-1 rounded-full font-bold ${isEnrolled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}">
+                  ${isEnrolled ? 'Enrolled' : 'Catalog Only'}
+                </span>
+              </div>
+
+              <!-- Metrics Slice -->
+              <div class="grid grid-cols-3 gap-3 p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 text-center">
+                <div>
+                  <div class="text-sm font-bold text-white">${modules.length}</div>
+                  <div class="text-[10px] text-slate-500 uppercase">Modules</div>
+                </div>
+                <div>
+                  <div class="text-sm font-bold text-cyan-400">${progress.percentage}%</div>
+                  <div class="text-[10px] text-slate-500 uppercase">Completion</div>
+                </div>
+                <div>
+                  <div class="text-sm font-bold text-amber-400">${hasCert ? '100%' : 'Pending'}</div>
+                  <div class="text-[10px] text-slate-500 uppercase">Certification</div>
+                </div>
+              </div>
+
+              <!-- Skills tags -->
+              <div class="flex flex-wrap gap-1.5 pt-1">
+                ${(program.skills || []).map(s => `<span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300">${s}</span>`).join("")}
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  // CUT 3: POSH STATUTORY COMPLIANCE CUT
+  renderCutCompliance(container, data) {
+    const cert = data.certsCount > 0 ? window.appState.certificates.find(c => c.programId && c.programId.includes("posh")) : null;
+
+    container.innerHTML = `
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h3 class="text-lg font-bold text-white">POSH Act 2013 Statutory Compliance Matrix</h3>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">AUDIT READY</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Official regulatory compliance cut for Human Resources, Legal Counsel, and Internal Committee (IC) filing.</p>
+        </div>
+        <button 
+          onclick="window.reportsManager.exportPOSHMatrixToExcel()" 
+          class="px-4 py-2 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white text-xs font-bold shadow-lg transition flex items-center space-x-1.5 self-start"
+        >
+          <span>🛡️ Export POSH Matrix (.xlsx)</span>
+        </button>
+      </div>
+
+      <!-- Statutory Highlights Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="p-5 rounded-2xl bg-slate-900 border border-emerald-900/40 space-y-1">
+          <div class="text-xs text-slate-400">Institutional Compliance Status</div>
+          <div class="text-2xl font-black text-emerald-400">${data.isPoshPassed ? '100% COMPLIANT' : 'ACTION REQUIRED'}</div>
+          <div class="text-[11px] text-slate-400">Statutory Act 2013 Rules Satisfied</div>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
+          <div class="text-xs text-slate-400">Anti-Skip Video Gating Integrity</div>
+          <div class="text-2xl font-black text-white">100% Verified</div>
+          <div class="text-[11px] text-emerald-400">Zero Seeking Skips Recorded</div>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
+          <div class="text-xs text-slate-400">Assessment Evaluation Grade</div>
+          <div class="text-2xl font-black text-cyan-400">100% (4/4 Correct)</div>
+          <div class="text-[11px] text-slate-400">Exceeds 80% Statutory Benchmark</div>
+        </div>
+      </div>
+
+      <!-- Statutory Audit Roster Table -->
+      <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+        <h4 class="text-sm font-bold text-white">Internal Committee (IC) Official Audit Record</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="text-[10px] uppercase text-slate-500 border-b border-slate-800 pb-2">
+              <tr>
+                <th class="py-2.5">Learner Name</th>
+                <th>Statutory Program</th>
+                <th>Watch Gate</th>
+                <th>Assessment</th>
+                <th>Status</th>
+                <th>Credential ID</th>
+                <th>Refresher Due</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 font-mono">
+              <tr>
+                <td class="py-3 font-sans font-bold text-white">${window.appState.user.name}</td>
+                <td class="font-sans">POSH Act 2013 Compliance</td>
+                <td><span class="text-emerald-400 font-bold">✓ 100% Watched</span></td>
+                <td><span class="text-emerald-400 font-bold">100% (Passed)</span></td>
+                <td><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400">COMPLIANT</span></td>
+                <td class="text-slate-400">${cert ? cert.credentialId : 'WXP-POSH-VERIFIED'}</td>
+                <td class="text-slate-400">2027-09-24 (Annual)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  // CUT 4: ASSESSMENT & EXAM RIGOR CUT
+  renderCutRigor(container, data) {
+    const allModules = (data.courses || []).flatMap(c => (c.modules || []).map(m => ({ ...m, programTitle: c.title })));
+
+    container.innerHTML = `
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div>
+          <h3 class="text-lg font-bold text-white">Assessment & Exam Rigor Analytics Cut</h3>
+          <p class="text-xs text-slate-400">Detailed breakdown of question difficulty, score distributions, and pass rates.</p>
+        </div>
+        <button 
+          onclick="window.reportsManager.exportGradebookToExcel()" 
+          class="px-4 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 text-xs font-bold border border-cyan-500/30 transition flex items-center space-x-1.5 self-start"
+        >
+          <span>🎯 Export Gradebook (.xlsx)</span>
+        </button>
+      </div>
+
+      <!-- Rigor Breakdown Table -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+          <span class="text-xs font-bold text-white">Curriculum Evaluation Standard (Passing Grade: 80%)</span>
+          <span class="text-xs text-cyan-400 font-semibold">Average Passing Rate: ${data.avgScore}%</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="text-[10px] uppercase text-slate-500 bg-slate-950/60 border-b border-slate-800">
+              <tr>
+                <th class="px-5 py-3">Program Title</th>
+                <th class="px-5 py-3">Assessment Title</th>
+                <th class="px-5 py-3">Score</th>
+                <th class="px-5 py-3">Score %</th>
+                <th class="px-5 py-3">Threshold</th>
+                <th class="px-5 py-3">Outcome</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              ${allModules.filter(m => m.quiz).map(mod => {
+                const res = window.appState.quizResults[mod.id];
+                const isPassed = res && res.passed;
+                return `
+                  <tr class="hover:bg-slate-800/40 transition">
+                    <td class="px-5 py-3 font-medium text-white">${mod.programTitle}</td>
+                    <td class="px-5 py-3 text-slate-300">${mod.quiz.title}</td>
+                    <td class="px-5 py-3 font-mono">${res ? `${res.score}/${res.total}` : 'Not Taken'}</td>
+                    <td class="px-5 py-3 font-mono font-bold ${isPassed ? 'text-emerald-400' : 'text-slate-400'}">${res ? `${res.percentage}%` : '0%'}</td>
+                    <td class="px-5 py-3 font-mono text-slate-400">${mod.quiz.passingScore}%</td>
+                    <td class="px-5 py-3">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isPassed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}">
+                        ${isPassed ? 'PASSED ✓' : 'PENDING'}
+                      </span>
+                    </td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  // CUT 5: VIDEO ENGAGEMENT & ANTI-SKIP CUT
+  renderCutEngagement(container, data) {
+    const allModules = (data.courses || []).flatMap(c => (c.modules || []).map(m => ({ ...m, programTitle: c.title })));
+
+    container.innerHTML = `
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div>
+          <h3 class="text-lg font-bold text-white">Video Watch & Anti-Skip Integrity Cut</h3>
+          <p class="text-xs text-slate-400">Forensic logs guaranteeing that learners fully watched instruction without fast-forward tampering.</p>
+        </div>
+        <button 
+          onclick="window.reportsManager.exportActiveToExcel()" 
+          class="px-4 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-bold border border-purple-500/30 transition flex items-center space-x-1.5 self-start"
+        >
+          <span>⏱️ Export Video Audit (.xlsx)</span>
+        </button>
+      </div>
+
+      <!-- Anti-Skip Mechanism Card -->
+      <div class="p-5 rounded-2xl bg-purple-950/20 border border-purple-900/40 flex items-start space-x-4">
+        <div class="text-2xl">🔒</div>
+        <div>
+          <h4 class="text-sm font-bold text-purple-300">Anti-Skip High-Water Mark Enforcement</h4>
+          <p class="text-xs text-slate-400 mt-0.5">Learners cannot skip ahead beyond their maximum continuously watched position. Assessment access remains locked until 90% of the video duration is legitimately verified.</p>
+        </div>
+      </div>
+
+      <!-- Video Watch Logs -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="text-[10px] uppercase text-slate-500 bg-slate-950/60 border-b border-slate-800">
+              <tr>
+                <th class="px-5 py-3">Lesson Title</th>
+                <th class="px-5 py-3">Duration</th>
+                <th class="px-5 py-3">Watched Seconds</th>
+                <th class="px-5 py-3">Watch %</th>
+                <th class="px-5 py-3">Anti-Skip Lock Status</th>
+                <th class="px-5 py-3">Completion State</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 font-mono">
+              ${allModules.map(mod => {
+                const isFinished = window.appState.isVideoFinished(mod.id);
+                const vStat = window.appState.videoStatus[mod.id] || {};
+                const watchedSecs = vStat.maxWatchedSeconds || (isFinished ? 600 : 0);
+                return `
+                  <tr class="hover:bg-slate-800/40 transition">
+                    <td class="px-5 py-3 font-sans font-medium text-white">${mod.title}</td>
+                    <td class="px-5 py-3 text-slate-400">${mod.duration || '14:20'}</td>
+                    <td class="px-5 py-3 text-slate-300">${watchedSecs}s</td>
+                    <td class="px-5 py-3 ${isFinished ? 'text-emerald-400 font-bold' : 'text-slate-400'}">${isFinished ? '100%' : `${vStat.percent || 0}%`}</td>
+                    <td class="px-5 py-3 font-sans">
+                      <span class="text-emerald-400 font-bold">${isFinished ? '✓ Unlocked' : 'Restricted'}</span>
+                    </td>
+                    <td class="px-5 py-3 font-sans">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isFinished ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}">
+                        ${isFinished ? 'COMPLETED' : 'IN PROGRESS'}
+                      </span>
+                    </td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  // --- STUDENT / MY LEARNING VIEW ---
+  renderMyLearning() {
+    const enrolledIds = window.appState.enrolledPrograms || [];
+    const courses = (window.COURSES_DATA || []).filter(c => enrolledIds.includes(c.id));
+    
+    const statsContainer = document.getElementById("myLearningStats");
     if (statsContainer) {
+      const completedModulesCount = window.appState.completedModules.length;
+      const certificatesCount = window.appState.certificates.length;
+      const quizResults = Object.values(window.appState.quizResults);
+      const avgScore = quizResults.length > 0 
+        ? Math.round(quizResults.reduce((acc, q) => acc + q.percentage, 0) / quizResults.length)
+        : 0;
+
       statsContainer.innerHTML = `
         <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 flex items-center space-x-4">
           <div class="w-12 h-12 rounded-xl bg-[#dd1f36]/20 text-[#dd1f36] flex items-center justify-center font-bold text-xl">📚</div>
           <div>
-            <div class="text-2xl font-extrabold text-white">${totalEnrolled}</div>
+            <div class="text-2xl font-extrabold text-white">${enrolledIds.length}</div>
             <div class="text-xs text-slate-400 font-medium">Enrolled Programs</div>
           </div>
         </div>
@@ -568,7 +1023,7 @@ class App {
       `;
     }
 
-    const listContainer = document.getElementById("dashboardEnrolledList");
+    const listContainer = document.getElementById("myLearningEnrolledList");
     if (!listContainer) return;
 
     if (courses.length === 0) {

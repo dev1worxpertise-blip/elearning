@@ -63,29 +63,43 @@
         </div>
 
         <!-- Navigation Links -->
-        <nav class="hidden md:flex items-center space-x-1 sm:space-x-4">
+        <nav class="hidden md:flex items-center space-x-1 sm:space-x-3 overflow-x-auto py-1">
           <button 
             data-nav-target="catalog" 
-            class="px-3.5 py-2 rounded-lg text-sm font-semibold transition text-[#dd1f36] border-b-2 border-[#dd1f36] hover:text-white"
+            class="px-3 py-2 rounded-lg text-sm font-semibold transition text-[#dd1f36] border-b-2 border-[#dd1f36] hover:text-white shrink-0"
           >
             Programs Catalog
           </button>
           <button 
             data-nav-target="dashboard" 
-            class="px-3.5 py-2 rounded-lg text-sm font-semibold transition text-slate-400 hover:text-white"
+            class="px-3 py-2 rounded-lg text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1.5 shrink-0"
+          >
+            <span>Admin Dashboard</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-[#dd1f36]/20 text-[#dd1f36] border border-[#dd1f36]/30">5 Cuts</span>
+          </button>
+          <button 
+            data-nav-target="mylearning" 
+            class="px-3 py-2 rounded-lg text-sm font-semibold transition text-slate-400 hover:text-white shrink-0"
           >
             My Learning
           </button>
           <button 
+            data-nav-target="reports" 
+            class="px-3 py-2 rounded-lg text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1.5 shrink-0"
+          >
+            <span>Reports & Audit</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Excel 📊</span>
+          </button>
+          <button 
             data-nav-target="certificates" 
-            class="px-3.5 py-2 rounded-lg text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1.5"
+            class="px-3 py-2 rounded-lg text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1.5 shrink-0"
           >
             <span>Certificates</span>
             <span id="headerCertCount" class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-slate-950">0</span>
           </button>
           <button 
             data-nav-target="instructor" 
-            class="px-3.5 py-2 rounded-lg text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1.5"
+            class="px-3 py-2 rounded-lg text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1.5 shrink-0"
           >
             <span>Instructor Studio</span>
             <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#dd1f36]/20 text-[#dd1f36] border border-[#dd1f36]/30">Creator</span>
@@ -158,10 +172,16 @@
             Explore Corporate Programs
           </button>
           <button 
-            onclick="window.app.navigate('dashboard')"
+            onclick="window.app.navigate('mylearning')"
             class="px-6 py-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 font-bold text-sm border border-slate-700 transition"
           >
             Go to My Learning
+          </button>
+          <button 
+            onclick="window.app.navigate('dashboard')"
+            class="px-5 py-3 rounded-xl bg-purple-900/30 hover:bg-purple-900/50 text-purple-300 font-bold text-sm border border-purple-500/30 transition flex items-center space-x-1.5"
+          >
+            <span>Admin Dashboard →</span>
           </button>
         </div>
       </div>
@@ -275,25 +295,295 @@
   </main>
 
   <!-- ======================================================================
-       VIEW: MY LEARNING / STUDENT DASHBOARD
+       VIEW: ADMIN & EXECUTIVE DASHBOARD (5 PROFESSIONAL CUTS)
        ====================================================================== -->
-  <main id="viewDashboard" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+  <main id="viewDashboard" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <!-- Header with Scope & Actions -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="text-xs uppercase font-extrabold tracking-widest text-[#dd1f36]">Worxpertise Enterprise Intelligence</span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/30">ADMINISTRATIVE OVERVIEW</span>
+        </div>
+        <h2 class="text-3xl font-extrabold text-white mt-1">Executive & Admin Analytics Dashboard</h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-3xl">
+          Multi-dimensional institutional oversight across enterprise curricula, POSH statutory compliance, assessment rigor, and video anti-skip audit integrity.
+        </p>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex items-center space-x-3 shrink-0">
+        <button 
+          onclick="window.reportsManager.exportMasterAuditWorkbook()" 
+          class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 transition flex items-center space-x-2"
+          title="Download complete multi-sheet institutional audit in Microsoft Excel (.xlsx)"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Export Master Audit (.xlsx)</span>
+        </button>
+        <button 
+          onclick="window.app.navigate('reports')" 
+          class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition flex items-center space-x-1.5"
+        >
+          <span>Deep Audit Reports →</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 5 Professional Cuts Selector -->
+    <div class="flex flex-wrap gap-2 p-1.5 rounded-2xl bg-slate-900 border border-slate-800">
+      <button 
+        data-dash-cut="executive" 
+        onclick="window.app.setDashboardCut('executive')" 
+        class="px-4 py-2 rounded-xl text-xs font-bold transition bg-[#dd1f36] text-white flex items-center space-x-2"
+      >
+        <span>🏢 Cut 1: Executive Overview</span>
+      </button>
+      <button 
+        data-dash-cut="curriculum" 
+        onclick="window.app.setDashboardCut('curriculum')" 
+        class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white flex items-center space-x-2"
+      >
+        <span>📚 Cut 2: Curriculum Performance</span>
+      </button>
+      <button 
+        data-dash-cut="compliance" 
+        onclick="window.app.setDashboardCut('compliance')" 
+        class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white flex items-center space-x-2"
+      >
+        <span>🛡️ Cut 3: POSH Statutory Compliance</span>
+      </button>
+      <button 
+        data-dash-cut="rigor" 
+        onclick="window.app.setDashboardCut('rigor')" 
+        class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white flex items-center space-x-2"
+      >
+        <span>🎯 Cut 4: Assessment Rigor</span>
+      </button>
+      <button 
+        data-dash-cut="engagement" 
+        onclick="window.app.setDashboardCut('engagement')" 
+        class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white flex items-center space-x-2"
+      >
+        <span>⏱️ Cut 5: Video Watch & Anti-Skip</span>
+      </button>
+    </div>
+
+    <!-- Active Cut Dynamic View Container -->
+    <div id="dashboardCutContent" class="space-y-8">
+      <!-- Injected dynamically via app.js -->
+    </div>
+  </main>
+
+  <!-- ======================================================================
+       VIEW: MY LEARNING (FOCUSED ENROLLED WORKSPACE)
+       ====================================================================== -->
+  <main id="viewMyLearning" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
     <div class="space-y-2">
-      <h2 class="text-3xl font-extrabold text-white">Student Learning Dashboard</h2>
-      <p class="text-sm text-slate-400">Track your enrolled programs, completed modules, quiz records, and certificate credentials.</p>
+      <h2 class="text-3xl font-extrabold text-white">My Learning & Course Queue</h2>
+      <p class="text-sm text-slate-400">Continue your active video training, review lesson takeaways, and track module assessments.</p>
     </div>
 
     <!-- Stats Row -->
-    <div id="dashboardStats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div id="myLearningStats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       <!-- Injected dynamically -->
     </div>
 
     <!-- Enrolled Programs List -->
     <div class="space-y-4">
       <h3 class="text-xl font-bold text-white">Enrolled Programs</h3>
-      <div id="dashboardEnrolledList" class="space-y-4">
+      <div id="myLearningEnrolledList" class="space-y-4">
         <!-- Injected dynamically -->
       </div>
+    </div>
+  </main>
+
+  <!-- ======================================================================
+       VIEW: REPORTS & EXCEL EXPORT CENTER
+       ====================================================================== -->
+  <main id="viewReports" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="text-xs uppercase font-extrabold tracking-widest text-[#dd1f36]">Auditing & Institutional Records</span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">MICROSOFT EXCEL READY</span>
+        </div>
+        <h2 class="text-3xl font-extrabold text-white mt-1">Academic & Compliance Reporting Studio</h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
+          Generate structured tabular reports, inspect tamper-proof anti-skip audit logs, and export multi-sheet corporate workbooks.
+        </p>
+      </div>
+
+      <!-- Header Excel Action -->
+      <div class="flex items-center space-x-2 shrink-0">
+        <button 
+          onclick="window.reportsManager.exportMasterAuditWorkbook()" 
+          class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/25 transition flex items-center space-x-2"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <span>📗 Export Master Audit Workbook (.xlsx)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Different Exports to Excel Showcase Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition group flex flex-col justify-between space-y-3">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Master Audit</span>
+            <span class="text-base">📗</span>
+          </div>
+          <h4 class="text-sm font-bold text-white mt-1">Multi-Sheet Audit Workbook</h4>
+          <p class="text-[11px] text-slate-400 mt-0.5">5 formatted sheets: Executive Summary, POSH Matrix, Curriculum, Gradebook, and Video Logs.</p>
+        </div>
+        <button 
+          onclick="window.reportsManager.exportMasterAuditWorkbook()" 
+          class="w-full py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-xs font-bold border border-emerald-500/30 transition flex items-center justify-center space-x-1"
+        >
+          <span>Download 5-Sheet .xlsx</span>
+        </button>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-[#dd1f36]/40 transition group flex flex-col justify-between space-y-3">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-[#dd1f36]">HR & Legal Audit</span>
+            <span class="text-base">🛡️</span>
+          </div>
+          <h4 class="text-sm font-bold text-white mt-1">POSH Statutory Matrix</h4>
+          <p class="text-[11px] text-slate-400 mt-0.5">Official compliance roster with statutory validity, IC audit verification, and certificate hashes.</p>
+        </div>
+        <button 
+          onclick="window.reportsManager.exportPOSHMatrixToExcel()" 
+          class="w-full py-2 rounded-xl bg-[#dd1f36]/20 hover:bg-[#dd1f36]/30 text-[#dd1f36] text-xs font-bold border border-[#dd1f36]/30 transition flex items-center justify-center space-x-1"
+        >
+          <span>Export POSH .xlsx</span>
+        </button>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-cyan-500/40 transition group flex flex-col justify-between space-y-3">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-400">Exam Gradebook</span>
+            <span class="text-base">🎯</span>
+          </div>
+          <h4 class="text-sm font-bold text-white mt-1">Assessment Evaluation Log</h4>
+          <p class="text-[11px] text-slate-400 mt-0.5">Quiz scores, passing thresholds, question tallies, and percentage grades per module.</p>
+        </div>
+        <button 
+          onclick="window.reportsManager.exportGradebookToExcel()" 
+          class="w-full py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 text-xs font-bold border border-cyan-500/30 transition flex items-center justify-center space-x-1"
+        >
+          <span>Export Gradebook .xlsx</span>
+        </button>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-amber-500/40 transition group flex flex-col justify-between space-y-3">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Custom Export</span>
+            <span class="text-base">📊</span>
+          </div>
+          <h4 class="text-sm font-bold text-white mt-1">Export Active Table</h4>
+          <p class="text-[11px] text-slate-400 mt-0.5">Export exactly what is filtered below with custom column auto-widths.</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button 
+            onclick="window.reportsManager.exportActiveToExcel()" 
+            class="flex-1 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-500/30 transition flex items-center justify-center space-x-1"
+          >
+            <span>Active .xlsx</span>
+          </button>
+          <button 
+            onclick="window.reportsManager.exportActiveToCSV()" 
+            class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 transition"
+            title="Download CSV"
+          >
+            CSV
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div id="reportsSummaryCards">
+      <!-- Injected dynamically via reportsManager -->
+    </div>
+
+    <!-- Report Tabs, Search, and Status Filter Controls -->
+    <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
+      <!-- Report Tabs -->
+      <div class="flex flex-wrap gap-2">
+        <button 
+          data-report-tab="progress" 
+          onclick="window.reportsManager.setReportTab('progress')" 
+          class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-[#dd1f36] text-white"
+        >
+          📚 Curriculum Progress
+        </button>
+        <button 
+          data-report-tab="quiz" 
+          onclick="window.reportsManager.setReportTab('quiz')" 
+          class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white"
+        >
+          🎯 Assessment Gradebook
+        </button>
+        <button 
+          data-report-tab="posh" 
+          onclick="window.reportsManager.setReportTab('posh')" 
+          class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white"
+        >
+          🛡️ POSH Statutory Matrix
+        </button>
+        <button 
+          data-report-tab="video" 
+          onclick="window.reportsManager.setReportTab('video')" 
+          class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white"
+        >
+          ⏱️ Video Anti-Skip Audit
+        </button>
+      </div>
+
+      <!-- Filter & Search Controls -->
+      <div class="flex items-center space-x-3">
+        <!-- Status Dropdown -->
+        <select 
+          onchange="window.reportsManager.setFilter(this.value)" 
+          class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-[#dd1f36]"
+        >
+          <option value="all">All Statuses</option>
+          <option value="completed">Completed / Passed / Compliant</option>
+          <option value="in-progress">In Progress</option>
+          <option value="pending">Pending Action</option>
+        </select>
+
+        <!-- Live Search -->
+        <div class="relative">
+          <input 
+            type="text" 
+            placeholder="Search records..." 
+            oninput="window.reportsManager.setSearch(this.value)" 
+            class="w-48 sm:w-56 bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#dd1f36]"
+          />
+          <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Record Count Indicator -->
+    <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+      <div id="reportsRecordCount">0 records matching filter</div>
+      <div class="flex items-center space-x-2 text-[11px] text-slate-500">
+        <span>Auto-synced with PostgreSQL state</span>
+        <span>•</span>
+        <span>Export format: Microsoft Excel OpenXML (.xlsx)</span>
+      </div>
+    </div>
+
+    <!-- Data Table Container -->
+    <div id="reportsTableContainer" class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+      <!-- Injected dynamically via reportsManager.render() -->
     </div>
   </main>
 
@@ -627,12 +917,15 @@
 
   <!-- Scripts: Ordered Dependencies -->
   <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="js/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="js/data.js"></script>
   <script src="js/state.js"></script>
   <script src="js/api.js"></script>
   <script src="js/player.js"></script>
   <script src="js/quiz.js"></script>
   <script src="js/certificate.js"></script>
+  <script src="js/reports.js"></script>
   <script src="js/instructor.js"></script>
   <script src="js/app.js"></script>
 </body>
