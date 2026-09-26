@@ -20,7 +20,7 @@ class App {
     }
 
     this.bindGlobalEvents();
-    this.render();
+    this.navigate("catalog");
 
     // Check backend health and sync with PostgreSQL
     if (window.apiService) {
@@ -107,6 +107,21 @@ class App {
         this.navigate(target);
       });
     });
+
+    // Admin Hub Dropdown toggle on click & dismiss on outside click
+    const adminHubTrigger = document.getElementById("adminHubTrigger");
+    const adminHubMenu = document.getElementById("adminHubMenu");
+    if (adminHubTrigger && adminHubMenu) {
+      adminHubTrigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        adminHubMenu.classList.toggle("hidden");
+      });
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest("#adminHubDropdown")) {
+          adminHubMenu.classList.add("hidden");
+        }
+      });
+    }
 
     // Student profile edit button
     const editProfileBtn = document.getElementById("btnEditProfile");
@@ -378,8 +393,20 @@ class App {
   navigate(viewName, programId = null, moduleId = null) {
     this.currentView = viewName;
 
-    // Update active nav styling
-    document.querySelectorAll("[data-nav-target]").forEach(el => {
+    const isAdminView = ["dashboard", "reports", "instructor", "users"].includes(viewName);
+
+    // Show/hide contextual Admin Sub-Bar
+    const adminSubBar = document.getElementById("adminSubBar");
+    if (adminSubBar) {
+      if (isAdminView) {
+        adminSubBar.classList.remove("hidden");
+      } else {
+        adminSubBar.classList.add("hidden");
+      }
+    }
+
+    // Update active nav styling for top bar links
+    document.querySelectorAll("nav > [data-nav-target]").forEach(el => {
       if (el.getAttribute("data-nav-target") === viewName) {
         el.classList.add("text-[#dd1f36]", "border-b-2", "border-[#dd1f36]");
         el.classList.remove("text-slate-400");
@@ -388,6 +415,35 @@ class App {
         el.classList.add("text-slate-400");
       }
     });
+
+    // Update Admin Hub Trigger style if in any admin view
+    const adminHubTrigger = document.getElementById("adminHubTrigger");
+    if (adminHubTrigger) {
+      if (isAdminView) {
+        adminHubTrigger.classList.add("text-[#dd1f36]", "border-b-2", "border-[#dd1f36]");
+        adminHubTrigger.classList.remove("text-slate-400");
+      } else {
+        adminHubTrigger.classList.remove("text-[#dd1f36]", "border-b-2", "border-[#dd1f36]");
+        adminHubTrigger.classList.add("text-slate-400");
+      }
+    }
+
+    // Highlight active button in adminSubBar
+    document.querySelectorAll("[data-admin-sub]").forEach(el => {
+      if (el.getAttribute("data-admin-sub") === viewName) {
+        el.classList.add("bg-[#dd1f36]", "text-white", "shadow-md");
+        el.classList.remove("text-slate-300", "hover:bg-slate-800/80");
+      } else {
+        el.classList.remove("bg-[#dd1f36]", "text-white", "shadow-md");
+        el.classList.add("text-slate-300", "hover:bg-slate-800/80");
+      }
+    });
+
+    // Dismiss dropdown menu if open
+    const adminHubMenu = document.getElementById("adminHubMenu");
+    if (adminHubMenu) {
+      adminHubMenu.classList.add("hidden");
+    }
 
     if (programId) {
       const prog = (window.COURSES_DATA || []).find(p => p.id === programId);

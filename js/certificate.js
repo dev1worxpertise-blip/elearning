@@ -10,6 +10,31 @@ class CertificateStudio {
     this.currentTheme = "worxpertise-red"; // "worxpertise-red" | "royal-gold" | "modern-indigo" | "executive-emerald"
     this.institutionName = "WORXPERTISE GLOBAL TECHNOLOGY ACADEMY";
     this.viewMode = "certificate"; // "certificate" | "transcript"
+
+    // Bind Escape key to close modal
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        this.closeModal();
+      }
+    });
+
+    // Bind backdrop click to close modal
+    const setupBackdrop = () => {
+      const modal = document.getElementById("certificateModal");
+      if (modal && !modal.dataset.backdropBound) {
+        modal.dataset.backdropBound = "true";
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal || e.target.classList.contains("certificate-modal-wrap")) {
+            this.closeModal();
+          }
+        });
+      }
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", setupBackdrop);
+    } else {
+      setupBackdrop();
+    }
   }
 
   openCertificateModal(programId) {
@@ -122,12 +147,20 @@ class CertificateStudio {
         <!-- Top Toolbar -->
         <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800 no-print">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-xl bg-[#dd1f36]/20 text-[#dd1f36] flex items-center justify-center border border-[#dd1f36]/30">
+            <button 
+              onclick="window.certificateStudio.closeModal()" 
+              class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition flex items-center space-x-2 shadow-md cursor-pointer shrink-0"
+              title="Return to Academy"
+            >
+              <svg class="w-4 h-4 text-[#dd1f36]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              <span>← Back to Academy</span>
+            </button>
+            <div class="w-10 h-10 rounded-xl bg-[#dd1f36]/20 text-[#dd1f36] flex items-center justify-center border border-[#dd1f36]/30 shrink-0">
               <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
             </div>
             <div>
               <div class="flex items-center space-x-2">
-                <h3 class="text-lg font-bold text-white">Worxpertise Credential Studio</h3>
+                <h3 class="text-base sm:text-lg font-bold text-white">Worxpertise Credential Studio</h3>
                 <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-[#dd1f36] border border-slate-700">${cert.credentialId}</span>
               </div>
               <p class="text-xs text-slate-400">Verifiable corporate credential issued by Worxpertise</p>
@@ -154,23 +187,25 @@ class CertificateStudio {
           <div class="flex items-center space-x-2">
             <button 
               onclick="window.certificateStudio.downloadPNG()" 
-              class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#dd1f36] to-[#b81427] hover:from-[#b81427] hover:to-[#9b1322] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/30 transition flex items-center space-x-1.5"
+              class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#dd1f36] to-[#b81427] hover:from-[#b81427] hover:to-[#9b1322] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/30 transition flex items-center space-x-1.5 cursor-pointer"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
               <span>Download PNG</span>
             </button>
             <button 
               onclick="window.print()" 
-              class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition flex items-center space-x-1.5"
+              class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition flex items-center space-x-1 cursor-pointer"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-              <span>Print / PDF</span>
+              <span>Print</span>
             </button>
             <button 
               onclick="window.certificateStudio.closeModal()" 
-              class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+              class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-rose-900/60 text-slate-300 hover:text-rose-200 font-bold text-xs border border-slate-700 transition flex items-center space-x-1 cursor-pointer"
+              title="Close Certificate Studio (ESC)"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              <span>Close</span>
             </button>
           </div>
         </div>
@@ -316,6 +351,34 @@ class CertificateStudio {
             </div>
           </div>
         </div>
+
+        <!-- Bottom Action Bar / Go Back Button -->
+        <div class="pt-5 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4 no-print">
+          <button 
+            onclick="window.certificateStudio.closeModal()" 
+            class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition flex items-center space-x-2 shadow-md cursor-pointer"
+          >
+            <svg class="w-4 h-4 text-[#dd1f36]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            <span>← Back to My Learning / Courses</span>
+          </button>
+
+          <div class="flex items-center space-x-2">
+            <button 
+              onclick="window.certificateStudio.downloadPNG()" 
+              class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#dd1f36] to-[#b81427] hover:from-[#b81427] text-white font-bold text-xs shadow-lg transition flex items-center space-x-1.5 cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>Download High-Res PNG</span>
+            </button>
+            <button 
+              onclick="window.print()" 
+              class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition flex items-center space-x-1.5 cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              <span>Print / PDF</span>
+            </button>
+          </div>
+        </div>
       </div>
     `;
   }
@@ -334,11 +397,19 @@ class CertificateStudio {
         <!-- Top Toolbar -->
         <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800 no-print">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-xl bg-[#dd1f36]/20 text-[#dd1f36] flex items-center justify-center border border-[#dd1f36]/30">
+            <button 
+              onclick="window.certificateStudio.closeModal()" 
+              class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition flex items-center space-x-2 shadow-md cursor-pointer shrink-0"
+              title="Return to Academy"
+            >
+              <svg class="w-4 h-4 text-[#dd1f36]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              <span>← Back to Academy</span>
+            </button>
+            <div class="w-10 h-10 rounded-xl bg-[#dd1f36]/20 text-[#dd1f36] flex items-center justify-center border border-[#dd1f36]/30 shrink-0">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             </div>
             <div>
-              <h3 class="text-lg font-bold text-white">Official Academic Transcript</h3>
+              <h3 class="text-base sm:text-lg font-bold text-white">Official Academic Transcript</h3>
               <p class="text-xs text-slate-400">Detailed record of video module completion and assessment grades</p>
             </div>
           </div>
@@ -363,16 +434,18 @@ class CertificateStudio {
           <div class="flex items-center space-x-2">
             <button 
               onclick="window.print()" 
-              class="px-4 py-2 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/30 transition flex items-center space-x-1.5"
+              class="px-4 py-2 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/30 transition flex items-center space-x-1.5 cursor-pointer"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
               <span>Print / Save PDF</span>
             </button>
             <button 
               onclick="window.certificateStudio.closeModal()" 
-              class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+              class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-rose-900/60 text-slate-300 hover:text-rose-200 font-bold text-xs border border-slate-700 transition flex items-center space-x-1 cursor-pointer"
+              title="Close Transcript (ESC)"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              <span>Close</span>
             </button>
           </div>
         </div>
@@ -480,6 +553,27 @@ class CertificateStudio {
                 Official Registrar Seal
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Bottom Action Bar / Go Back Button -->
+        <div class="pt-5 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4 no-print">
+          <button 
+            onclick="window.certificateStudio.closeModal()" 
+            class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition flex items-center space-x-2 shadow-md cursor-pointer"
+          >
+            <svg class="w-4 h-4 text-[#dd1f36]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            <span>← Back to My Learning / Courses</span>
+          </button>
+
+          <div class="flex items-center space-x-2">
+            <button 
+              onclick="window.print()" 
+              class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#dd1f36] to-[#b81427] hover:from-[#b81427] text-white font-bold text-xs shadow-lg transition flex items-center space-x-1.5 cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              <span>Print / Official PDF</span>
+            </button>
           </div>
         </div>
       </div>
