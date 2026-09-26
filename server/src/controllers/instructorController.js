@@ -5,9 +5,27 @@ const db = require('../db');
 
 exports.createProgram = async (req, res) => {
   try {
-    const { title, tagline, category_name, level = 'All Levels', duration, thumbnail_url, skills = [] } = req.body;
+    const {
+      title,
+      tagline,
+      category_name,
+      level = 'All Levels',
+      duration,
+      thumbnail_url,
+      skills = [],
+      instructor_name,
+      instructor_role,
+      authority_name,
+      authority_role,
+      authority_title
+    } = req.body;
+
     let instructorId = (req.user && req.user.id) || null;
-    const instructorName = (req.user && req.user.name) || 'Lead Instructor';
+    const finalInstName = instructor_name || (req.user && req.user.name) || 'Lead Faculty';
+    const finalInstRole = instructor_role || 'Lead Faculty & Subject Matter Expert';
+    const finalAuthName = authority_name || 'Prof. Arthur Sterling';
+    const finalAuthRole = authority_role || 'Dean of Academic Affairs & Governance';
+    const finalAuthTitle = authority_title || 'Academic Board';
     const instructorAvatar = (req.user && req.user.avatar_url) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200';
 
     if (instructorId) {
@@ -44,8 +62,9 @@ exports.createProgram = async (req, res) => {
     const query = `
       INSERT INTO programs (
         id, title, slug, tagline, category_id, category_name, level, duration,
-        thumbnail_url, instructor_id, instructor_name, instructor_role, instructor_avatar, skills, is_published
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, TRUE)
+        thumbnail_url, instructor_id, instructor_name, instructor_role, instructor_avatar,
+        authority_name, authority_role, authority_title, skills, is_published
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, TRUE)
       RETURNING *
     `;
 
@@ -60,9 +79,12 @@ exports.createProgram = async (req, res) => {
       duration,
       thumbnail_url,
       instructorId,
-      instructorName,
-      'Lead Instructor',
+      finalInstName,
+      finalInstRole,
       instructorAvatar,
+      finalAuthName,
+      finalAuthRole,
+      finalAuthTitle,
       JSON.stringify(skills),
     ]);
 
@@ -147,7 +169,20 @@ exports.createOrUpdateQuiz = async (req, res) => {
 exports.updateProgram = async (req, res) => {
   try {
     const { programId } = req.params;
-    const { title, tagline, category_name, level, duration, thumbnail_url, skills } = req.body;
+    const {
+      title,
+      tagline,
+      category_name,
+      level,
+      duration,
+      thumbnail_url,
+      skills,
+      instructor_name,
+      instructor_role,
+      authority_name,
+      authority_role,
+      authority_title
+    } = req.body;
 
     const slug = title ? title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : undefined;
 
@@ -171,8 +206,13 @@ exports.updateProgram = async (req, res) => {
         duration = COALESCE($7, duration),
         thumbnail_url = COALESCE($8, thumbnail_url),
         skills = CASE WHEN $9::jsonb IS NOT NULL THEN $9::jsonb ELSE skills END,
+        instructor_name = COALESCE($10, instructor_name),
+        instructor_role = COALESCE($11, instructor_role),
+        authority_name = COALESCE($12, authority_name),
+        authority_role = COALESCE($13, authority_role),
+        authority_title = COALESCE($14, authority_title),
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $10
+      WHERE id = $15
       RETURNING *
     `;
 
@@ -186,6 +226,11 @@ exports.updateProgram = async (req, res) => {
       duration || null,
       thumbnail_url || null,
       skills ? JSON.stringify(skills) : null,
+      instructor_name || null,
+      instructor_role || null,
+      authority_name || null,
+      authority_role || null,
+      authority_title || null,
       programId
     ]);
 

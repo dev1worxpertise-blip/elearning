@@ -34,6 +34,56 @@ class CertificateStudio {
     this.render();
   }
 
+  previewCertificateWithCustomSignatures(programId, customData = {}) {
+    const baseProg = (window.COURSES_DATA || []).find(p => p.id === programId) || {};
+    const program = {
+      id: programId || "preview-program",
+      title: customData.title || baseProg.title || "Certification of Professional Mastery",
+      category: customData.category || baseProg.category || "Professional Track",
+      duration: customData.duration || baseProg.duration || "Self-Paced",
+      instructor: {
+        name: customData.instructorName || (baseProg.instructor && baseProg.instructor.name) || "Dr. Sarah Chen",
+        role: customData.instructorRole || (baseProg.instructor && baseProg.instructor.role) || "Principal Systems Architect",
+        avatar: (baseProg.instructor && baseProg.instructor.avatar) || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200"
+      },
+      authority: {
+        name: customData.authorityName || (baseProg.authority && baseProg.authority.name) || "Prof. Arthur Sterling",
+        role: customData.authorityRole || (baseProg.authority && baseProg.authority.role) || "Dean of Technology",
+        title: customData.authorityTitle || (baseProg.authority && baseProg.authority.title) || "Academic Board"
+      },
+      modules: baseProg.modules || []
+    };
+
+    const cert = {
+      id: "preview-cert",
+      credentialId: "CERT-PREVIEW-" + Math.floor(100000 + Math.random() * 900000),
+      programId: program.id,
+      studentName: (window.appState && window.appState.user && window.appState.user.name) || "Student Learner",
+      programTitle: program.title,
+      issueDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      instructor: program.instructor.name,
+      instructorRole: program.instructor.role,
+      authorityName: program.authority.name,
+      authorityRole: program.authority.role,
+      authorityTitle: program.authority.title,
+      grade: "Distinction (Honors)",
+      verificationCode: "PREVIEW-HASH-" + Math.random().toString(36).substring(2, 9).toUpperCase()
+    };
+
+    this.currentCert = cert;
+    this.currentProgram = program;
+
+    const modal = document.getElementById("certificateModal");
+    const container = document.getElementById("certificateModalContent");
+    if (!modal || !container) return;
+
+    modal.classList.remove("hidden");
+    modal.scrollTop = 0;
+    document.body.classList.add("overflow-hidden");
+
+    this.render();
+  }
+
   closeModal() {
     const modal = document.getElementById("certificateModal");
     if (modal) {
@@ -231,9 +281,9 @@ class CertificateStudio {
                 <!-- Instructor Signature -->
                 <div class="space-y-1">
                   <div class="font-serif italic text-lg text-indigo-900 font-bold border-b border-slate-400 pb-1 mx-4">
-                    ${cert.instructor || cert.instructor_name}
+                    ${(program.instructor && program.instructor.name) || cert.instructor || cert.instructor_name || "Lead Faculty"}
                   </div>
-                  <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">${cert.instructorRole || cert.instructor_role || 'Course Director'}</div>
+                  <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">${(program.instructor && program.instructor.role) || cert.instructorRole || cert.instructor_role || 'Course Director'}</div>
                   <div class="text-[10px] text-slate-500">Lead Faculty</div>
                 </div>
 
@@ -570,9 +620,12 @@ class CertificateStudio {
     ctx.fillText("ID: " + this.currentCert.credentialId, 800, 815);
 
     // 11. Instructor Signature (Left)
+    const instName = (this.currentProgram && this.currentProgram.instructor && this.currentProgram.instructor.name) || this.currentCert.instructor || this.currentCert.instructor_name || "Lead Instructor";
+    const instRole = (this.currentProgram && this.currentProgram.instructor && this.currentProgram.instructor.role) || this.currentCert.instructorRole || this.currentCert.instructor_role || "Course Director";
+
     ctx.fillStyle = "#1e1b4b";
     ctx.font = "italic bold 26px 'Georgia', serif";
-    ctx.fillText(this.currentCert.instructor || this.currentCert.instructor_name || "Lead Instructor", 350, 730);
+    ctx.fillText(instName, 350, 730);
     ctx.beginPath();
     ctx.moveTo(220, 750);
     ctx.lineTo(480, 750);
@@ -582,7 +635,7 @@ class CertificateStudio {
 
     ctx.fillStyle = "#334155";
     ctx.font = "bold 14px sans-serif";
-    ctx.fillText(this.currentCert.instructorRole || this.currentCert.instructor_role || "Course Director", 350, 775);
+    ctx.fillText(instRole, 350, 775);
     ctx.fillStyle = "#64748b";
     ctx.font = "12px sans-serif";
     ctx.fillText("Lead Faculty", 350, 795);

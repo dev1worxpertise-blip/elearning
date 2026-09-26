@@ -33,8 +33,19 @@ exports.getAllPrograms = async (req, res) => {
       const enrollment = userEnrollments.find((e) => e.program_id === prog.id);
       return {
         ...prog,
+        thumbnail: prog.thumbnail_url,
         is_enrolled: !!enrollment,
         is_completed: enrollment ? enrollment.is_completed : false,
+        instructor: {
+          name: prog.instructor_name || 'Dr. Sarah Chen',
+          role: prog.instructor_role || 'Principal Systems Architect',
+          avatar: prog.instructor_avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200',
+        },
+        authority: {
+          name: prog.authority_name || 'Prof. Arthur Sterling',
+          role: prog.authority_role || 'Dean of Technology',
+          title: prog.authority_title || 'Academic Board'
+        }
       };
     });
 
@@ -121,6 +132,16 @@ exports.getProgramById = async (req, res) => {
         ...program,
         thumbnail: program.thumbnail_url,
         is_enrolled: isEnrolled,
+        instructor: {
+          name: program.instructor_name || 'Dr. Sarah Chen',
+          role: program.instructor_role || 'Principal Systems Architect',
+          avatar: program.instructor_avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200',
+        },
+        authority: {
+          name: program.authority_name || 'Prof. Arthur Sterling',
+          role: program.authority_role || 'Dean of Technology',
+          title: program.authority_title || 'Academic Board'
+        },
         modules,
       },
     });

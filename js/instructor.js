@@ -76,6 +76,12 @@ class InstructorStudio {
     const thumbInput = document.getElementById("instProgThumbnail");
     const skillsInput = document.getElementById("instProgSkills");
 
+    const instNameInput = document.getElementById("instProgInstructorName");
+    const instRoleInput = document.getElementById("instProgInstructorRole");
+    const authNameInput = document.getElementById("instProgAuthName");
+    const authRoleInput = document.getElementById("instProgAuthRole");
+    const authTitleInput = document.getElementById("instProgAuthTitle");
+
     if (editIdInput) editIdInput.value = prog.id;
     if (titleInput) titleInput.value = prog.title || "";
     if (taglineInput) taglineInput.value = prog.tagline || "";
@@ -85,6 +91,20 @@ class InstructorStudio {
     if (thumbInput) thumbInput.value = prog.thumbnail || "";
     if (skillsInput) skillsInput.value = Array.isArray(prog.skills) ? prog.skills.join(", ") : (prog.skills || "");
 
+    const instName = (prog.instructor && prog.instructor.name) || prog.instructor_name || "Lead Faculty";
+    const instRole = (prog.instructor && prog.instructor.role) || prog.instructor_role || "Course Director";
+    const authName = (prog.authority && prog.authority.name) || prog.authority_name || "Prof. Arthur Sterling";
+    const authRole = (prog.authority && prog.authority.role) || prog.authority_role || "Dean of Technology";
+    const authTitle = (prog.authority && prog.authority.title) || prog.authority_title || "Academic Board";
+
+    if (instNameInput) instNameInput.value = instName;
+    if (instRoleInput) instRoleInput.value = instRole;
+    if (authNameInput) authNameInput.value = authName;
+    if (authRoleInput) authRoleInput.value = authRole;
+    if (authTitleInput) authTitleInput.value = authTitle;
+
+    this.updateCertSignaturesPreview();
+
     // Update form header titles and buttons to Edit mode
     const formTitle = document.getElementById("instProgramFormTitle");
     const formSubtitle = document.getElementById("instProgramFormSubtitle");
@@ -93,7 +113,7 @@ class InstructorStudio {
     const cancelBtnBottom = document.getElementById("btnCancelEditProgramBottom");
 
     if (formTitle) formTitle.innerText = `Edit Course: ${prog.title}`;
-    if (formSubtitle) formSubtitle.innerText = "Modify course metadata, syllabus description, or thumbnail. Changes sync with PostgreSQL.";
+    if (formSubtitle) formSubtitle.innerText = "Modify course metadata, certificate signatories, or thumbnail. Changes sync with PostgreSQL.";
     if (submitBtnText) submitBtnText.innerText = "💾 Save Course Changes";
     if (cancelBtnTop) cancelBtnTop.classList.remove("hidden");
     if (cancelBtnBottom) cancelBtnBottom.classList.remove("hidden");
@@ -109,6 +129,20 @@ class InstructorStudio {
     const form = document.getElementById("formCreateProgram");
     if (form) form.reset();
 
+    const instNameInput = document.getElementById("instProgInstructorName");
+    const instRoleInput = document.getElementById("instProgInstructorRole");
+    const authNameInput = document.getElementById("instProgAuthName");
+    const authRoleInput = document.getElementById("instProgAuthRole");
+    const authTitleInput = document.getElementById("instProgAuthTitle");
+
+    if (instNameInput) instNameInput.value = (window.appState && window.appState.user && window.appState.user.name) || "Dr. Sarah Chen";
+    if (instRoleInput) instRoleInput.value = "Principal Systems Architect";
+    if (authNameInput) authNameInput.value = "Prof. Arthur Sterling";
+    if (authRoleInput) authRoleInput.value = "Dean of Technology";
+    if (authTitleInput) authTitleInput.value = "Academic Board";
+
+    this.updateCertSignaturesPreview();
+
     const formTitle = document.getElementById("instProgramFormTitle");
     const formSubtitle = document.getElementById("instProgramFormSubtitle");
     const submitBtnText = document.getElementById("btnSubmitProgramText");
@@ -120,6 +154,44 @@ class InstructorStudio {
     if (submitBtnText) submitBtnText.innerText = "Publish Program & Proceed to Lessons →";
     if (cancelBtnTop) cancelBtnTop.classList.add("hidden");
     if (cancelBtnBottom) cancelBtnBottom.classList.add("hidden");
+  }
+
+  updateCertSignaturesPreview() {
+    const instName = document.getElementById("instProgInstructorName")?.value.trim() || "Lead Faculty";
+    const instRole = document.getElementById("instProgInstructorRole")?.value.trim() || "Course Director";
+    const authName = document.getElementById("instProgAuthName")?.value.trim() || "Prof. Arthur Sterling";
+    const authRole = document.getElementById("instProgAuthRole")?.value.trim() || "Dean of Technology";
+
+    const pInstName = document.getElementById("previewSigInstName");
+    const pInstRole = document.getElementById("previewSigInstRole");
+    const pAuthName = document.getElementById("previewSigAuthName");
+    const pAuthRole = document.getElementById("previewSigAuthRole");
+
+    if (pInstName) pInstName.innerText = instName;
+    if (pInstRole) pInstRole.innerText = instRole;
+    if (pAuthName) pAuthName.innerText = authName;
+    if (pAuthRole) pAuthRole.innerText = authRole;
+  }
+
+  previewCertificateFromForm() {
+    const editProgramId = document.getElementById("instEditProgramId")?.value;
+    const title = document.getElementById("instProgTitle")?.value.trim() || "Professional Certification";
+    const instructorName = document.getElementById("instProgInstructorName")?.value.trim() || "Lead Faculty";
+    const instructorRole = document.getElementById("instProgInstructorRole")?.value.trim() || "Course Director";
+    const authorityName = document.getElementById("instProgAuthName")?.value.trim() || "Prof. Arthur Sterling";
+    const authorityRole = document.getElementById("instProgAuthRole")?.value.trim() || "Dean of Technology";
+    const authorityTitle = document.getElementById("instProgAuthTitle")?.value.trim() || "Academic Board";
+
+    if (window.certificateStudio) {
+      window.certificateStudio.previewCertificateWithCustomSignatures(editProgramId, {
+        title,
+        instructorName,
+        instructorRole,
+        authorityName,
+        authorityRole,
+        authorityTitle
+      });
+    }
   }
 
   async handleCreateProgram(e) {
@@ -135,6 +207,12 @@ class InstructorStudio {
     const skillsRaw = document.getElementById("instProgSkills").value.trim();
     const skills = skillsRaw ? skillsRaw.split(",").map(s => s.trim()).filter(Boolean) : [];
 
+    const instructor_name = document.getElementById("instProgInstructorName")?.value.trim() || "Lead Faculty";
+    const instructor_role = document.getElementById("instProgInstructorRole")?.value.trim() || "Course Director";
+    const authority_name = document.getElementById("instProgAuthName")?.value.trim() || "Prof. Arthur Sterling";
+    const authority_role = document.getElementById("instProgAuthRole")?.value.trim() || "Dean of Technology";
+    const authority_title = document.getElementById("instProgAuthTitle")?.value.trim() || "Academic Board";
+
     if (!title || !category_name || !duration || !thumbnail_url) {
       window.app.showToast("Please fill in all required fields.", "info");
       return;
@@ -147,7 +225,12 @@ class InstructorStudio {
       level,
       duration,
       thumbnail_url,
-      skills
+      skills,
+      instructor_name,
+      instructor_role,
+      authority_name,
+      authority_role,
+      authority_title
     };
 
     // --- CASE A: EDITING AN EXISTING PROGRAM ---
@@ -156,7 +239,7 @@ class InstructorStudio {
         if (window.apiService && window.apiService.isBackendOnline) {
           const res = await window.apiService.updateProgram(editProgramId, payload);
           if (res && res.success) {
-            window.app.showToast("🎉 Course updated in PostgreSQL database!", "success");
+            window.app.showToast("🎉 Course and certificate signatories updated in PostgreSQL!", "success");
           }
         }
 
@@ -170,6 +253,35 @@ class InstructorStudio {
           prog.duration = duration;
           prog.thumbnail = thumbnail_url;
           prog.skills = skills;
+          prog.instructor_name = instructor_name;
+          prog.instructor_role = instructor_role;
+          prog.authority_name = authority_name;
+          prog.authority_role = authority_role;
+          prog.authority_title = authority_title;
+          prog.instructor = {
+            ...(prog.instructor || {}),
+            name: instructor_name,
+            role: instructor_role
+          };
+          prog.authority = {
+            name: authority_name,
+            role: authority_role,
+            title: authority_title
+          };
+        }
+
+        // Sync existing earned certificates in localStorage
+        if (window.appState && window.appState.certificates) {
+          window.appState.certificates.forEach(c => {
+            if (c.programId === editProgramId || c.program_id === editProgramId) {
+              c.instructor = instructor_name;
+              c.instructorRole = instructor_role;
+              c.authorityName = authority_name;
+              c.authorityRole = authority_role;
+              c.authorityTitle = authority_title;
+            }
+          });
+          window.appState.saveState();
         }
 
         if (window.app && window.app.renderCatalogGrid) {
@@ -177,7 +289,7 @@ class InstructorStudio {
         }
 
         this.cancelEditProgram();
-        window.app.showToast(`Course "${title}" updated successfully!`, "success");
+        window.app.showToast(`Course "${title}" and certificate settings updated!`, "success");
         this.switchTab("overview");
       } catch (err) {
         console.error("Update program error:", err);
@@ -212,15 +324,15 @@ class InstructorStudio {
         duration,
         thumbnail: thumbnail_url,
         instructor: {
-          name: (window.appState && window.appState.user && window.appState.user.name) || "Lead Instructor",
-          role: "Verified Instructor",
+          name: instructor_name,
+          role: instructor_role,
           avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200",
           bio: "Course Author & Lead Subject Matter Expert"
         },
         authority: {
-          name: "Prof. Arthur Sterling",
-          role: "Dean of Academic Affairs & Governance",
-          title: "Academic Board"
+          name: authority_name,
+          role: authority_role,
+          title: authority_title
         },
         skills,
         modules: []
@@ -786,6 +898,17 @@ class InstructorStudio {
                   <span>•</span>
                   <span class="text-amber-400">★ ${p.rating || 5.0}</span>
                 </div>
+                <div class="flex flex-wrap items-center gap-1.5 pt-1.5 text-[11px] text-slate-400">
+                  <span class="inline-flex items-center space-x-1 font-semibold text-slate-300 text-[10px]">
+                    <span>📜 Cert:</span>
+                  </span>
+                  <span class="px-2 py-0.5 rounded-md bg-indigo-950/70 border border-indigo-800/40 text-indigo-300 text-[10px] font-medium" title="Faculty Signatory">
+                    ✍️ ${(p.instructor && p.instructor.name) || p.instructor_name || 'Lead Faculty'}
+                  </span>
+                  <span class="px-2 py-0.5 rounded-md bg-purple-950/70 border border-purple-800/40 text-purple-300 text-[10px] font-medium" title="Governing Authority Signatory">
+                    🏛️ ${(p.authority && p.authority.name) || p.authority_name || 'Prof. Arthur Sterling'}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -793,9 +916,19 @@ class InstructorStudio {
             <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0 justify-end pt-2 lg:pt-0">
               <button 
                 type="button"
+                onclick="window.certificateStudio.openCertificateModal('${p.id}')" 
+                class="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold transition flex items-center space-x-1.5 shadow-sm"
+                title="View & Preview Official Certificate for this course"
+              >
+                <span>🎓</span>
+                <span>Certificate</span>
+              </button>
+
+              <button 
+                type="button"
                 onclick="window.instructorStudio.editProgram('${p.id}')" 
                 class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white border border-slate-700 hover:border-slate-600 transition flex items-center space-x-1.5 shadow-sm"
-                title="Edit Course Metadata, Title, Description"
+                title="Edit Course Metadata, Title, Description, and Certificate Signatories"
               >
                 <span>✏️</span>
                 <span>Edit Course</span>

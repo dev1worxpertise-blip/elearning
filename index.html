@@ -688,6 +688,149 @@
           <input type="text" id="instProgSkills" placeholder="e.g. Next.js, Server Actions, PostgreSQL, Prisma, Tailwind" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" />
         </div>
 
+        <!-- CERTIFICATE & COURSE SIGNATORIES CONFIGURATION -->
+        <div class="mt-6 pt-6 border-t border-slate-800/80 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-slate-950 to-slate-900/90 p-4 rounded-2xl border border-slate-800">
+            <div class="flex items-center space-x-3">
+              <span class="w-9 h-9 rounded-xl bg-[#9744cc]/20 border border-[#9744cc]/40 flex items-center justify-center text-base shrink-0">📜</span>
+              <div>
+                <h4 class="text-sm font-bold text-white flex items-center space-x-2">
+                  <span>Certificate & Signatures Configuration</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#dd1f36]/20 text-[#dd1f36] border border-[#dd1f36]/30">Course-Specific</span>
+                </h4>
+                <p class="text-[11px] text-slate-400">Configure dual signatories (Lead Faculty & Governing Authority) printed on completion certificates and transcripts.</p>
+              </div>
+            </div>
+            <button 
+              type="button" 
+              onclick="window.instructorStudio.previewCertificateFromForm()"
+              class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition flex items-center space-x-1.5 shrink-0 self-start sm:self-auto shadow-sm"
+              title="Preview complete certificate in full modal"
+            >
+              <span>👁️</span>
+              <span>Live Cert Preview</span>
+            </button>
+          </div>
+
+          <!-- Dual Signatories Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+            <!-- Signatory 1: Lead Faculty / Course Instructor (Left Signature) -->
+            <div class="space-y-3 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
+              <div class="flex items-center space-x-2 pb-2 border-b border-slate-800">
+                <span class="text-xs">✍️</span>
+                <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">Signatory 1: Lead Faculty / Instructor</span>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Instructor / Signatory Name *</label>
+                <input 
+                  type="text" 
+                  id="instProgInstructorName" 
+                  placeholder="e.g. Dr. Sarah Chen / Advocate Ananya Deshmukh" 
+                  class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#9744cc]" 
+                  oninput="window.instructorStudio.updateCertSignaturesPreview()"
+                  required 
+                />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Designation & Role *</label>
+                <input 
+                  type="text" 
+                  id="instProgInstructorRole" 
+                  placeholder="e.g. Principal Systems Architect / Senior Corporate Legal Counsel" 
+                  class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#9744cc]" 
+                  oninput="window.instructorStudio.updateCertSignaturesPreview()"
+                  required 
+                />
+              </div>
+            </div>
+
+            <!-- Signatory 2: Governing Authority / Dean / Director (Right Signature) -->
+            <div class="space-y-3 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
+              <div class="flex items-center space-x-2 pb-2 border-b border-slate-800">
+                <span class="text-xs">🏛️</span>
+                <span class="text-xs font-bold text-purple-400 uppercase tracking-wider">Signatory 2: Governing Authority / Dean</span>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Authority / Dean Name *</label>
+                <input 
+                  type="text" 
+                  id="instProgAuthName" 
+                  placeholder="e.g. Prof. Arthur Sterling / Rajeshwar Rao" 
+                  class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#9744cc]" 
+                  oninput="window.instructorStudio.updateCertSignaturesPreview()"
+                  required 
+                />
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-300 mb-1">Authority Role *</label>
+                  <input 
+                    type="text" 
+                    id="instProgAuthRole" 
+                    placeholder="e.g. Dean of Computer Science / Head of HR & IC Governance" 
+                    class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#9744cc]" 
+                    oninput="window.instructorStudio.updateCertSignaturesPreview()"
+                    required 
+                  />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-300 mb-1">Board / Department</label>
+                  <input 
+                    type="text" 
+                    id="instProgAuthTitle" 
+                    placeholder="e.g. Academic Board / Presiding IC Authority" 
+                    class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#9744cc]" 
+                    oninput="window.instructorStudio.updateCertSignaturesPreview()"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Visual Certificate Signatures Mini-Preview -->
+          <div class="p-4 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 shadow-inner">
+            <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2.5 flex items-center justify-between">
+              <span class="flex items-center space-x-1.5">
+                <span>🎓</span>
+                <span>Certificate Bottom Endorsement Preview</span>
+              </span>
+              <span class="text-emerald-400 flex items-center space-x-1 text-[10px]">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Live Dynamic Sync</span>
+              </span>
+            </div>
+            <div class="grid grid-cols-3 items-center text-center gap-3 p-3.5 bg-slate-950/70 rounded-xl border border-slate-800/80">
+              <!-- Signatory 1 Preview -->
+              <div class="space-y-1">
+                <div id="previewSigInstName" class="font-serif italic text-sm font-bold text-indigo-300 border-b border-slate-700 pb-1 mx-2 truncate">
+                  Dr. Sarah Chen
+                </div>
+                <div id="previewSigInstRole" class="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">
+                  Lead Faculty
+                </div>
+              </div>
+
+              <!-- Seal Preview -->
+              <div class="flex flex-col items-center justify-center">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-black text-xs shadow-md shadow-amber-500/20">
+                  ★
+                </div>
+                <div class="text-[8px] font-mono text-slate-400 mt-1 uppercase font-bold">OFFICIAL SEAL</div>
+              </div>
+
+              <!-- Signatory 2 Preview -->
+              <div class="space-y-1">
+                <div id="previewSigAuthName" class="font-serif italic text-sm font-bold text-indigo-300 border-b border-slate-700 pb-1 mx-2 truncate">
+                  Prof. Arthur Sterling
+                </div>
+                <div id="previewSigAuthRole" class="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">
+                  Dean of Technology
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="pt-4 border-t border-slate-800 flex justify-end space-x-3">
           <button 
             type="button" 
