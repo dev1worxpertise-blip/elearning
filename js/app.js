@@ -136,6 +136,243 @@ class App {
         }
       });
     }
+
+    this.bindAuthEvents();
+  }
+
+  bindAuthEvents() {
+    const authModal = document.getElementById("authModal");
+    const btnOpen = document.getElementById("btnOpenAuthModal");
+    const profilePill = document.getElementById("userProfilePill");
+    const btnClose = document.getElementById("btnCloseAuthModal");
+    const alertBox = document.getElementById("authAlertBox");
+
+    const tabRegister = document.getElementById("tabBtnRegister");
+    const tabLogin = document.getElementById("tabBtnLogin");
+    const tabQuickSwitch = document.getElementById("tabBtnQuickSwitch");
+
+    const formRegister = document.getElementById("formRegister");
+    const formLogin = document.getElementById("formLogin");
+    const paneQuickSwitch = document.getElementById("paneQuickSwitch");
+
+    const showAlert = (msg, type = "error") => {
+      if (!alertBox) return;
+      alertBox.className = "p-3 rounded-xl text-xs font-medium border";
+      if (type === "error" || type === "lockout") {
+        alertBox.classList.add("bg-rose-950/80", "border-rose-500/50", "text-rose-200");
+      } else if (type === "warning") {
+        alertBox.classList.add("bg-amber-950/80", "border-amber-500/50", "text-amber-200");
+      } else {
+        alertBox.classList.add("bg-emerald-950/80", "border-emerald-500/50", "text-emerald-200");
+      }
+      alertBox.innerHTML = msg;
+      alertBox.classList.remove("hidden");
+    };
+
+    const clearAlert = () => {
+      if (alertBox) {
+        alertBox.innerHTML = "";
+        alertBox.classList.add("hidden");
+      }
+    };
+
+    const switchAuthTab = (tab) => {
+      clearAlert();
+      [tabRegister, tabLogin, tabQuickSwitch].forEach(b => {
+        if (!b) return;
+        b.classList.remove("bg-gradient-to-r", "from-purple-600", "to-indigo-600", "text-white", "shadow-md");
+        b.classList.add("text-slate-400");
+      });
+
+      if (formRegister) formRegister.classList.add("hidden");
+      if (formLogin) formLogin.classList.add("hidden");
+      if (paneQuickSwitch) paneQuickSwitch.classList.add("hidden");
+
+      if (tab === "register") {
+        if (tabRegister) {
+          tabRegister.classList.add("bg-gradient-to-r", "from-purple-600", "to-indigo-600", "text-white", "shadow-md");
+          tabRegister.classList.remove("text-slate-400");
+        }
+        if (formRegister) formRegister.classList.remove("hidden");
+      } else if (tab === "login") {
+        if (tabLogin) {
+          tabLogin.classList.add("bg-gradient-to-r", "from-purple-600", "to-indigo-600", "text-white", "shadow-md");
+          tabLogin.classList.remove("text-slate-400");
+        }
+        if (formLogin) formLogin.classList.remove("hidden");
+      } else if (tab === "quickswitch") {
+        if (tabQuickSwitch) {
+          tabQuickSwitch.classList.add("bg-gradient-to-r", "from-purple-600", "to-indigo-600", "text-white", "shadow-md");
+          tabQuickSwitch.classList.remove("text-slate-400");
+        }
+        if (paneQuickSwitch) paneQuickSwitch.classList.remove("hidden");
+      }
+    };
+
+    const openModal = () => {
+      if (authModal) authModal.classList.remove("hidden");
+      switchAuthTab("login");
+    };
+
+    const closeModal = () => {
+      if (authModal) authModal.classList.add("hidden");
+      clearAlert();
+    };
+
+    if (btnOpen) btnOpen.addEventListener("click", openModal);
+    if (profilePill) {
+      profilePill.addEventListener("click", (e) => {
+        if (e.target.closest("#btnEditProfile")) return;
+        openModal();
+      });
+    }
+    if (btnClose) btnClose.addEventListener("click", closeModal);
+
+    if (tabRegister) tabRegister.addEventListener("click", () => switchAuthTab("register"));
+    if (tabLogin) tabLogin.addEventListener("click", () => switchAuthTab("login"));
+    if (tabQuickSwitch) tabQuickSwitch.addEventListener("click", () => switchAuthTab("quickswitch"));
+
+    // Register Submit
+    if (formRegister) {
+      formRegister.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearAlert();
+        const name = document.getElementById("regName").value.trim();
+        const email = document.getElementById("regEmail").value.trim();
+        const pass = document.getElementById("regPassword").value;
+        const confirmPass = document.getElementById("regConfirmPassword").value;
+        const role = document.getElementById("regRole").value;
+
+        if (pass !== confirmPass) {
+          showAlert("⚠️ Passwords do not match. Please re-enter.");
+          return;
+        }
+
+        try {
+          if (window.apiService && window.apiService.register) {
+            const res = await window.apiService.register(name, email, pass, role);
+            if (res && res.success) {
+              window.appState.setCurrentUser(res.user, res.token);
+              this.showToast(`🎉 Welcome, ${res.user.name}! Registered as ${res.user.role.toUpperCase()}`, "success");
+              closeModal();
+              this.updateHeaderProfile();
+              if (window.userManager) window.userManager.render();
+              return;
+            } else if (res && !res.success) {
+              showAlert(`⚠️ ${res.message || 'Registration failed.'}`);
+              return;
+            }
+          }
+
+          // Offline fallback
+          const newUser = {
+            id: 'usr_' + Date.now(),
+            name,
+            email,
+            role,
+            avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
+          };
+          window.appState.setCurrentUser(newUser);
+          this.showToast(`🎉 Registered as ${name} (${role.toUpperCase()})`, "success");
+          closeModal();
+          this.updateHeaderProfile();
+        } catch (err) {
+          showAlert(`⚠️ ${err.message}`);
+        }
+      });
+    }
+
+    // Login Submit with 3-Attempt Lockout
+    if (formLogin) {
+      formLogin.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearAlert();
+        const email = document.getElementById("loginEmail").value.trim();
+        const password = document.getElementById("loginPassword").value;
+
+        try {
+          if (window.apiService && window.apiService.login) {
+            const res = await window.apiService.login(email, password);
+            if (res && res.success) {
+              window.appState.setCurrentUser(res.user, res.token);
+              this.showToast(`✅ Signed in as ${res.user.name} (${res.user.role.toUpperCase()})`, "success");
+              closeModal();
+              this.updateHeaderProfile();
+              if (window.userManager) window.userManager.render();
+              return;
+            } else if (res) {
+              if (res.isBlocked) {
+                showAlert(`
+                  <div class="space-y-1">
+                    <div class="font-black text-rose-300 flex items-center space-x-1.5">
+                      <span class="text-base">🔒</span>
+                      <span>ACCOUNT SECURITY LOCKOUT</span>
+                    </div>
+                    <div>${res.message}</div>
+                    <div class="text-[11px] text-amber-300 font-bold mt-1">
+                      👉 Platform Administrator can unlock your account directly from the <strong>User Directory</strong> studio!
+                    </div>
+                  </div>
+                `, "lockout");
+              } else if (res.attemptsLeft !== undefined) {
+                showAlert(`
+                  <div class="font-bold flex items-center space-x-1.5">
+                    <span>⚠️</span>
+                    <span>${res.message}</span>
+                  </div>
+                `, "warning");
+              } else {
+                showAlert(`⚠️ ${res.message || 'Login failed.'}`);
+              }
+              return;
+            }
+          }
+
+          showAlert("⚠️ Unable to reach authentication server.");
+        } catch (err) {
+          showAlert(`⚠️ ${err.message}`);
+        }
+      });
+    }
+
+    // Quick Persona Switcher Buttons
+    document.querySelectorAll("[data-switch-persona]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const persona = btn.getAttribute("data-switch-persona");
+        if (persona === "admin") {
+          window.appState.setCurrentUser({
+            id: "usr_admin_master",
+            name: "System Administrator",
+            email: "admin@learnpulse.dev",
+            role: "admin",
+            avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+          });
+          this.showToast("👑 Switched to System Administrator view (Full Role & Lockout Control)", "success");
+        } else if (persona === "instructor") {
+          window.appState.setCurrentUser({
+            id: "usr_instructor_1",
+            name: "Dr. Sarah Chen",
+            email: "sarah.chen@learnpulse.dev",
+            role: "instructor",
+            avatar_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80"
+          });
+          this.showToast("👨‍🏫 Switched to Instructor view (Dr. Sarah Chen)", "success");
+        } else if (persona === "student") {
+          window.appState.setCurrentUser({
+            id: "usr_student_sachin",
+            name: "Sachin Chauhan",
+            email: "sachin@learnpulse.dev",
+            role: "student",
+            avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+          });
+          this.showToast("🎓 Switched to Student view (Sachin Chauhan)", "info");
+        }
+
+        closeModal();
+        this.updateHeaderProfile();
+        this.render();
+      });
+    });
   }
 
   navigate(viewName, programId = null, moduleId = null) {
@@ -172,6 +409,7 @@ class App {
     const reportsView = document.getElementById("viewReports");
     const certificatesView = document.getElementById("viewCertificates");
     const instructorView = document.getElementById("viewInstructor");
+    const usersView = document.getElementById("viewUsers");
 
     // Hide all
     if (catalogView) catalogView.classList.add("hidden");
@@ -181,6 +419,7 @@ class App {
     if (reportsView) reportsView.classList.add("hidden");
     if (certificatesView) certificatesView.classList.add("hidden");
     if (instructorView) instructorView.classList.add("hidden");
+    if (usersView) usersView.classList.add("hidden");
 
     this.updateHeaderProfile();
 
@@ -205,14 +444,36 @@ class App {
     } else if (this.currentView === "instructor") {
       if (instructorView) instructorView.classList.remove("hidden");
       if (window.instructorStudio) window.instructorStudio.switchTab(window.instructorStudio.activeTab || "programs");
+    } else if (this.currentView === "users") {
+      if (usersView) usersView.classList.remove("hidden");
+      if (window.userManager) window.userManager.render();
     }
   }
 
   updateHeaderProfile() {
+    const user = (window.appState && window.appState.user) || { name: 'Sachin Chauhan', role: 'student' };
     const nameEl = document.getElementById("headerStudentName");
+    const roleEl = document.getElementById("headerRoleBadge");
+    const avatarEl = document.getElementById("headerUserAvatar");
     const certCountEl = document.getElementById("headerCertCount");
-    if (nameEl) nameEl.textContent = window.appState.user.name;
-    if (certCountEl) certCountEl.textContent = window.appState.certificates.length;
+
+    if (nameEl) nameEl.textContent = user.name;
+    if (avatarEl && (user.avatar || user.avatar_url)) avatarEl.src = user.avatar || user.avatar_url;
+    if (certCountEl) certCountEl.textContent = (window.appState && window.appState.certificates) ? window.appState.certificates.length : 0;
+
+    if (roleEl) {
+      const normalizedRole = (user.role || 'student').toLowerCase();
+      if (normalizedRole === 'admin') {
+        roleEl.textContent = '👑 Admin';
+        roleEl.className = 'px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30';
+      } else if (normalizedRole === 'instructor') {
+        roleEl.textContent = '👨‍🏫 Instructor';
+        roleEl.className = 'px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30';
+      } else {
+        roleEl.textContent = '🎓 Student';
+        roleEl.className = 'px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+      }
+    }
   }
 
   // --- CATALOG VIEW ---

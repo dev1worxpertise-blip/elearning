@@ -9,6 +9,7 @@ const programRoutes = require('./routes/programRoutes');
 const progressRoutes = require('./routes/progressRoutes');
 const certificateRoutes = require('./routes/certificateRoutes');
 const instructorRoutes = require('./routes/instructorRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const path = require('path');
 const app = express();
@@ -35,6 +36,7 @@ app.use('/api/programs', programRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/instructor', instructorRoutes);
+app.use('/api/users', userRoutes);
 
 // 404 Handler
 app.use((req, res) => {

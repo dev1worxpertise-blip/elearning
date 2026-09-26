@@ -104,10 +104,17 @@
             <span>Instructor Studio</span>
             <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#dd1f36]/20 text-[#dd1f36] border border-[#dd1f36]/30">Creator</span>
           </button>
+          <button 
+            data-nav-target="users" 
+            class="px-3 py-2 rounded-lg text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1.5 shrink-0"
+          >
+            <span>User Directory</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/30">👥 Roles</span>
+          </button>
         </nav>
 
         <!-- User Profile & Action Tools -->
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2 sm:space-x-3">
           <button 
             id="btnResetProgress" 
             title="Reset demo progress for evaluation" 
@@ -123,20 +130,33 @@
             <span class="text-[10px] text-slate-400 font-medium">Standalone Mode</span>
           </div>
 
-          <!-- Student Profile Pill -->
-          <div class="flex items-center space-x-2 pl-2 border-l border-slate-800">
+          <!-- Sign In / Register Button -->
+          <button 
+            id="btnOpenAuthModal" 
+            class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-purple-900/40 transition flex items-center space-x-1.5 shrink-0"
+            title="Register new account or sign in"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <span>Sign In / Register</span>
+          </button>
+
+          <!-- User Profile Pill -->
+          <div id="userProfilePill" class="flex items-center space-x-2 pl-2 border-l border-slate-800 cursor-pointer hover:bg-slate-800/40 rounded-xl p-1 transition" title="Click to view/switch user persona">
             <img 
+              id="headerUserAvatar"
               src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" 
               alt="Avatar" 
               class="w-8 h-8 rounded-full border border-slate-700 object-cover"
             />
             <div class="hidden lg:block text-left">
               <div id="headerStudentName" class="text-xs font-bold text-white truncate max-w-[120px]">Sachin Chauhan</div>
-              <div class="text-[10px] text-emerald-400 font-medium">Verified Learner</div>
+              <div class="flex items-center space-x-1">
+                <span id="headerRoleBadge" class="px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Student</span>
+              </div>
             </div>
             <button 
               id="btnEditProfile" 
-              title="Edit Student Name (Changes name on Certificate)" 
+              title="Edit Profile Name (Changes name on Certificate)" 
               class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
@@ -1018,6 +1038,13 @@
   </main>
 
   <!-- ======================================================================
+       VIEW: USER MANAGEMENT & ROLE ASSIGNMENT STUDIO
+       ====================================================================== -->
+  <main id="viewUsers" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <!-- Injected dynamically via users.js -->
+  </main>
+
+  <!-- ======================================================================
        MODAL: INTERACTIVE POST-VIDEO Q&A QUIZ
        ====================================================================== -->
   <div id="quizModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-md p-4 sm:p-6 md:p-8">
@@ -1065,6 +1092,216 @@
   </div>
 
   <!-- ======================================================================
+       MODAL: USER AUTHENTICATION, REGISTRATION & ROLE SWITCHER
+       ====================================================================== -->
+  <div id="authModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/90 backdrop-blur-lg p-4 sm:p-6 md:p-8">
+    <div class="min-h-full flex items-center justify-center py-4 sm:py-8">
+      <div class="relative bg-slate-900 border border-purple-500/40 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6">
+        <!-- Close button -->
+        <button 
+          id="btnCloseAuthModal" 
+          class="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <div class="text-center space-y-1">
+          <div class="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[11px] font-black uppercase tracking-wider">
+            <span>Worxpertise Security Gate</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-black text-white">Academy Account Access</h2>
+          <p class="text-xs text-slate-400">Self-register a new account, sign in, or test role personas instantly.</p>
+        </div>
+
+        <!-- Auth Navigation Tabs -->
+        <div class="flex rounded-xl bg-slate-950 p-1 border border-slate-800">
+          <button 
+            id="tabBtnRegister" 
+            type="button"
+            class="flex-1 py-2 text-xs font-bold rounded-lg transition bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md"
+          >
+            📝 Register
+          </button>
+          <button 
+            id="tabBtnLogin" 
+            type="button"
+            class="flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white"
+          >
+            🔐 Sign In
+          </button>
+          <button 
+            id="tabBtnQuickSwitch" 
+            type="button"
+            class="flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white"
+          >
+            ⚡ Persona
+          </button>
+        </div>
+
+        <!-- Alert Notification Box -->
+        <div id="authAlertBox" class="hidden p-3 rounded-xl text-xs font-medium border"></div>
+
+        <!-- PANE 1: SELF-REGISTRATION FORM -->
+        <form id="formRegister" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Full Legal Name</label>
+            <input 
+              type="text" 
+              id="regName" 
+              required 
+              placeholder="e.g. Ramesh Patel" 
+              class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Corporate Email Address</label>
+            <input 
+              type="email" 
+              id="regEmail" 
+              required 
+              placeholder="e.g. ramesh.patel@worxpertise.com" 
+              class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+              <input 
+                type="password" 
+                id="regPassword" 
+                required 
+                placeholder="••••••••" 
+                class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Confirm Password</label>
+              <input 
+                type="password" 
+                id="regConfirmPassword" 
+                required 
+                placeholder="••••••••" 
+                class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Select System Role</label>
+            <select 
+              id="regRole" 
+              class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-purple-500 transition"
+            >
+              <option value="student">🎓 Student / Learner (Access Courses & Certifications)</option>
+              <option value="instructor">👨‍🏫 Instructor / Faculty (Create Courses & Quizzes)</option>
+              <option value="admin">👑 Administrator (Full Platform & User Management)</option>
+            </select>
+          </div>
+
+          <button 
+            type="submit" 
+            class="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-900/40 transition"
+          >
+            Create Account & Enter Academy
+          </button>
+        </form>
+
+        <!-- PANE 2: SIGN IN FORM (WITH 3-ATTEMPT LOCKOUT PROTECTION) -->
+        <form id="formLogin" class="hidden space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
+            <input 
+              type="email" 
+              id="loginEmail" 
+              required 
+              placeholder="e.g. sachin@learnpulse.dev" 
+              class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
+            />
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-300">Password</label>
+              <span class="text-[10px] text-slate-400">Policy: 3 Failed Attempts = Lockout</span>
+            </div>
+            <input 
+              type="password" 
+              id="loginPassword" 
+              required 
+              placeholder="••••••••" 
+              class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            class="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-900/40 transition"
+          >
+            Sign In to Academy
+          </button>
+        </form>
+
+        <!-- PANE 3: QUICK PERSONA SWITCHER -->
+        <div id="paneQuickSwitch" class="hidden space-y-3">
+          <div class="text-[11px] text-slate-400">
+            Select an account to instantly switch session and permissions without re-typing credentials:
+          </div>
+
+          <!-- Persona: Admin -->
+          <button 
+            type="button" 
+            data-switch-persona="admin" 
+            class="w-full p-3 rounded-2xl bg-slate-950 hover:bg-purple-950/40 border border-purple-800/40 transition flex items-center justify-between group text-left"
+          >
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-full bg-purple-900/60 border border-purple-500 flex items-center justify-center text-lg">👑</div>
+              <div>
+                <div class="font-bold text-white text-xs group-hover:text-purple-300 transition">System Administrator</div>
+                <div class="text-[10px] text-slate-400">admin@learnpulse.dev</div>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-purple-500/20 text-purple-300 border border-purple-500/40">Role: Admin</span>
+          </button>
+
+          <!-- Persona: Instructor -->
+          <button 
+            type="button" 
+            data-switch-persona="instructor" 
+            class="w-full p-3 rounded-2xl bg-slate-950 hover:bg-rose-950/40 border border-rose-800/40 transition flex items-center justify-between group text-left"
+          >
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-full bg-rose-900/60 border border-rose-500 flex items-center justify-center text-lg">👨‍🏫</div>
+              <div>
+                <div class="font-bold text-white text-xs group-hover:text-rose-300 transition">Dr. Sarah Chen</div>
+                <div class="text-[10px] text-slate-400">sarah.chen@learnpulse.dev</div>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-rose-500/20 text-rose-300 border border-rose-500/40">Role: Instructor</span>
+          </button>
+
+          <!-- Persona: Student -->
+          <button 
+            type="button" 
+            data-switch-persona="student" 
+            class="w-full p-3 rounded-2xl bg-slate-950 hover:bg-emerald-950/40 border border-emerald-800/40 transition flex items-center justify-between group text-left"
+          >
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-full bg-emerald-900/60 border border-emerald-500 flex items-center justify-center text-lg">🎓</div>
+              <div>
+                <div class="font-bold text-white text-xs group-hover:text-emerald-300 transition">Sachin Chauhan</div>
+                <div class="text-[10px] text-slate-400">sachin@learnpulse.dev</div>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Role: Student</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
        Footer
        ====================================================================== -->
   <footer class="mt-auto border-t border-slate-900 bg-slate-950/60 py-8 text-center text-xs text-slate-500">
@@ -1094,6 +1331,7 @@
   <script src="js/certificate.js"></script>
   <script src="js/reports.js"></script>
   <script src="js/instructor.js"></script>
+  <script src="js/users.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

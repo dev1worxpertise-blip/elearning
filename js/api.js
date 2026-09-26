@@ -238,6 +238,62 @@ class ApiService {
     });
     return res.json();
   }
+
+  // User Management & Role Assignment APIs
+  async getUsers() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/users`, { headers: this.getHeaders() });
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      console.warn('API get users failed, falling back to local user store:', e);
+      return null;
+    }
+  }
+
+  async updateUserRole(userId, role) {
+    const res = await fetch(`${API_BASE_URL}/users/${userId}/role`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ role }),
+    });
+    return res.json();
+  }
+
+  async toggleUserBlock(userId, isBlocked) {
+    const res = await fetch(`${API_BASE_URL}/users/${userId}/block`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ isBlocked }),
+    });
+    return res.json();
+  }
+
+  async resetUserPassword(userId, newPassword) {
+    const res = await fetch(`${API_BASE_URL}/users/${userId}/reset-password`, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ newPassword }),
+    });
+    return res.json();
+  }
+
+  async createUser(payload) {
+    const res = await fetch(`${API_BASE_URL}/users`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return res.json();
+  }
+
+  async deleteUser(userId) {
+    const res = await fetch(`${API_BASE_URL}/users/${userId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return res.json();
+  }
 }
 
 window.apiService = new ApiService();

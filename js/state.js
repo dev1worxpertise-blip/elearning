@@ -119,6 +119,23 @@ class AppState {
     this.save();
   }
 
+  setCurrentUser(user, token = null) {
+    if (!user) return;
+    this.user = {
+      ...this.user,
+      id: user.id || this.user.id || 'usr_' + Date.now(),
+      name: user.name || this.user.name,
+      email: user.email || this.user.email,
+      role: (user.role || 'student').toLowerCase(),
+      avatar: user.avatar_url || user.avatar || this.user.avatar
+    };
+    if (token && window.apiService) {
+      window.apiService.setToken(token);
+    }
+    this.save();
+    this.notify();
+  }
+
   recordVideoProgress(moduleId, percent, isFinished, maxWatchedSeconds) {
     const current = this.videoStatus[moduleId] || { percent: 0, isFinished: false, maxWatchedSeconds: 0 };
     const newPercent = Math.max(current.percent || 0, Math.min(100, Math.round(percent)));

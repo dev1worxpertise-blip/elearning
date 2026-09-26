@@ -18,6 +18,9 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_url TEXT DEFAULT 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
     headline VARCHAR(255),
     bio TEXT,
+    failed_login_attempts INT DEFAULT 0,
+    is_blocked BOOLEAN DEFAULT FALSE,
+    blocked_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

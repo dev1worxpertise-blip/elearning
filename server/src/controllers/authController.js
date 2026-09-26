@@ -66,10 +66,52 @@ exports.login = async (req, res) => {
     }
 
     const user = result.rows[0];
+
+    // Check if account is currently blocked
+    if (user.is_blocked) {
+      return res.status(403).json({
+        success: false,
+        isBlocked: true,
+        attemptsLeft: 0,
+        message: 'Security Alert: This account is LOCKED due to 3 failed login attempts. Please contact your platform Administrator to unblock or reset your account from the Admin Panel.',
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+      const currentAttempts = Number(user.failed_login_attempts || 0);
+      const newAttempts = currentAttempts + 1;
+
+      if (newAttempts >= 3) {
+        // Lock account immediately
+        await db.query(
+          'UPDATE users SET failed_login_attempts = $1, is_blocked = TRUE, blocked_at = CURRENT_TIMESTAMP WHERE id = $2',
+          [newAttempts, user.id]
+        );
+        return res.status(403).json({
+          success: false,
+          isBlocked: true,
+          attemptsLeft: 0,
+          message: 'Account Locked! You have entered the wrong password 3 times. Your account has been locked for security. Please contact your platform Administrator to unblock your account.',
+        });
+      } else {
+        // Increment failed attempts
+        await db.query('UPDATE users SET failed_login_attempts = $1 WHERE id = $2', [newAttempts, user.id]);
+        const remaining = 3 - newAttempts;
+        return res.status(401).json({
+          success: false,
+          isBlocked: false,
+          attemptsLeft: remaining,
+          message: `Invalid password. You have ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before your account is locked.`,
+        });
+      }
     }
+
+    // Password is correct: reset failed login attempts
+    await db.query(
+      'UPDATE users SET failed_login_attempts = 0, is_blocked = FALSE, blocked_at = NULL WHERE id = $1',
+      [user.id]
+    );
 
     const token = jwt.sign({ id: user.id, name: user.name, email: user.email, role: user.role }, JWT_SECRET, {
       expiresIn: JWT_EXPIRES_IN,
