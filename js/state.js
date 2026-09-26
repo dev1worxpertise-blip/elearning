@@ -160,7 +160,7 @@ class AppState {
     this.save();
   }
 
-  recordQuizSubmission(moduleId, score, total) {
+  recordQuizSubmission(moduleId, score, total, userAnswers = {}) {
     const percentage = Math.round((score / total) * 100);
     const passed = percentage >= 80;
 
@@ -169,6 +169,7 @@ class AppState {
       total,
       percentage,
       passed,
+      userAnswers: { ...userAnswers },
       date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
     };
 

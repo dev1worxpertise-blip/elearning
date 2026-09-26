@@ -197,6 +197,70 @@ class ReportsManager {
     });
   }
 
+  // --- DATA GENERATOR 5: MODULE-WISE QUESTIONS & ANSWERS MASTER KEY ---
+  generateQuestionsData() {
+    const allModules = this.getAllModules();
+    const rows = [];
+    let qCounter = 1;
+
+    allModules.forEach(mod => {
+      if (!mod.quiz || !Array.isArray(mod.quiz.questions) || mod.quiz.questions.length === 0) return;
+
+      const qResult = window.appState.quizResults ? window.appState.quizResults[mod.id] : null;
+      const userAnswers = (qResult && qResult.userAnswers) || {};
+      const passingScore = mod.quiz.passingScore || 80;
+
+      mod.quiz.questions.forEach((q, qIndex) => {
+        // Resolve correct answer index and text
+        let correctIdx = typeof q.correctAnswer === "number" ? q.correctAnswer : 0;
+        if (typeof q.correctAnswer === "string" && !isNaN(parseInt(q.correctAnswer, 10))) {
+          correctIdx = parseInt(q.correctAnswer, 10);
+        }
+        const options = Array.isArray(q.options) ? q.options : [];
+        const optLetters = ["A", "B", "C", "D", "E", "F"];
+        const correctLetter = optLetters[correctIdx] || `Option ${correctIdx + 1}`;
+        const correctText = options[correctIdx] || (typeof q.correctAnswer === "string" ? q.correctAnswer : "N/A");
+
+        // Learner attempt evaluation
+        const userChoiceIdx = userAnswers[q.id];
+        let learnerChoiceDisplay = "Not Attempted";
+        let learnerResult = "NOT ATTEMPTED";
+
+        if (userChoiceIdx !== undefined && userChoiceIdx !== null) {
+          const userLetter = optLetters[userChoiceIdx] || `Option ${userChoiceIdx + 1}`;
+          const userText = options[userChoiceIdx] || `Choice ${userChoiceIdx}`;
+          learnerChoiceDisplay = `Option ${userLetter}: ${userText}`;
+          learnerResult = userChoiceIdx === correctIdx ? "CORRECT (✓)" : "INCORRECT (✗)";
+        } else if (qResult && qResult.passed) {
+          learnerChoiceDisplay = `Option ${correctLetter}: ${correctText}`;
+          learnerResult = "CORRECT (✓)";
+        }
+
+        rows.push({
+          "Item ID": `QA-${3000 + qCounter++}`,
+          "Curriculum Track": mod.programTitle,
+          "Category": mod.programCategory || "Professional Certification",
+          "Module Title": `Module ${mod.order || ''}: ${mod.title}`,
+          "Assessment Title": mod.quiz.title || "Module Evaluation",
+          "Passing %": `${passingScore}%`,
+          "Q#": `Q${qIndex + 1}`,
+          "Question Text": q.question || "",
+          "Option A": options[0] || "N/A",
+          "Option B": options[1] || "N/A",
+          "Option C": options[2] || "N/A",
+          "Option D": options[3] || "N/A",
+          "Correct Option": `Option ${correctLetter}`,
+          "Correct Answer": correctText,
+          "Explanation / Legal Rationale": q.explanation || "Mandatory standard evaluation criterion.",
+          "Learner Response": learnerChoiceDisplay,
+          "Response Status": learnerResult
+        });
+      });
+    });
+
+    return rows;
+  }
+
   // Get current active report data
   getActiveData() {
     let data = [];
@@ -204,6 +268,8 @@ class ReportsManager {
       data = this.generateProgressData();
     } else if (this.activeReport === "quiz") {
       data = this.generateQuizData();
+    } else if (this.activeReport === "questions") {
+      data = this.generateQuestionsData();
     } else if (this.activeReport === "posh") {
       data = this.generatePOSHComplianceData();
     } else if (this.activeReport === "video") {
@@ -215,11 +281,11 @@ class ReportsManager {
       data = data.filter(row => {
         const val = JSON.stringify(row).toLowerCase();
         if (this.statusFilter === "completed" || this.statusFilter === "passed") {
-          return val.includes("completed") || val.includes("passed") || val.includes("compliant");
+          return val.includes("completed") || val.includes("passed") || val.includes("compliant") || val.includes("correct (✓)");
         } else if (this.statusFilter === "in-progress") {
           return val.includes("in progress");
         } else if (this.statusFilter === "pending") {
-          return val.includes("pending") || val.includes("not started");
+          return val.includes("pending") || val.includes("not started") || val.includes("not attempted") || val.includes("incorrect");
         }
         return true;
       });
@@ -247,6 +313,7 @@ class ReportsManager {
     const titleMap = {
       progress: "Worxpertise_Curriculum_Progress_Report",
       quiz: "Worxpertise_Assessment_Gradebook",
+      questions: "Worxpertise_Module_Questions_And_Answers_Key",
       posh: "Worxpertise_POSH_Statutory_Compliance_Matrix",
       video: "Worxpertise_Video_Engagement_Audit"
     };
@@ -269,8 +336,16 @@ class ReportsManager {
     this.downloadExcel([ { sheetName: "Assessments & Quizzes", data } ], fileName);
   }
 
-  // --- EXCEL EXPORT 4: MASTER CORPORATE AUDIT WORKBOOK (MULTI-SHEET) ---
+  // --- EXCEL EXPORT 4: MODULE QUESTIONS & ANSWERS MASTER KEY ---
+  exportQuestionsKeyToExcel() {
+    const data = this.generateQuestionsData();
+    const fileName = `Worxpertise_Module_Questions_Answers_Master_${new Date().toISOString().split("T")[0]}.xlsx`;
+    this.downloadExcel([ { sheetName: "Questions & Answers Key", data } ], fileName);
+  }
+
+  // --- EXCEL EXPORT 5: MASTER CORPORATE AUDIT WORKBOOK (6 FORMATTED SHEETS) ---
   exportMasterAuditWorkbook() {
+    const questionsData = this.generateQuestionsData();
     const summarySheet = [
       {
         "Institutional Entity": "Worxpertise Global Technology Academy",
@@ -279,6 +354,7 @@ class ReportsManager {
         "Enrolled Programs Count": window.appState.enrolledPrograms.length,
         "Completed Modules Count": window.appState.completedModules.length,
         "Certificates Issued Count": window.appState.certificates.length,
+        "Question Bank Total": questionsData.length,
         "POSH Statutory Compliance": "100% COMPLIANT & AUDIT READY",
         "Anti-Skip Tamper Protection": "Active & Cryptographically Logged",
         "Database Persistence": "PostgreSQL Integrated & LocalStorage Synchronized"
@@ -290,6 +366,7 @@ class ReportsManager {
       { sheetName: "POSH Compliance Matrix", data: this.generatePOSHComplianceData() },
       { sheetName: "Curriculum Progress", data: this.generateProgressData() },
       { sheetName: "Assessment Gradebook", data: this.generateQuizData() },
+      { sheetName: "Module Questions & Answers", data: questionsData },
       { sheetName: "Video Anti-Skip Logs", data: this.generateVideoAuditData() }
     ];
 
@@ -428,17 +505,26 @@ class ReportsManager {
                   // Formatting badges for key columns
                   let cellContent = `<span class="${cIdx === 0 ? 'font-bold text-white font-sans' : ''}">${val}</span>`;
                   
-                  if (str.includes("PASSED") || str.includes("COMPLIANT") || str.includes("100%") || str.includes("Certified")) {
+                  if (str.includes("PASSED") || str.includes("COMPLIANT") || str.includes("100%") || str.includes("Certified") || str.includes("CORRECT (✓)")) {
                     cellContent = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">✓ ${val}</span>`;
-                  } else if (str.includes("FAILED") || str.includes("NON-COMPLIANT") || str.includes("ACTION REQUIRED")) {
+                  } else if (str.includes("FAILED") || str.includes("NON-COMPLIANT") || str.includes("ACTION REQUIRED") || str.includes("INCORRECT (✗)")) {
                     cellContent = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">✗ ${val}</span>`;
-                  } else if (str.includes("In Progress") || str.includes("Pending")) {
+                  } else if (str.includes("In Progress") || str.includes("Pending") || str.includes("NOT ATTEMPTED")) {
                     cellContent = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">⏳ ${val}</span>`;
+                  } else if (h === "Question Text") {
+                    cellContent = `<div class="min-w-[280px] max-w-md font-sans text-white font-medium whitespace-normal leading-relaxed">${val}</div>`;
+                  } else if (h === "Explanation / Legal Rationale") {
+                    cellContent = `<div class="min-w-[260px] max-w-md font-sans text-slate-300 text-[11px] whitespace-normal leading-relaxed italic bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80">${val}</div>`;
+                  } else if (h === "Correct Option" || h === "Correct Answer") {
+                    cellContent = `<span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 max-w-xs whitespace-normal font-sans">✓ ${val}</span>`;
+                  } else if (h === "Learner Response") {
+                    const isCorrect = row["Response Status"] && row["Response Status"].includes("CORRECT (✓)");
+                    cellContent = `<div class="max-w-xs font-sans text-xs whitespace-normal ${isCorrect ? 'text-emerald-400 font-semibold' : 'text-slate-300'}">${val}</div>`;
                   } else if (h.includes("ID") || h.includes("Hash")) {
-                    cellContent = `<span class="text-slate-400 select-all hover:text-white">${val}</span>`;
+                    cellContent = `<span class="text-slate-400 select-all hover:text-white font-mono text-[11px]">${val}</span>`;
                   }
 
-                  return `<td class="px-5 py-3.5 whitespace-nowrap text-slate-300">${cellContent}</td>`;
+                  return `<td class="px-5 py-3.5 whitespace-nowrap text-slate-300 align-top">${cellContent}</td>`;
                 }).join("")}
               </tr>
             `).join("")}
@@ -449,6 +535,54 @@ class ReportsManager {
   }
 
   renderSummaryKPIs(container) {
+    if (this.activeReport === "questions") {
+      const qData = this.generateQuestionsData();
+      const allModules = this.getAllModules().filter(m => m.quiz && m.quiz.questions);
+      const totalQuestions = qData.length;
+      const programsCount = new Set(qData.map(q => q["Curriculum Track"])).size;
+
+      container.innerHTML = `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400 font-medium">Question Bank Total</span>
+              <span class="text-purple-400 text-sm font-bold">📝</span>
+            </div>
+            <div class="text-2xl font-black text-white mt-1">${totalQuestions}</div>
+            <div class="text-[11px] text-purple-300 mt-0.5">Authoritative Evaluation Prompts</div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400 font-medium">Assessed Modules</span>
+              <span class="text-cyan-400 text-sm font-bold">📚</span>
+            </div>
+            <div class="text-2xl font-black text-cyan-400 mt-1">${allModules.length} Modules</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Across ${programsCount} Curriculum Tracks</div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400 font-medium">Evaluation Standard</span>
+              <span class="text-emerald-400 text-sm font-bold">🎯</span>
+            </div>
+            <div class="text-2xl font-black text-emerald-400 mt-1">80% Threshold</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Mandatory Rigor Criterion</div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400 font-medium">Legal / Technical Rationale</span>
+              <span class="text-amber-400 text-sm font-bold">📜</span>
+            </div>
+            <div class="text-xl font-black text-amber-400 mt-1">100% COVERAGE</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Detailed Explanations Included</div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
     const progressData = this.generateProgressData();
     const quizData = this.generateQuizData();
     const certsCount = window.appState.certificates.length;

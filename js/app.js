@@ -34,7 +34,23 @@ class App {
               if (detail && detail.success && detail.program) {
                 const existingIdx = (window.COURSES_DATA || []).findIndex(cp => cp.id === p.id);
                 if (existingIdx >= 0) {
-                  window.COURSES_DATA[existingIdx] = { ...window.COURSES_DATA[existingIdx], ...detail.program };
+                  const existingProg = window.COURSES_DATA[existingIdx];
+                  const mergedModules = (detail.program.modules && detail.program.modules.length > 0)
+                    ? detail.program.modules.map(dm => {
+                        const em = (existingProg.modules || []).find(m => m.id === dm.id);
+                        return {
+                          ...(em || {}),
+                          ...dm,
+                          quiz: dm.quiz || (em && em.quiz) || null
+                        };
+                      })
+                    : (existingProg.modules || []);
+
+                  window.COURSES_DATA[existingIdx] = {
+                    ...existingProg,
+                    ...detail.program,
+                    modules: mergedModules
+                  };
                 } else {
                   window.COURSES_DATA.push(detail.program);
                 }
@@ -852,12 +868,21 @@ class App {
           <h3 class="text-lg font-bold text-white">Assessment & Exam Rigor Analytics Cut</h3>
           <p class="text-xs text-slate-400">Detailed breakdown of question difficulty, score distributions, and pass rates.</p>
         </div>
-        <button 
-          onclick="window.reportsManager.exportGradebookToExcel()" 
-          class="px-4 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 text-xs font-bold border border-cyan-500/30 transition flex items-center space-x-1.5 self-start"
-        >
-          <span>🎯 Export Gradebook (.xlsx)</span>
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+          <button 
+            onclick="window.reportsManager.exportQuestionsKeyToExcel()" 
+            class="px-3.5 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-bold border border-purple-500/30 transition flex items-center space-x-1.5"
+            title="Export all module questions and answers across all courses to Excel"
+          >
+            <span>📝 Export Q&A Key (.xlsx)</span>
+          </button>
+          <button 
+            onclick="window.reportsManager.exportGradebookToExcel()" 
+            class="px-3.5 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 text-xs font-bold border border-cyan-500/30 transition flex items-center space-x-1.5"
+          >
+            <span>🎯 Export Gradebook (.xlsx)</span>
+          </button>
+        </div>
       </div>
 
       <!-- Rigor Breakdown Table -->

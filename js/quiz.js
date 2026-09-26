@@ -176,7 +176,7 @@ class QuizController {
     });
 
     const total = this.quiz.questions.length;
-    const { percentage, passed } = window.appState.recordQuizSubmission(this.currentModule.id, correctCount, total);
+    const { percentage, passed } = window.appState.recordQuizSubmission(this.currentModule.id, correctCount, total, this.userAnswers);
     this.isSubmitted = true;
     this.renderResults(correctCount, total, percentage, passed);
   }
