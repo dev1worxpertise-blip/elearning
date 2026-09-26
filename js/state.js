@@ -232,6 +232,9 @@ class AppState {
       issueDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
       instructor: program.instructor.name,
       instructorRole: program.instructor.role,
+      authorityName: (program.authority && program.authority.name) || "Prof. Arthur Sterling",
+      authorityRole: (program.authority && program.authority.role) || "Dean of Technology",
+      authorityTitle: (program.authority && program.authority.title) || "Academic Board",
       grade: "Distinction (Honors)",
       verificationCode: "LP-" + Math.random().toString(36).substring(2, 9).toUpperCase()
     };

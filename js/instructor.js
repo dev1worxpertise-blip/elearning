@@ -217,6 +217,11 @@ class InstructorStudio {
           avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200",
           bio: "Course Author & Lead Subject Matter Expert"
         },
+        authority: {
+          name: "Prof. Arthur Sterling",
+          role: "Dean of Academic Affairs & Governance",
+          title: "Academic Board"
+        },
         skills,
         modules: []
       };

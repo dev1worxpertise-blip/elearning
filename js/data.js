@@ -21,6 +21,11 @@ window.COURSES_DATA = [
       avatar: "https://images.unsplash.com/photo-1573496799652-408c2ac9fe98?w=200&auto=format&fit=crop&q=80",
       bio: "Senior Corporate Legal Counsel and External IC Advisor with 15+ years specializing in POSH Act compliance, workplace ethics, and sensitivity governance."
     },
+    authority: {
+      name: "Rajeshwar Rao",
+      role: "Head of HR & Internal Committee (IC) Governance",
+      title: "Presiding IC Authority"
+    },
     skills: ["POSH Act 2013", "Workplace Ethics & Sensitivity", "Hostile Work Environment Prevention", "Bystander Intervention (4Ds)", "Internal Committee (IC) Redressal"],
     modules: [
       {
@@ -265,6 +270,11 @@ window.COURSES_DATA = [
       avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80",
       bio: "Ex-Google Staff Engineer with 12+ years of distributed systems and frontend architecture experience."
     },
+    authority: {
+      name: "Prof. Arthur Sterling",
+      role: "Dean of Computer Science & Engineering",
+      title: "Academic Board"
+    },
     skills: ["React & TypeScript", "RESTful APIs", "Node.js & Express", "Docker & CI/CD", "Tailwind CSS"],
     modules: [
       {
@@ -505,6 +515,11 @@ window.COURSES_DATA = [
       avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
       bio: "Leading AI researcher specializing in Transformer architectures, prompt engineering, and autonomous agent orchestration."
     },
+    authority: {
+      name: "Dr. Katherine Chen",
+      role: "Dean of Advanced Technologies & Artificial Intelligence",
+      title: "Faculty Senate"
+    },
     skills: ["Neural Networks", "Transformer Architectures", "Prompt Engineering", "Autonomous Agents", "RAG Systems"],
     modules: [
       {
@@ -744,6 +759,11 @@ window.COURSES_DATA = [
       role: "Certified Information Systems Security Professional",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80",
       bio: "Former Red Team Lead with expertise in adversary emulation, threat hunting, and modern cryptographic defense."
+    },
+    authority: {
+      name: "Vikram Malhotra",
+      role: "Chief Compliance Officer & Security Auditor",
+      title: "Corporate Governance Board"
     },
     skills: ["Vulnerability Assessment", "OWASP Top 10", "Network Penetration", "Cryptographic Defense", "Zero Trust"],
     modules: [

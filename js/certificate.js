@@ -248,13 +248,13 @@ class CertificateStudio {
                   <div class="text-[10px] font-mono text-slate-600 mt-2">ID: ${cert.credentialId}</div>
                 </div>
 
-                <!-- Academic Dean Signature -->
+                <!-- Academic Dean / Governing Authority Signature -->
                 <div class="space-y-1">
                   <div class="font-serif italic text-lg text-indigo-900 font-bold border-b border-slate-400 pb-1 mx-4">
-                    Prof. Arthur Sterling
+                    ${cert.authorityName || (program.authority && program.authority.name) || "Prof. Arthur Sterling"}
                   </div>
-                  <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Dean of Technology</div>
-                  <div class="text-[10px] text-slate-500">Issued: ${cert.issueDate || cert.issue_date}</div>
+                  <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">${cert.authorityRole || (program.authority && program.authority.role) || "Dean of Technology"}</div>
+                  <div class="text-[10px] text-slate-500">${cert.authorityTitle || (program.authority && program.authority.title) || "Governing Authority"} • Issued: ${cert.issueDate || cert.issue_date}</div>
                 </div>
               </div>
 
@@ -421,9 +421,9 @@ class CertificateStudio {
             <div class="text-right flex items-center space-x-6">
               <div class="text-center">
                 <div class="font-serif italic text-base font-bold text-[#dd1f36] border-b border-slate-400 pb-1">
-                  Prof. Arthur Sterling
+                  ${cert.authorityName || (program.authority && program.authority.name) || "Prof. Arthur Sterling"}
                 </div>
-                <div class="text-[10px] text-slate-600 uppercase font-bold mt-1">Academic Registrar</div>
+                <div class="text-[10px] text-slate-600 uppercase font-bold mt-1">${cert.authorityRole || (program.authority && program.authority.role) || "Academic Registrar"}</div>
               </div>
 
               <div class="w-14 h-14 rounded-full border-2 border-[#dd1f36] flex items-center justify-center text-center p-1 text-[8px] font-black uppercase text-[#dd1f36]">
@@ -587,10 +587,13 @@ class CertificateStudio {
     ctx.font = "12px sans-serif";
     ctx.fillText("Lead Faculty", 350, 795);
 
-    // 12. Academic Dean Signature (Right)
+    // 12. Governing Authority / Dean Signature (Right)
+    const authName = this.currentCert.authorityName || (this.currentProgram && this.currentProgram.authority && this.currentProgram.authority.name) || "Prof. Arthur Sterling";
+    const authRole = this.currentCert.authorityRole || (this.currentProgram && this.currentProgram.authority && this.currentProgram.authority.role) || "Dean of Technology";
+
     ctx.fillStyle = "#1e1b4b";
     ctx.font = "italic bold 26px 'Georgia', serif";
-    ctx.fillText("Prof. Arthur Sterling", 1250, 730);
+    ctx.fillText(authName, 1250, 730);
     ctx.beginPath();
     ctx.moveTo(1120, 750);
     ctx.lineTo(1380, 750);
@@ -600,7 +603,7 @@ class CertificateStudio {
 
     ctx.fillStyle = "#334155";
     ctx.font = "bold 14px sans-serif";
-    ctx.fillText("Dean of Technology", 1250, 775);
+    ctx.fillText(authRole, 1250, 775);
     ctx.fillStyle = "#64748b";
     ctx.font = "12px sans-serif";
     ctx.fillText("Issued: " + (this.currentCert.issueDate || this.currentCert.issue_date), 1250, 795);
