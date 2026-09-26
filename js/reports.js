@@ -119,55 +119,50 @@ class ReportsManager {
   // --- DATA GENERATOR 3: POSH & STATUTORY COMPLIANCE MATRIX ---
   generatePOSHComplianceData() {
     const learnerName = (window.appState && window.appState.user && window.appState.user.name) || "Sachin Chauhan";
-    const poshProg = (window.COURSES_DATA || []).find(p => p.id === "prog-posh-compliance" || p.id.includes("posh")) || window.COURSES_DATA[0];
-    const cert = poshProg ? window.appState.getCertificate(poshProg.id) : null;
-    const progress = poshProg ? window.appState.getProgramProgress(poshProg.id) : { percentage: 0 };
+    const courses = window.COURSES_DATA || [];
     
-    // Check all POSH modules
-    const poshModules = (poshProg && poshProg.modules) || [];
-    let allVideosWatched = true;
-    let allQuizzesPassed = true;
+    return courses.map((prog, idx) => {
+      const isEnrolled = window.appState.isEnrolled(prog.id);
+      const progProgress = window.appState.getProgramProgress(prog.id);
+      const cert = window.appState.getCertificate(prog.id);
+      const modules = prog.modules || [];
 
-    poshModules.forEach(m => {
-      if (!window.appState.isVideoFinished(m.id)) allVideosWatched = false;
-      const q = window.appState.quizResults[m.id];
-      if (!q || !q.passed) allQuizzesPassed = false;
-    });
+      const watchedModules = modules.filter(m => window.appState.isVideoFinished(m.id)).length;
+      const allWatched = modules.length > 0 && watchedModules === modules.length;
 
-    const isFullyCompliant = (progress.percentage === 100) || (allVideosWatched && allQuizzesPassed) || !!cert;
-    const completionDate = cert ? cert.issueDate : (isFullyCompliant ? new Date().toISOString().split("T")[0] : "Pending");
-    const nextRefresher = isFullyCompliant ? "2027-09-24 (Annual Cycle)" : "Immediate Action Required";
+      const quizModules = modules.filter(m => m.quiz);
+      const passedQuizzes = quizModules.filter(m => {
+        const q = window.appState.quizResults[m.id];
+        return q && q.passed;
+      }).length;
+      const allQuizzesPassed = quizModules.length > 0 && passedQuizzes === quizModules.length;
 
-    return [
-      {
-        "Compliance ID": "STAT-POSH-2026-01",
+      const isFullyCompliant = (progProgress.percentage === 100) || (allWatched && (quizModules.length === 0 || allQuizzesPassed)) || !!cert;
+      const completionDate = cert ? cert.issueDate : (isFullyCompliant ? new Date().toISOString().split("T")[0] : "Pending");
+      const nextRefresher = isFullyCompliant ? "2027-09-24 (Annual Cycle)" : "Immediate Action Required";
+      const regTitle = prog.category === "Corporate Compliance" ? `${prog.title} (Statutory POSH Mandate)` : `${prog.title} (${prog.category})`;
+
+      let statStatus = "NON-COMPLIANT / PENDING";
+      if (isFullyCompliant) statStatus = "FULLY COMPLIANT";
+      else if (isEnrolled && (progProgress.percentage > 0 || watchedModules > 0)) statStatus = "IN PROGRESS";
+
+      const cleanSlug = (prog.slug || prog.id || `TRK${idx + 1}`).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+
+      return {
+        "Compliance ID": `STAT-${cleanSlug}-${2026}`,
         "Employee Name": learnerName,
         "Department / Role": "Technology & Enablement",
-        "Mandatory Regulation": "POSH Act 2013 (Sexual Harassment Prevention)",
-        "Video Modules Watched": allVideosWatched ? "100% Complete" : "In Progress",
+        "Mandatory Regulation": regTitle,
+        "Video Modules Watched": allWatched ? "100% Complete" : (modules.length > 0 ? `${watchedModules}/${modules.length} Watched` : "No Video"),
         "Anti-Skip Gate Integrity": "Strictly Enforced (High-Water Mark Verified)",
-        "Assessment Passed": allQuizzesPassed ? "Yes (100% Score)" : "Pending",
-        "Statutory Status": isFullyCompliant ? "FULLY COMPLIANT" : "NON-COMPLIANT / PENDING",
-        "Certificate ID": cert ? cert.credentialId : (isFullyCompliant ? "WXP-POSH-VERIFIED" : "Pending"),
+        "Assessment Passed": quizModules.length > 0 ? (allQuizzesPassed ? `Passed (${passedQuizzes}/${quizModules.length})` : `${passedQuizzes}/${quizModules.length} Passed`) : "Exempt",
+        "Statutory Status": statStatus,
+        "Certificate ID": cert ? cert.credentialId : (isFullyCompliant ? "VERIFIED-INTERNAL" : "Pending"),
         "Completion Date": completionDate,
         "Refresher Due Date": nextRefresher,
-        "Internal Committee (IC) Audit": isFullyCompliant ? "AUDIT READY & VERIFIED" : "ACTION REQUIRED"
-      },
-      {
-        "Compliance ID": "STAT-CYBER-2026-02",
-        "Employee Name": learnerName,
-        "Department / Role": "Technology & Enablement",
-        "Mandatory Regulation": "ISO 27001 & Corporate Information Security",
-        "Video Modules Watched": window.appState.isVideoFinished("mod-cyber-1") ? "100% Complete" : "Pending",
-        "Anti-Skip Gate Integrity": "Strictly Enforced",
-        "Assessment Passed": (window.appState.quizResults["mod-cyber-1"] && window.appState.quizResults["mod-cyber-1"].passed) ? "Yes" : "Pending",
-        "Statutory Status": window.appState.isProgramCompleted("prog-cybersecurity") ? "FULLY COMPLIANT" : "IN PROGRESS",
-        "Certificate ID": window.appState.getCertificate("prog-cybersecurity") ? window.appState.getCertificate("prog-cybersecurity").credentialId : "Pending",
-        "Completion Date": window.appState.getCertificate("prog-cybersecurity") ? window.appState.getCertificate("prog-cybersecurity").issueDate : "Pending",
-        "Refresher Due Date": "2027-01-15",
-        "Internal Committee (IC) Audit": "Standard Policy"
-      }
-    ];
+        "Internal Committee (IC) Audit": isFullyCompliant ? "AUDIT READY & VERIFIED" : (isEnrolled ? "IN PROGRESS" : "ACTION REQUIRED")
+      };
+    });
   }
 
   // --- DATA GENERATOR 4: VIDEO WATCH & ANTI-SKIP AUDIT LOG ---
@@ -346,16 +341,28 @@ class ReportsManager {
   // --- EXCEL EXPORT 5: MASTER CORPORATE AUDIT WORKBOOK (6 FORMATTED SHEETS) ---
   exportMasterAuditWorkbook() {
     const questionsData = this.generateQuestionsData();
+    const progressData = this.generateProgressData();
+    const quizData = this.generateQuizData();
+    const complianceData = this.generatePOSHComplianceData();
+    const videoData = this.generateVideoAuditData();
+
+    const courses = window.COURSES_DATA || [];
+    const compliantCount = complianceData.filter(c => c["Statutory Status"] === "FULLY COMPLIANT").length;
+    const compRate = complianceData.length > 0 ? Math.round((compliantCount / complianceData.length) * 100) : 0;
+
     const summarySheet = [
       {
         "Institutional Entity": "Worxpertise Global Technology Academy",
         "Audit Date": new Date().toLocaleString(),
         "Learner Name": (window.appState && window.appState.user && window.appState.user.name) || "Sachin Chauhan",
-        "Enrolled Programs Count": window.appState.enrolledPrograms.length,
-        "Completed Modules Count": window.appState.completedModules.length,
-        "Certificates Issued Count": window.appState.certificates.length,
+        "Total Academy Curricula": courses.length,
+        "Enrolled Curricula Count": (window.appState.enrolledPrograms || []).length,
+        "Total Video Modules": videoData.length,
+        "Completed Modules Count": (window.appState.completedModules || []).length,
+        "Total Quizzes Assessed": quizData.length,
+        "Certificates Issued Count": (window.appState.certificates || []).length,
         "Question Bank Total": questionsData.length,
-        "POSH Statutory Compliance": "100% COMPLIANT & AUDIT READY",
+        "Compliance Health": `${compRate}% Compliant (${compliantCount} of ${courses.length} Tracks Satisfied)`,
         "Anti-Skip Tamper Protection": "Active & Cryptographically Logged",
         "Database Persistence": "PostgreSQL Integrated & LocalStorage Synchronized"
       }
@@ -363,11 +370,11 @@ class ReportsManager {
 
     const sheets = [
       { sheetName: "Executive Summary", data: summarySheet },
-      { sheetName: "POSH Compliance Matrix", data: this.generatePOSHComplianceData() },
-      { sheetName: "Curriculum Progress", data: this.generateProgressData() },
-      { sheetName: "Assessment Gradebook", data: this.generateQuizData() },
+      { sheetName: "POSH Compliance Matrix", data: complianceData },
+      { sheetName: "Curriculum Progress", data: progressData },
+      { sheetName: "Assessment Gradebook", data: quizData },
       { sheetName: "Module Questions & Answers", data: questionsData },
-      { sheetName: "Video Anti-Skip Logs", data: this.generateVideoAuditData() }
+      { sheetName: "Video Anti-Skip Logs", data: videoData }
     ];
 
     const fileName = `Worxpertise_Master_Corporate_Audit_Workbook_${new Date().toISOString().split("T")[0]}.xlsx`;
@@ -585,12 +592,15 @@ class ReportsManager {
 
     const progressData = this.generateProgressData();
     const quizData = this.generateQuizData();
-    const certsCount = window.appState.certificates.length;
+    const certsCount = (window.appState && window.appState.certificates && window.appState.certificates.length) || 0;
+    const complianceData = this.generatePOSHComplianceData();
     
     const completedProgs = progressData.filter(p => p.Status.includes("100%")).length;
     const passedQuizzes = quizData.filter(q => q["Result Status"] === "PASSED").length;
     const totalQuizzes = quizData.length;
     const quizPassRate = totalQuizzes > 0 ? Math.round((passedQuizzes / totalQuizzes) * 100) : 0;
+    const compliantCount = complianceData.filter(c => c["Statutory Status"] === "FULLY COMPLIANT").length;
+    const compRate = complianceData.length > 0 ? Math.round((compliantCount / complianceData.length) * 100) : 0;
 
     container.innerHTML = `
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -614,11 +624,11 @@ class ReportsManager {
 
         <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
           <div class="flex items-center justify-between">
-            <span class="text-xs text-slate-400 font-medium">POSH Statutory Audit</span>
+            <span class="text-xs text-slate-400 font-medium">Statutory Compliance</span>
             <span class="text-[#dd1f36] text-sm font-bold">🛡️</span>
           </div>
-          <div class="text-xl font-black text-emerald-400 mt-1">100% COMPLIANT</div>
-          <div class="text-[11px] text-slate-400 mt-0.5">Act 2013 Verified</div>
+          <div class="text-xl font-black ${compRate === 100 ? 'text-emerald-400' : 'text-amber-400'} mt-1">${compRate}% COMPLIANT</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">${compliantCount} of ${complianceData.length} Tracks Satisfied</div>
         </div>
 
         <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">

@@ -341,8 +341,19 @@ class InstructorStudio {
       if (!window.COURSES_DATA) window.COURSES_DATA = [];
       window.COURSES_DATA.unshift(newProg);
 
+      // Auto-enroll in new course so it's active in My Learning & Dashboard
+      if (window.appState && window.appState.enrollProgram) {
+        window.appState.enrollProgram(newProg.id);
+      }
+
       if (window.app && window.app.renderCatalogGrid) {
         window.app.renderCatalogGrid();
+      }
+      if (window.app && window.app.renderDashboard) {
+        window.app.renderDashboard();
+      }
+      if (window.reportsManager && window.reportsManager.render) {
+        window.reportsManager.render();
       }
 
       // Reset form
@@ -374,6 +385,12 @@ class InstructorStudio {
 
       if (window.app && window.app.renderCatalogGrid) {
         window.app.renderCatalogGrid();
+      }
+      if (window.app && window.app.renderDashboard) {
+        window.app.renderDashboard();
+      }
+      if (window.reportsManager && window.reportsManager.render) {
+        window.reportsManager.render();
       }
 
       this.renderOverview();
@@ -523,6 +540,8 @@ class InstructorStudio {
         });
 
         this.cancelEditModule();
+        if (window.app && window.app.renderDashboard) window.app.renderDashboard();
+        if (window.reportsManager && window.reportsManager.render) window.reportsManager.render();
         window.app.showToast(`Lesson "${title}" updated successfully!`, "success");
         this.switchTab("overview");
       } catch (err) {
@@ -564,6 +583,8 @@ class InstructorStudio {
       }
 
       this.cancelEditModule();
+      if (window.app && window.app.renderDashboard) window.app.renderDashboard();
+      if (window.reportsManager && window.reportsManager.render) window.reportsManager.render();
       window.app.showToast(`Lesson "${title}" added! Now author its post-video Q&A.`, "success");
       this.switchTab("quiz");
     } catch (err) {
@@ -823,6 +844,8 @@ class InstructorStudio {
         });
       });
 
+      if (window.app && window.app.renderDashboard) window.app.renderDashboard();
+      if (window.reportsManager && window.reportsManager.render) window.reportsManager.render();
       window.app.showToast("🎉 Post-video Q&A assessment saved successfully!", "success");
       this.switchTab("overview");
     } catch (err) {

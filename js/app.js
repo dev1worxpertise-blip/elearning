@@ -57,6 +57,8 @@ class App {
               }
             }
             this.renderCatalogGrid();
+            if (this.currentView === "dashboard") this.renderDashboard();
+            if (this.currentView === "reports" && window.reportsManager) window.reportsManager.render();
           }
         } catch (e) {
           console.log('Using local curriculum cache.');
@@ -67,6 +69,9 @@ class App {
     // Subscribe to state changes to update stats & UI
     window.appState.subscribe(() => {
       this.updateHeaderProfile();
+      if (this.currentView === "dashboard") this.renderDashboard();
+      if (this.currentView === "reports" && window.reportsManager) window.reportsManager.render();
+      if (this.currentView === "mylearning") this.renderMyLearning();
     });
   }
 
@@ -585,16 +590,16 @@ class App {
       : 0;
 
     const certsCount = window.appState.certificates.length;
-    const poshProg = courses.find(c => c.id.includes("posh")) || courses[0];
-    const isPoshPassed = poshProg && (window.appState.isProgramCompleted(poshProg.id) || !!window.appState.getCertificate(poshProg.id));
+    const compliantCoursesCount = courses.filter(c => window.appState.isProgramCompleted(c.id) || !!window.appState.getCertificate(c.id)).length;
+    const complianceRate = courses.length > 0 ? Math.round((compliantCoursesCount / courses.length) * 100) : 0;
 
     // Render active cut
     if (this.activeDashboardCut === "executive") {
-      this.renderCutExecutive(container, { enrolledIds, courses, enrolledCourses, totalWatchHours, totalWatchMins, quizResults, passedQuizzes, avgScore, certsCount, isPoshPassed });
+      this.renderCutExecutive(container, { enrolledIds, courses, enrolledCourses, totalWatchHours, totalWatchMins, quizResults, passedQuizzes, avgScore, certsCount, compliantCoursesCount, complianceRate });
     } else if (this.activeDashboardCut === "curriculum") {
       this.renderCutCurriculum(container, { courses, enrolledIds });
     } else if (this.activeDashboardCut === "compliance") {
-      this.renderCutCompliance(container, { poshProg, isPoshPassed, certsCount });
+      this.renderCutCompliance(container, { courses, certsCount, avgScore, compliantCoursesCount, complianceRate });
     } else if (this.activeDashboardCut === "rigor") {
       this.renderCutRigor(container, { courses, quizResults, avgScore, passedQuizzes });
     } else if (this.activeDashboardCut === "engagement") {
@@ -610,8 +615,8 @@ class App {
         <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex items-center space-x-4">
           <div class="w-12 h-12 rounded-xl bg-[#dd1f36]/20 text-[#dd1f36] flex items-center justify-center font-bold text-xl">📚</div>
           <div>
-            <div class="text-2xl font-black text-white">${data.enrolledIds.length} Tracks</div>
-            <div class="text-xs text-slate-400 font-medium">Enrolled Curricula</div>
+            <div class="text-2xl font-black text-white">${data.courses.length} Tracks</div>
+            <div class="text-xs text-slate-400 font-medium">${data.enrolledIds.length} Enrolled Curricula</div>
           </div>
         </div>
 
@@ -642,8 +647,8 @@ class App {
         <div class="p-5 rounded-2xl bg-slate-900 border border-emerald-900/50 flex items-center space-x-4">
           <div class="w-12 h-12 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center font-bold text-xl">🛡️</div>
           <div>
-            <div class="text-xs font-black uppercase tracking-wider text-emerald-400">POSH 2013</div>
-            <div class="text-sm font-bold text-white">${data.isPoshPassed ? '100% COMPLIANT ✓' : 'ACTION REQUIRED'}</div>
+            <div class="text-xs font-black uppercase tracking-wider text-emerald-400">COMPLIANCE</div>
+            <div class="text-sm font-bold text-white">${data.complianceRate}% (${data.compliantCoursesCount}/${data.courses.length} Passed)</div>
           </div>
         </div>
       </div>
@@ -674,12 +679,13 @@ class App {
       <!-- Curriculum Completion Velocity -->
       <div class="space-y-4">
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-bold text-white">Active Curricula Progress</h3>
-          <span class="text-xs text-slate-400">${data.enrolledCourses.length} of ${data.courses.length} Tracks In Training</span>
+          <h3 class="text-lg font-bold text-white">Curriculum Velocity & Active Tracks</h3>
+          <span class="text-xs text-slate-400">${data.courses.length} Total Curricula Available (${data.enrolledIds.length} Enrolled)</span>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          ${data.enrolledCourses.map(program => {
+          ${data.courses.map(program => {
+            const isEnrolled = window.appState.isEnrolled(program.id);
             const progress = window.appState.getProgramProgress(program.id);
             const hasCert = !!window.appState.getCertificate(program.id);
             return `
@@ -691,12 +697,17 @@ class App {
                       <div class="flex items-center space-x-2">
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#dd1f36]/20 text-[#dd1f36]">${program.category}</span>
                         ${hasCert ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">🎓 Certified</span>' : ''}
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isEnrolled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}">
+                          ${isEnrolled ? 'Enrolled' : 'Catalog Track'}
+                        </span>
                       </div>
                       <h4 class="text-sm font-bold text-white mt-1 line-clamp-1">${program.title}</h4>
-                      <p class="text-xs text-slate-400 mt-0.5">${progress.completed} of ${progress.total} lessons passed</p>
+                      <p class="text-xs text-slate-400 mt-0.5">
+                        ${isEnrolled ? `${progress.completed} of ${progress.total} lessons passed` : `${(program.modules || []).length} lessons available`}
+                      </p>
                     </div>
                   </div>
-                  <span class="text-sm font-extrabold text-[#dd1f36]">${progress.percentage}%</span>
+                  <span class="text-sm font-extrabold ${isEnrolled ? 'text-[#dd1f36]' : 'text-slate-500'}">${progress.percentage}%</span>
                 </div>
 
                 <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
@@ -705,12 +716,21 @@ class App {
 
                 <div class="flex items-center justify-between pt-1">
                   <span class="text-xs text-slate-400 font-mono">Duration: ${program.duration}</span>
-                  <button 
-                    onclick="window.app.startProgram('${program.id}')" 
-                    class="px-4 py-1.5 rounded-lg bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs transition"
-                  >
-                    ${progress.percentage === 100 ? 'Review Lessons' : 'Resume'}
-                  </button>
+                  ${isEnrolled ? `
+                    <button 
+                      onclick="window.app.startProgram('${program.id}')" 
+                      class="px-4 py-1.5 rounded-lg bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs transition"
+                    >
+                      ${progress.percentage === 100 ? 'Review Lessons' : 'Resume'}
+                    </button>
+                  ` : `
+                    <button 
+                      onclick="window.app.enrollInProgram('${program.id}')" 
+                      class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center space-x-1"
+                    >
+                      <span>⚡ Enroll & Launch</span>
+                    </button>
+                  `}
                 </div>
               </div>
             `;
@@ -722,11 +742,16 @@ class App {
 
   // CUT 2: CURRICULUM PERFORMANCE CUT
   renderCutCurriculum(container, data) {
+    const totalModules = data.courses.reduce((acc, c) => acc + (c.modules ? c.modules.length : 0), 0);
+    const categoriesCount = new Set(data.courses.map(c => c.category)).size;
+    const enrolledProgresses = data.courses.map(c => window.appState.getProgramProgress(c.id).percentage);
+    const avgProg = enrolledProgresses.length > 0 ? Math.round(enrolledProgresses.reduce((a, b) => a + b, 0) / enrolledProgresses.length) : 0;
+
     container.innerHTML = `
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
           <h3 class="text-lg font-bold text-white">Curriculum & Departmental Breakdown Cut</h3>
-          <p class="text-xs text-slate-400">Institutional performance slice across all training tracks and competencies.</p>
+          <p class="text-xs text-slate-400">Institutional performance slice across all ${data.courses.length} training tracks and ${categoriesCount} competency tracks.</p>
         </div>
         <button 
           onclick="window.reportsManager.exportActiveToExcel()" 
@@ -734,6 +759,33 @@ class App {
         >
           <span>📊 Export Curriculum Cut (.xlsx)</span>
         </button>
+      </div>
+
+      <!-- Departmental Highlights KPIs -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="text-xs text-slate-400 font-medium">Curricula Tracks</div>
+          <div class="text-2xl font-black text-white mt-1">${data.courses.length} Available</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">${data.enrolledIds.length} Active in Learning</div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="text-xs text-slate-400 font-medium">Total Video Lessons</div>
+          <div class="text-2xl font-black text-cyan-400 mt-1">${totalModules} Modules</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Across All Programs</div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="text-xs text-slate-400 font-medium">Disciplines</div>
+          <div class="text-2xl font-black text-purple-400 mt-1">${categoriesCount} Domains</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Enterprise Breadth</div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="text-xs text-slate-400 font-medium">Avg Track Completion</div>
+          <div class="text-2xl font-black text-emerald-400 mt-1">${avgProg}%</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Curriculum Velocity</div>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -744,37 +796,48 @@ class App {
           const modules = program.modules || [];
 
           return `
-            <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-              <div class="flex items-start justify-between">
-                <div>
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 uppercase">${program.category}</span>
-                  <h4 class="text-base font-bold text-white mt-1.5">${program.title}</h4>
-                  <p class="text-xs text-slate-400 mt-1 line-clamp-2">${program.tagline}</p>
+            <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 flex flex-col justify-between">
+              <div class="space-y-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 uppercase">${program.category}</span>
+                    <h4 class="text-base font-bold text-white mt-1.5">${program.title}</h4>
+                    <p class="text-xs text-slate-400 mt-1 line-clamp-2">${program.tagline}</p>
+                  </div>
+                  <span class="text-xs px-2.5 py-1 rounded-full font-bold ${isEnrolled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}">
+                    ${isEnrolled ? 'Enrolled' : 'Catalog Only'}
+                  </span>
                 </div>
-                <span class="text-xs px-2.5 py-1 rounded-full font-bold ${isEnrolled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}">
-                  ${isEnrolled ? 'Enrolled' : 'Catalog Only'}
-                </span>
+
+                <!-- Metrics Slice -->
+                <div class="grid grid-cols-3 gap-3 p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 text-center">
+                  <div>
+                    <div class="text-sm font-bold text-white">${modules.length}</div>
+                    <div class="text-[10px] text-slate-500 uppercase">Modules</div>
+                  </div>
+                  <div>
+                    <div class="text-sm font-bold text-cyan-400">${progress.percentage}%</div>
+                    <div class="text-[10px] text-slate-500 uppercase">Completion</div>
+                  </div>
+                  <div>
+                    <div class="text-sm font-bold text-amber-400">${hasCert ? '100%' : 'Pending'}</div>
+                    <div class="text-[10px] text-slate-500 uppercase">Certification</div>
+                  </div>
+                </div>
+
+                <!-- Skills tags -->
+                <div class="flex flex-wrap gap-1.5 pt-1">
+                  ${(program.skills || []).map(s => `<span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300">${s}</span>`).join("")}
+                </div>
               </div>
 
-              <!-- Metrics Slice -->
-              <div class="grid grid-cols-3 gap-3 p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 text-center">
-                <div>
-                  <div class="text-sm font-bold text-white">${modules.length}</div>
-                  <div class="text-[10px] text-slate-500 uppercase">Modules</div>
-                </div>
-                <div>
-                  <div class="text-sm font-bold text-cyan-400">${progress.percentage}%</div>
-                  <div class="text-[10px] text-slate-500 uppercase">Completion</div>
-                </div>
-                <div>
-                  <div class="text-sm font-bold text-amber-400">${hasCert ? '100%' : 'Pending'}</div>
-                  <div class="text-[10px] text-slate-500 uppercase">Certification</div>
-                </div>
-              </div>
-
-              <!-- Skills tags -->
-              <div class="flex flex-wrap gap-1.5 pt-1">
-                ${(program.skills || []).map(s => `<span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300">${s}</span>`).join("")}
+              <div class="pt-2 border-t border-slate-800/80">
+                <button 
+                  onclick="${isEnrolled ? `window.app.startProgram('${program.id}')` : `window.app.enrollInProgram('${program.id}')`}" 
+                  class="w-full py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 ${isEnrolled ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}"
+                >
+                  <span>${isEnrolled ? (progress.percentage === 100 ? 'Review Lessons' : 'Resume Track') : '⚡ Quick Enroll & Launch'}</span>
+                </button>
               </div>
             </div>
           `;
@@ -783,57 +846,103 @@ class App {
     `;
   }
 
-  // CUT 3: POSH STATUTORY COMPLIANCE CUT
+  // CUT 3: STATUTORY & GOVERNANCE COMPLIANCE MATRIX CUT
   renderCutCompliance(container, data) {
-    const cert = data.certsCount > 0 ? window.appState.certificates.find(c => c.programId && c.programId.includes("posh")) : null;
+    const courses = data.courses || window.COURSES_DATA || [];
+    const complianceRoster = courses.map((prog, idx) => {
+      const cert = window.appState.getCertificate(prog.id);
+      const isCompleted = window.appState.isProgramCompleted(prog.id) || !!cert;
+      const progress = window.appState.getProgramProgress(prog.id);
+      const isEnrolled = window.appState.isEnrolled(prog.id);
+      
+      const modules = prog.modules || [];
+      const watchedCount = modules.filter(m => window.appState.isVideoFinished(m.id)).length;
+      const allWatched = modules.length > 0 && watchedCount === modules.length;
+
+      const quizModules = modules.filter(m => m.quiz);
+      const passedQuizzes = quizModules.filter(m => {
+        const q = window.appState.quizResults[m.id];
+        return q && q.passed;
+      }).length;
+      const allQuizzesPassed = quizModules.length > 0 && passedQuizzes === quizModules.length;
+
+      const isCompliant = isCompleted || (allWatched && (quizModules.length === 0 || allQuizzesPassed));
+      const cleanSlug = (prog.slug || prog.id || `TRK${idx + 1}`).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+
+      return {
+        id: `STAT-${cleanSlug}-2026`,
+        program: prog,
+        isCompliant,
+        isEnrolled,
+        progress,
+        cert,
+        modulesCount: modules.length,
+        watchedCount,
+        allWatched,
+        quizCount: quizModules.length,
+        passedQuizzes,
+        allQuizzesPassed
+      };
+    });
+
+    const compliantCount = complianceRoster.filter(r => r.isCompliant).length;
+    const compRate = courses.length > 0 ? Math.round((compliantCount / courses.length) * 100) : 0;
+    const totalWatchedModules = complianceRoster.reduce((acc, r) => acc + r.watchedCount, 0);
+    const totalModulesCount = complianceRoster.reduce((acc, r) => acc + r.modulesCount, 0);
 
     container.innerHTML = `
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
           <div class="flex items-center space-x-2">
-            <h3 class="text-lg font-bold text-white">POSH Act 2013 Statutory Compliance Matrix</h3>
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">AUDIT READY</span>
+            <h3 class="text-lg font-bold text-white">Statutory & Governance Compliance Matrix</h3>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${compRate === 100 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}">
+              ${compRate === 100 ? '100% AUDIT READY' : `${compRate}% COMPLIANT`}
+            </span>
           </div>
-          <p class="text-xs text-slate-400 mt-1">Official regulatory compliance cut for Human Resources, Legal Counsel, and Internal Committee (IC) filing.</p>
+          <p class="text-xs text-slate-400 mt-1">Official regulatory and institutional compliance cut across all ${courses.length} curriculum tracks.</p>
         </div>
         <button 
           onclick="window.reportsManager.exportPOSHMatrixToExcel()" 
           class="px-4 py-2 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white text-xs font-bold shadow-lg transition flex items-center space-x-1.5 self-start"
         >
-          <span>🛡️ Export POSH Matrix (.xlsx)</span>
+          <span>🛡️ Export Compliance Matrix (.xlsx)</span>
         </button>
       </div>
 
       <!-- Statutory Highlights Row -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="p-5 rounded-2xl bg-slate-900 border border-emerald-900/40 space-y-1">
-          <div class="text-xs text-slate-400">Institutional Compliance Status</div>
-          <div class="text-2xl font-black text-emerald-400">${data.isPoshPassed ? '100% COMPLIANT' : 'ACTION REQUIRED'}</div>
-          <div class="text-[11px] text-slate-400">Statutory Act 2013 Rules Satisfied</div>
+        <div class="p-5 rounded-2xl bg-slate-900 border ${compRate === 100 ? 'border-emerald-900/40' : 'border-amber-900/40'} space-y-1">
+          <div class="text-xs text-slate-400">Institutional Compliance Health</div>
+          <div class="text-2xl font-black ${compRate === 100 ? 'text-emerald-400' : 'text-amber-400'}">${compRate}% COMPLIANT</div>
+          <div class="text-[11px] text-slate-400">${compliantCount} of ${courses.length} Tracks Fully Satisfied</div>
         </div>
 
         <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
           <div class="text-xs text-slate-400">Anti-Skip Video Gating Integrity</div>
-          <div class="text-2xl font-black text-white">100% Verified</div>
+          <div class="text-2xl font-black text-white">${totalWatchedModules} / ${totalModulesCount} Passed</div>
           <div class="text-[11px] text-emerald-400">Zero Seeking Skips Recorded</div>
         </div>
 
         <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-1">
           <div class="text-xs text-slate-400">Assessment Evaluation Grade</div>
-          <div class="text-2xl font-black text-cyan-400">100% (4/4 Correct)</div>
-          <div class="text-[11px] text-slate-400">Exceeds 80% Statutory Benchmark</div>
+          <div class="text-2xl font-black text-cyan-400">${data.avgScore}% Average</div>
+          <div class="text-[11px] text-slate-400">Mandatory 80% Rigor Threshold</div>
         </div>
       </div>
 
       <!-- Statutory Audit Roster Table -->
       <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-        <h4 class="text-sm font-bold text-white">Internal Committee (IC) Official Audit Record</h4>
+        <div class="flex items-center justify-between">
+          <h4 class="text-sm font-bold text-white">Internal Committee (IC) & Corporate Governance Audit Roster</h4>
+          <span class="text-xs text-slate-400 font-mono">${courses.length} Tracks Monitored</span>
+        </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-300">
             <thead class="text-[10px] uppercase text-slate-500 border-b border-slate-800 pb-2">
               <tr>
                 <th class="py-2.5">Learner Name</th>
-                <th>Statutory Program</th>
+                <th>Program Track</th>
+                <th>Category</th>
                 <th>Watch Gate</th>
                 <th>Assessment</th>
                 <th>Status</th>
@@ -842,15 +951,30 @@ class App {
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-800 font-mono">
-              <tr>
-                <td class="py-3 font-sans font-bold text-white">${window.appState.user.name}</td>
-                <td class="font-sans">POSH Act 2013 Compliance</td>
-                <td><span class="text-emerald-400 font-bold">✓ 100% Watched</span></td>
-                <td><span class="text-emerald-400 font-bold">100% (Passed)</span></td>
-                <td><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400">COMPLIANT</span></td>
-                <td class="text-slate-400">${cert ? cert.credentialId : 'WXP-POSH-VERIFIED'}</td>
-                <td class="text-slate-400">2027-09-24 (Annual)</td>
-              </tr>
+              ${complianceRoster.map(item => `
+                <tr class="hover:bg-slate-800/40 transition">
+                  <td class="py-3 font-sans font-bold text-white">${window.appState.user.name}</td>
+                  <td class="font-sans font-semibold text-slate-200">${item.program.title}</td>
+                  <td class="font-sans"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300">${item.program.category}</span></td>
+                  <td>
+                    <span class="${item.allWatched ? 'text-emerald-400 font-bold' : (item.watchedCount > 0 ? 'text-amber-300' : 'text-slate-500')}">
+                      ${item.allWatched ? '✓ 100% Watched' : `${item.watchedCount}/${item.modulesCount} Watched`}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="${item.allQuizzesPassed ? 'text-emerald-400 font-bold' : (item.passedQuizzes > 0 ? 'text-amber-300' : 'text-slate-500')}">
+                      ${item.quizCount > 0 ? (item.allQuizzesPassed ? '✓ Passed (≥80%)' : `${item.passedQuizzes}/${item.quizCount} Passed`) : 'Exempt'}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${item.isCompliant ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : (item.isEnrolled ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-slate-800 text-slate-400')}">
+                      ${item.isCompliant ? 'COMPLIANT' : (item.isEnrolled ? 'IN PROGRESS' : 'NOT STARTED')}
+                    </span>
+                  </td>
+                  <td class="text-slate-400">${item.cert ? item.cert.credentialId : (item.isCompliant ? 'WXP-AUDIT-VERIFIED' : 'Pending')}</td>
+                  <td class="text-slate-400">${item.isCompliant ? '2027-09-24 (Annual)' : 'Immediate Action Required'}</td>
+                </tr>
+              `).join("")}
             </tbody>
           </table>
         </div>
@@ -861,12 +985,14 @@ class App {
   // CUT 4: ASSESSMENT & EXAM RIGOR CUT
   renderCutRigor(container, data) {
     const allModules = (data.courses || []).flatMap(c => (c.modules || []).map(m => ({ ...m, programTitle: c.title })));
+    const assessedModules = allModules.filter(m => m.quiz);
+    const totalQuestions = assessedModules.reduce((acc, m) => acc + (m.quiz.questions ? m.quiz.questions.length : 0), 0);
 
     container.innerHTML = `
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
           <h3 class="text-lg font-bold text-white">Assessment & Exam Rigor Analytics Cut</h3>
-          <p class="text-xs text-slate-400">Detailed breakdown of question difficulty, score distributions, and pass rates.</p>
+          <p class="text-xs text-slate-400">Detailed breakdown of question difficulty, score distributions, and pass rates across ${allModules.length} curriculum modules.</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <button 
@@ -882,6 +1008,27 @@ class App {
           >
             <span>🎯 Export Gradebook (.xlsx)</span>
           </button>
+        </div>
+      </div>
+
+      <!-- Exam Rigor Summary KPIs -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="text-xs text-slate-400 font-medium">Assessed Curriculum Modules</div>
+          <div class="text-2xl font-black text-cyan-400 mt-1">${assessedModules.length} Modules</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">With Embedded Examinations</div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="text-xs text-slate-400 font-medium">Master Question Bank</div>
+          <div class="text-2xl font-black text-purple-400 mt-1">${totalQuestions} Questions</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">MCQ Assessment Bank</div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="text-xs text-slate-400 font-medium">Average Evaluation Standard</div>
+          <div class="text-2xl font-black text-emerald-400 mt-1">${data.avgScore}% Average</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">${data.passedQuizzes} Assessments Passed (≥80%)</div>
         </div>
       </div>
 
@@ -904,7 +1051,7 @@ class App {
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-800">
-              ${allModules.filter(m => m.quiz).map(mod => {
+              ${assessedModules.map(mod => {
                 const res = window.appState.quizResults[mod.id];
                 const isPassed = res && res.passed;
                 return `
@@ -932,12 +1079,13 @@ class App {
   // CUT 5: VIDEO ENGAGEMENT & ANTI-SKIP CUT
   renderCutEngagement(container, data) {
     const allModules = (data.courses || []).flatMap(c => (c.modules || []).map(m => ({ ...m, programTitle: c.title })));
+    const finishedCount = allModules.filter(m => window.appState.isVideoFinished(m.id)).length;
 
     container.innerHTML = `
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
           <h3 class="text-lg font-bold text-white">Video Watch & Anti-Skip Integrity Cut</h3>
-          <p class="text-xs text-slate-400">Forensic logs guaranteeing that learners fully watched instruction without fast-forward tampering.</p>
+          <p class="text-xs text-slate-400">Forensic logs guaranteeing that learners fully watched instruction across all ${allModules.length} lessons.</p>
         </div>
         <button 
           onclick="window.reportsManager.exportActiveToExcel()" 
@@ -945,6 +1093,33 @@ class App {
         >
           <span>⏱️ Export Video Audit (.xlsx)</span>
         </button>
+      </div>
+
+      <!-- Video Watch KPIs -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="text-xs text-slate-400 font-medium">Monitored Lessons</div>
+          <div class="text-2xl font-black text-white mt-1">${allModules.length} Modules</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Across All Curricula</div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="text-xs text-slate-400 font-medium">Streamed Hours</div>
+          <div class="text-2xl font-black text-purple-400 mt-1">${data.totalWatchHours} hrs</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">${data.totalWatchMins} Total Minutes</div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="text-xs text-slate-400 font-medium">Fully Watched</div>
+          <div class="text-2xl font-black text-emerald-400 mt-1">${finishedCount} / ${allModules.length}</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Completed Modules</div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="text-xs text-slate-400 font-medium">Anti-Skip Lock</div>
+          <div class="text-xl font-black text-amber-400 mt-1">100% ENFORCED</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Seeking Restricted</div>
+        </div>
       </div>
 
       <!-- Anti-Skip Mechanism Card -->
@@ -963,6 +1138,7 @@ class App {
             <thead class="text-[10px] uppercase text-slate-500 bg-slate-950/60 border-b border-slate-800">
               <tr>
                 <th class="px-5 py-3">Lesson Title</th>
+                <th class="px-5 py-3">Program</th>
                 <th class="px-5 py-3">Duration</th>
                 <th class="px-5 py-3">Watched Seconds</th>
                 <th class="px-5 py-3">Watch %</th>
@@ -978,6 +1154,7 @@ class App {
                 return `
                   <tr class="hover:bg-slate-800/40 transition">
                     <td class="px-5 py-3 font-sans font-medium text-white">${mod.title}</td>
+                    <td class="px-5 py-3 font-sans text-xs text-slate-400">${mod.programTitle}</td>
                     <td class="px-5 py-3 text-slate-400">${mod.duration || '14:20'}</td>
                     <td class="px-5 py-3 text-slate-300">${watchedSecs}s</td>
                     <td class="px-5 py-3 ${isFinished ? 'text-emerald-400 font-bold' : 'text-slate-400'}">${isFinished ? '100%' : `${vStat.percent || 0}%`}</td>
