@@ -84,6 +84,16 @@
             <span id="headerCertCount" class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-slate-950">0</span>
           </button>
 
+          <!-- Instructor Studio Tab (Visible exclusively for Instructor persona) -->
+          <button 
+            id="navItemInstructor"
+            data-nav-target="instructor" 
+            class="hidden px-3 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1.5 cursor-pointer shrink-0 whitespace-nowrap hover:bg-slate-800/60"
+          >
+            <span>👨‍🏫 Instructor Studio</span>
+            <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#dd1f36]/20 text-[#dd1f36] border border-[#dd1f36]/30">Creator</span>
+          </button>
+
           <!-- Admin Studio & Hub Dropdown Menu -->
           <div class="relative group shrink-0" id="adminHubDropdown">
             <button 

@@ -136,6 +136,19 @@ class AppState {
     this.notify();
   }
 
+  isAdmin() {
+    return (this.user.role || '').toLowerCase() === 'admin';
+  }
+
+  isInstructor() {
+    const r = (this.user.role || '').toLowerCase();
+    return r === 'instructor' || r === 'admin';
+  }
+
+  isStudent() {
+    return (this.user.role || '').toLowerCase() === 'student';
+  }
+
   recordVideoProgress(moduleId, percent, isFinished, maxWatchedSeconds) {
     const current = this.videoStatus[moduleId] || { percent: 0, isFinished: false, maxWatchedSeconds: 0 };
     const newPercent = Math.max(current.percent || 0, Math.min(100, Math.round(percent)));

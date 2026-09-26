@@ -391,14 +391,26 @@ class App {
   }
 
   navigate(viewName, programId = null, moduleId = null) {
+    const user = (window.appState && window.appState.user) || { role: 'student' };
+    const role = (user.role || 'student').toLowerCase();
+
+    // Route guards based on persona role
+    if (role === "student" && ["dashboard", "reports", "instructor", "users"].includes(viewName)) {
+      this.showToast("🔒 Restricted: This area requires Instructor or Administrator access.", "warning");
+      viewName = "catalog";
+    } else if (role === "instructor" && ["users", "dashboard"].includes(viewName)) {
+      this.showToast("👑 Restricted: Administrator privileges required for User Directory.", "warning");
+      viewName = "instructor";
+    }
+
     this.currentView = viewName;
 
     const isAdminView = ["dashboard", "reports", "instructor", "users"].includes(viewName);
 
-    // Show/hide contextual Admin Sub-Bar
+    // Show/hide contextual Admin Sub-Bar (only for admin role)
     const adminSubBar = document.getElementById("adminSubBar");
     if (adminSubBar) {
-      if (isAdminView) {
+      if (role === "admin" && isAdminView) {
         adminSubBar.classList.remove("hidden");
       } else {
         adminSubBar.classList.add("hidden");
@@ -406,7 +418,7 @@ class App {
     }
 
     // Update active nav styling for top bar links
-    document.querySelectorAll("nav > [data-nav-target]").forEach(el => {
+    document.querySelectorAll("nav [data-nav-target]").forEach(el => {
       if (el.getAttribute("data-nav-target") === viewName) {
         el.classList.add("text-[#dd1f36]", "border-b-2", "border-[#dd1f36]");
         el.classList.remove("text-slate-400");
@@ -528,6 +540,47 @@ class App {
       } else {
         roleEl.textContent = '🎓 Student';
         roleEl.className = 'px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+      }
+    }
+
+    // Dynamic RBAC: Show/hide menus strictly based on persona role
+    const normalizedRole = (user.role || 'student').toLowerCase();
+    this.updateNavPermissions(normalizedRole);
+  }
+
+  updateNavPermissions(role) {
+    if (!role) {
+      const user = (window.appState && window.appState.user) || { role: 'student' };
+      role = (user.role || 'student').toLowerCase();
+    }
+
+    const adminHubDropdown = document.getElementById("adminHubDropdown");
+    const navItemInstructor = document.getElementById("navItemInstructor");
+    const adminSubBar = document.getElementById("adminSubBar");
+
+    if (role === "admin") {
+      // 👑 Admin persona: Sees full Admin Hub with all 5 analytical tools
+      if (adminHubDropdown) adminHubDropdown.classList.remove("hidden");
+      if (navItemInstructor) navItemInstructor.classList.add("hidden");
+    } else if (role === "instructor") {
+      // 👨‍🏫 Instructor persona: Sees Instructor Studio tab, hides Admin Hub & Security
+      if (adminHubDropdown) adminHubDropdown.classList.add("hidden");
+      if (navItemInstructor) navItemInstructor.classList.remove("hidden");
+      if (adminSubBar) adminSubBar.classList.add("hidden");
+
+      // Redirect if on admin-only view
+      if (["users", "dashboard"].includes(this.currentView)) {
+        this.navigate("instructor");
+      }
+    } else {
+      // 🎓 Student persona: Clean learner catalog only (no Admin Hub, no Instructor Studio, no Sub-Bar)
+      if (adminHubDropdown) adminHubDropdown.classList.add("hidden");
+      if (navItemInstructor) navItemInstructor.classList.add("hidden");
+      if (adminSubBar) adminSubBar.classList.add("hidden");
+
+      // Redirect if on any restricted admin or instructor view
+      if (["dashboard", "reports", "instructor", "users"].includes(this.currentView)) {
+        this.navigate("catalog");
       }
     }
   }
