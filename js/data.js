@@ -512,7 +512,7 @@ window.COURSES_DATA = [
     rating: 4.95,
     enrolledCount: 19850,
     duration: "8 Hours",
-    thumbnail: "https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80",
+    thumbnail: "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800&auto=format&fit=crop&q=80",
     instructor: {
       name: "Alex Rivera",
       role: "AI Research Lead & Author",

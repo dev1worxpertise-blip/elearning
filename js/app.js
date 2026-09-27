@@ -635,6 +635,7 @@ class App {
             <img 
               src="${program.thumbnail}" 
               alt="${program.title}" 
+              onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800&auto=format&fit=crop&q=80';"
               class="w-full h-full object-cover group-hover:scale-105 transition duration-500"
             />
             <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
@@ -1638,7 +1639,7 @@ class App {
       return `
         <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div class="flex items-start space-x-4">
-            <img src="${program.thumbnail}" class="w-20 h-20 rounded-xl object-cover border border-slate-800 shrink-0" />
+            <img src="${program.thumbnail}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800&auto=format&fit=crop&q=80';" class="w-20 h-20 rounded-xl object-cover border border-slate-800 shrink-0" />
             <div>
               <div class="flex items-center space-x-2">
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#dd1f36]/20 text-[#dd1f36]">${program.category}</span>
