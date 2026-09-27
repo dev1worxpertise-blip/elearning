@@ -38,9 +38,15 @@ class App {
                   const mergedModules = (detail.program.modules && detail.program.modules.length > 0)
                     ? detail.program.modules.map(dm => {
                         const em = (existingProg.modules || []).find(m => m.id === dm.id);
+                        const finalVideo = dm.video_url || dm.videoUrl || (em && (em.video_url || em.videoUrl));
+                        const finalYt = dm.youtube_id || dm.youtubeId || (em && (em.youtube_id || em.youtubeId));
                         return {
                           ...(em || {}),
                           ...dm,
+                          videoUrl: finalVideo,
+                          video_url: finalVideo,
+                          youtubeId: finalYt,
+                          youtube_id: finalYt,
                           quiz: dm.quiz || (em && em.quiz) || null
                         };
                       })

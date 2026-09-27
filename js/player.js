@@ -4,6 +4,17 @@
  * embedded YouTube lecture playback, watch-time gating, and post-video assessment unlock triggers.
  */
 
+window.extractYouTubeId = function(urlOrId) {
+  if (!urlOrId || typeof urlOrId !== 'string') return null;
+  const str = urlOrId.trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(str)) return str;
+  const shortMatch = str.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/i);
+  if (shortMatch) return shortMatch[1];
+  const fullMatch = str.match(/(?:youtube\.com\/(?:watch\?.*v=|embed\/|v\/|shorts\/))([a-zA-Z0-9_-]{11})/i);
+  if (fullMatch) return fullMatch[1];
+  return null;
+};
+
 class VideoPlayerController {
   constructor() {
     this.currentModule = null;
@@ -30,9 +41,10 @@ class VideoPlayerController {
   }
 
   init(containerId, moduleData, programData = null) {
+    this.containerId = containerId || this.containerId || "videoPlayerMount";
     this.currentModule = moduleData;
     this.currentProgram = programData || (window.app && window.app.activeProgram);
-    const container = document.getElementById(containerId);
+    const container = document.getElementById(this.containerId) || document.getElementById("videoPlayerMount");
     if (!container) return;
 
     if (this.ytSyncInterval) {
@@ -44,7 +56,6 @@ class VideoPlayerController {
     }
     this.ytPlayer = null;
     this.ytReady = false;
-    this.activeMode = "html5";
 
     const isWatched = window.appState.isVideoFinished(moduleData.id);
     const initialPercent = window.appState.getVideoPercent(moduleData.id);
@@ -54,10 +65,23 @@ class VideoPlayerController {
       ? this.currentProgram.thumbnail 
       : "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&auto=format&fit=crop&q=80";
 
-    const videoUrl = moduleData.videoUrl || moduleData.video_url || "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4";
-    const youtubeId = moduleData.youtubeId || moduleData.youtube_id || "aqz-KE-bpKQ";
-    this.ytVideoId = youtubeId;
-    const hasYouTube = Boolean(youtubeId);
+    const rawVideoUrl = (moduleData.video_url || moduleData.videoUrl || "").trim();
+    const rawYoutubeId = (moduleData.youtube_id || moduleData.youtubeId || "").trim();
+
+    // Auto-detect YouTube video ID from URL or ID field
+    const ytFromUrl = window.extractYouTubeId(rawVideoUrl);
+    const ytFromId = window.extractYouTubeId(rawYoutubeId);
+    this.ytVideoId = ytFromUrl || ytFromId || (rawYoutubeId && rawYoutubeId.length === 11 ? rawYoutubeId : null);
+
+    // Check if it's a direct HTML5 video stream (.mp4, .webm, etc.)
+    const isDirectVideo = Boolean(rawVideoUrl && rawVideoUrl.match(/\.(mp4|webm|ogg|m4v)(\?.*)?$/i));
+
+    // If YouTube ID detected or rawVideoUrl is YouTube, use YouTube mode
+    const isYouTubeStream = Boolean(ytFromUrl) || (Boolean(this.ytVideoId) && !isDirectVideo);
+    this.activeMode = isYouTubeStream ? "youtube" : "html5";
+
+    const hasYouTube = Boolean(this.ytVideoId);
+    const videoUrl = isDirectVideo ? rawVideoUrl : (rawVideoUrl || "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4");
 
     container.innerHTML = `
       <div class="video-wrapper bg-slate-950 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
@@ -72,7 +96,7 @@ class VideoPlayerController {
             <button 
               id="btnModeHtml5" 
               type="button"
-              class="px-3 py-1 rounded-lg font-bold text-xs transition bg-[#dd1f36] text-white shadow-sm flex items-center space-x-1"
+              class="px-3 py-1 rounded-lg font-bold text-xs transition ${this.activeMode === 'html5' ? 'bg-[#dd1f36] text-white shadow-sm' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'} flex items-center space-x-1"
             >
               <span>🎬</span>
               <span>MP4 Stream</span>
@@ -81,7 +105,7 @@ class VideoPlayerController {
               <button 
                 id="btnModeYouTube" 
                 type="button"
-                class="px-3 py-1 rounded-lg font-bold text-xs transition bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center space-x-1"
+                class="px-3 py-1 rounded-lg font-bold text-xs transition ${this.activeMode === 'youtube' ? 'bg-[#dd1f36] text-white shadow-sm' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'} flex items-center space-x-1"
               >
                 <span>🔴</span>
                 <span>YouTube Player</span>
@@ -93,7 +117,7 @@ class VideoPlayerController {
         <!-- Video Display Area -->
         <div class="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
           <!-- 1. HTML5 Video Player Container -->
-          <div id="html5VideoContainer" class="w-full h-full relative flex items-center justify-center bg-black">
+          <div id="html5VideoContainer" class="w-full h-full relative flex items-center justify-center bg-black ${this.activeMode === 'youtube' ? 'hidden' : ''}">
             <video 
               id="mainLessonVideo" 
               class="w-full h-full object-contain"
@@ -101,8 +125,8 @@ class VideoPlayerController {
               preload="auto"
               poster="${posterUrl}"
             >
-              <!-- Primary module stream -->
-              <source src="${videoUrl}" type="video/mp4">
+              <!-- Primary module stream (direct MP4 only) -->
+              ${!isYouTubeStream && rawVideoUrl ? `<source src="${rawVideoUrl}" type="video/mp4">` : ''}
               <!-- Local bundled fallback -->
               <source src="assets/videos/lesson-stream.mp4" type="video/mp4">
               <source src="http://localhost:5000/assets/videos/lesson-stream.mp4" type="video/mp4">
@@ -153,8 +177,8 @@ class VideoPlayerController {
             </div>
           </div>
 
-          <!-- 2. YouTube IFrame Player Container (Hidden by default) -->
-          <div id="youtubeVideoContainer" class="hidden w-full h-full relative bg-black flex items-center justify-center overflow-hidden">
+          <!-- 2. YouTube IFrame Player Container -->
+          <div id="youtubeVideoContainer" class="${this.activeMode === 'youtube' ? '' : 'hidden'} w-full h-full relative bg-black flex items-center justify-center overflow-hidden">
             ${hasYouTube ? `
               <div id="youtubePlayerFrame" class="w-full h-full"></div>
             ` : `
@@ -546,7 +570,7 @@ class VideoPlayerController {
           this.ytPlayer.pauseVideo();
         } catch (e) {}
       }
-      this.init("videoPlayerContainer", this.currentModule, this.currentProgram);
+      this.init(this.containerId || "videoPlayerMount", this.currentModule, this.currentProgram);
       if (window.app && window.app.showToast) {
         window.app.showToast("Lesson watch progress reset to 0%. Locked & ready for testing.", "info");
       }
@@ -569,6 +593,11 @@ class VideoPlayerController {
         window.quizController.openQuiz(this.currentModule);
       }
     });
+
+    // Automatically initialize and play YouTube player if activeMode is youtube
+    if (this.activeMode === "youtube") {
+      this.switchMode("youtube");
+    }
   }
 
   switchMode(mode) {

@@ -33,8 +33,8 @@ window.COURSES_DATA = [
         title: "POSH Act 2013 Framework & Defining Workplace Harassment",
         order: 1,
         duration: "14:20",
-        videoUrl: "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4",
-        youtubeId: "aqz-KE-bpKQ",
+        videoUrl: "https://youtu.be/BOZsYXZRP-s",
+        youtubeId: "BOZsYXZRP-s",
         description: "An essential introduction to the Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013. Learn the legal definition of sexual harassment, physical vs. non-physical misconduct, the expanded definition of the 'extended workplace' (including remote work, virtual calls, and official travel), and the difference between Quid Pro Quo and Hostile Work Environment.",
         takeaways: [
           "Understand the statutory definition of sexual harassment under Indian law and corporate standards.",

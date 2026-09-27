@@ -25,6 +25,34 @@ class InstructorStudio {
         this.switchTab(target);
       });
     });
+
+    // Real-time YouTube stream detector on video stream input
+    const videoUrlInput = document.getElementById("instModVideoUrl");
+    if (videoUrlInput) {
+      videoUrlInput.addEventListener("input", () => this.onVideoUrlChange());
+      videoUrlInput.addEventListener("change", () => this.onVideoUrlChange());
+    }
+  }
+
+  onVideoUrlChange() {
+    const videoUrlInput = document.getElementById("instModVideoUrl");
+    const ytInput = document.getElementById("instModYoutubeId");
+    const badge = document.getElementById("instModVideoDetectBadge");
+    const badgeId = document.getElementById("instModDetectedId");
+    if (!videoUrlInput) return;
+
+    const val = videoUrlInput.value.trim();
+    const extractYt = window.extractYouTubeId ? window.extractYouTubeId(val) : null;
+
+    if (extractYt) {
+      if (ytInput) ytInput.value = extractYt;
+      if (badge && badgeId) {
+        badgeId.textContent = extractYt;
+        badge.classList.remove("hidden");
+      }
+    } else {
+      if (badge) badge.classList.add("hidden");
+    }
   }
 
   switchTab(tabName) {
@@ -437,16 +465,21 @@ class InstructorStudio {
     const descInput = document.getElementById("instModDescription");
     const takeawaysInput = document.getElementById("instModTakeaways");
 
+    const activeVidUrl = mod.videoUrl || mod.video_url || "";
+    const activeYtId = mod.youtubeId || mod.youtube_id || (window.extractYouTubeId ? window.extractYouTubeId(activeVidUrl) : "") || "";
+
     if (progSelect) progSelect.value = programId;
     if (editModIdInput) editModIdInput.value = moduleId;
     if (titleInput) titleInput.value = mod.title || "";
     if (durInput) durInput.value = mod.duration || "";
-    if (videoUrlInput) videoUrlInput.value = mod.videoUrl || "";
-    if (ytInput) ytInput.value = mod.youtubeId || "";
+    if (videoUrlInput) videoUrlInput.value = activeVidUrl;
+    if (ytInput) ytInput.value = activeYtId;
     if (descInput) descInput.value = mod.description || "";
     if (takeawaysInput) {
       takeawaysInput.value = Array.isArray(mod.takeaways) ? mod.takeaways.join("\n") : (mod.takeaways || "");
     }
+
+    this.onVideoUrlChange();
 
     const formTitle = document.getElementById("instModuleFormTitle");
     const formSubtitle = document.getElementById("instModuleFormSubtitle");
@@ -470,6 +503,9 @@ class InstructorStudio {
 
     const form = document.getElementById("formAddModule");
     if (form) form.reset();
+
+    const badge = document.getElementById("instModVideoDetectBadge");
+    if (badge) badge.classList.add("hidden");
 
     const formTitle = document.getElementById("instModuleFormTitle");
     const formSubtitle = document.getElementById("instModuleFormSubtitle");
@@ -505,11 +541,15 @@ class InstructorStudio {
       return;
     }
 
+    const finalYoutubeId = (window.extractYouTubeId && window.extractYouTubeId(video_url)) ||
+                           (window.extractYouTubeId && window.extractYouTubeId(youtube_id)) ||
+                           youtube_id || null;
+
     const payload = {
       title,
       duration,
       video_url,
-      youtube_id,
+      youtube_id: finalYoutubeId,
       description,
       takeaways,
       resources: [{ name: "Lesson Notes & Cheatsheet.pdf", size: "1.4 MB" }]
@@ -532,12 +572,30 @@ class InstructorStudio {
               m.title = title;
               m.duration = duration;
               m.videoUrl = video_url;
-              m.youtubeId = youtube_id;
+              m.video_url = video_url;
+              m.youtubeId = finalYoutubeId;
+              m.youtube_id = finalYoutubeId;
               m.description = description;
               m.takeaways = takeaways;
             }
           });
         });
+
+        // Also update window.app.activeModule if currently active
+        if (window.app && window.app.activeModule && window.app.activeModule.id === editModuleId) {
+          window.app.activeModule.title = title;
+          window.app.activeModule.duration = duration;
+          window.app.activeModule.videoUrl = video_url;
+          window.app.activeModule.video_url = video_url;
+          window.app.activeModule.youtubeId = finalYoutubeId;
+          window.app.activeModule.youtube_id = finalYoutubeId;
+          window.app.activeModule.description = description;
+          window.app.activeModule.takeaways = takeaways;
+
+          if (window.videoPlayer) {
+            window.videoPlayer.init("videoPlayerMount", window.app.activeModule, window.app.activeProgram);
+          }
+        }
 
         this.cancelEditModule();
         if (window.app && window.app.renderDashboard) window.app.renderDashboard();
@@ -570,7 +628,9 @@ class InstructorStudio {
           order: (prog.modules ? prog.modules.length : 0) + 1,
           duration,
           videoUrl: video_url,
-          youtubeId: youtube_id,
+          video_url: video_url,
+          youtubeId: finalYoutubeId,
+          youtube_id: finalYoutubeId,
           description,
           takeaways,
           resources: [{ name: "Lesson Notes & Cheatsheet.pdf", size: "1.4 MB" }],

@@ -95,6 +95,17 @@ exports.createProgram = async (req, res) => {
   }
 };
 
+function extractYouTubeId(urlOrId) {
+  if (!urlOrId || typeof urlOrId !== 'string') return null;
+  const str = urlOrId.trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(str)) return str;
+  const shortMatch = str.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/i);
+  if (shortMatch) return shortMatch[1];
+  const fullMatch = str.match(/(?:youtube\.com\/(?:watch\?.*v=|embed\/|v\/|shorts\/))([a-zA-Z0-9_-]{11})/i);
+  if (fullMatch) return fullMatch[1];
+  return null;
+}
+
 exports.addModule = async (req, res) => {
   try {
     const { programId } = req.params;
@@ -103,6 +114,8 @@ exports.addModule = async (req, res) => {
     if (!title || !duration || !video_url || !description) {
       return res.status(400).json({ success: false, message: 'Title, duration, video_url, and description are required.' });
     }
+
+    const finalYoutubeId = extractYouTubeId(video_url) || extractYouTubeId(youtube_id) || youtube_id || null;
 
     // Get next order
     const orderRes = await db.query('SELECT COALESCE(MAX(module_order), 0) + 1 as next_order FROM modules WHERE program_id = $1', [programId]);
@@ -123,7 +136,7 @@ exports.addModule = async (req, res) => {
       moduleOrder,
       duration,
       video_url,
-      youtube_id || null,
+      finalYoutubeId || null,
       description,
       JSON.stringify(takeaways),
       JSON.stringify(resources),
@@ -264,6 +277,8 @@ exports.updateModule = async (req, res) => {
     const { moduleId } = req.params;
     const { title, duration, video_url, youtube_id, description, takeaways, resources } = req.body;
 
+    const finalYoutubeId = extractYouTubeId(video_url) || extractYouTubeId(youtube_id) || youtube_id || null;
+
     const query = `
       UPDATE modules
       SET 
@@ -283,7 +298,7 @@ exports.updateModule = async (req, res) => {
       title || null,
       duration || null,
       video_url || null,
-      youtube_id || null,
+      finalYoutubeId,
       description || null,
       takeaways ? JSON.stringify(takeaways) : null,
       resources ? JSON.stringify(resources) : null,
