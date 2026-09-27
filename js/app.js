@@ -667,7 +667,9 @@ class App {
               <div class="flex items-center space-x-2 text-xs text-slate-400 mb-2">
                 <span>⏱ ${program.duration}</span>
                 <span>•</span>
-                <span>📚 ${program.modules.length} Video Modules</span>
+                <span>📚 ${program.modules.length} Modules</span>
+                <span>•</span>
+                <span class="text-amber-400 font-bold">🎯 Pass: ${program.passingScore || program.passing_score || 80}%</span>
                 <span>•</span>
                 <span>${program.level}</span>
               </div>
@@ -856,7 +858,7 @@ class App {
               </div>
               <div>
                 <h4 class="font-bold text-white text-base">You Completed All Course Modules!</h4>
-                <p class="text-xs text-slate-300">Your official digital certificate is ready for generation and verification.</p>
+                <p class="text-xs text-slate-300">Your official digital certificate is unlocked (Score: ${progress.averageScore}% • Passing Benchmark: ${progress.passingScore}%).</p>
               </div>
             </div>
             <button 
@@ -1640,10 +1642,11 @@ class App {
             <div>
               <div class="flex items-center space-x-2">
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#dd1f36]/20 text-[#dd1f36]">${program.category}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300">🎯 Pass: ${program.passingScore || program.passing_score || 80}%</span>
                 ${hasCert && progress.isComplete ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">🎓 Certified</span>' : ''}
               </div>
               <h4 class="text-lg font-bold text-white mt-1">${program.title}</h4>
-              <p class="text-xs text-slate-400 mt-0.5">${progress.completed} of ${progress.total} modules passed</p>
+              <p class="text-xs text-slate-400 mt-0.5">${progress.completed} of ${progress.total} modules passed • Score: <span class="font-bold ${progress.averageScore >= (program.passingScore || program.passing_score || 80) ? 'text-emerald-400' : 'text-amber-400'}">${progress.averageScore}%</span></p>
             </div>
           </div>
 

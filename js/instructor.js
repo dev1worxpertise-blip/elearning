@@ -131,6 +131,9 @@ class InstructorStudio {
     if (authRoleInput) authRoleInput.value = authRole;
     if (authTitleInput) authTitleInput.value = authTitle;
 
+    const passingScore = prog.passingScore || prog.passing_score || 80;
+    this.onPassingScoreChange(passingScore);
+
     this.updateCertSignaturesPreview();
 
     // Update form header titles and buttons to Edit mode
@@ -141,7 +144,7 @@ class InstructorStudio {
     const cancelBtnBottom = document.getElementById("btnCancelEditProgramBottom");
 
     if (formTitle) formTitle.innerText = `Edit Course: ${prog.title}`;
-    if (formSubtitle) formSubtitle.innerText = "Modify course metadata, certificate signatories, or thumbnail. Changes sync with PostgreSQL.";
+    if (formSubtitle) formSubtitle.innerText = "Modify course metadata, certificate signatories, passing score threshold, or thumbnail. Changes sync with PostgreSQL.";
     if (submitBtnText) submitBtnText.innerText = "💾 Save Course Changes";
     if (cancelBtnTop) cancelBtnTop.classList.remove("hidden");
     if (cancelBtnBottom) cancelBtnBottom.classList.remove("hidden");
@@ -156,6 +159,8 @@ class InstructorStudio {
 
     const form = document.getElementById("formCreateProgram");
     if (form) form.reset();
+
+    this.onPassingScoreChange(80);
 
     const instNameInput = document.getElementById("instProgInstructorName");
     const instRoleInput = document.getElementById("instProgInstructorRole");
@@ -182,6 +187,29 @@ class InstructorStudio {
     if (submitBtnText) submitBtnText.innerText = "Publish Program & Proceed to Lessons →";
     if (cancelBtnTop) cancelBtnTop.classList.add("hidden");
     if (cancelBtnBottom) cancelBtnBottom.classList.add("hidden");
+  }
+
+  onPassingScoreChange(val) {
+    const num = Math.min(100, Math.max(50, parseInt(val, 10) || 80));
+    const input = document.getElementById("instProgPassingScore");
+    if (input && input.value != num) input.value = num;
+
+    const displayEl = document.getElementById("displayPassingScore");
+    if (displayEl) displayEl.innerText = `${num}%`;
+
+    // Highlight matching preset button if any
+    document.querySelectorAll(".passing-preset-btn").forEach(btn => {
+      const btnScore = parseInt(btn.getAttribute("data-score"), 10);
+      if (btnScore === num) {
+        btn.className = "passing-preset-btn px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 border border-amber-400 shadow-sm transition cursor-pointer";
+      } else {
+        btn.className = "passing-preset-btn px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition cursor-pointer";
+      }
+    });
+  }
+
+  setPassingScorePreset(score) {
+    this.onPassingScoreChange(score);
   }
 
   updateCertSignaturesPreview() {
@@ -240,6 +268,7 @@ class InstructorStudio {
     const authority_name = document.getElementById("instProgAuthName")?.value.trim() || "Prof. Arthur Sterling";
     const authority_role = document.getElementById("instProgAuthRole")?.value.trim() || "Dean of Technology";
     const authority_title = document.getElementById("instProgAuthTitle")?.value.trim() || "Academic Board";
+    const passing_score = parseInt(document.getElementById("instProgPassingScore")?.value, 10) || 80;
 
     if (!title || !category_name || !duration || !thumbnail_url) {
       window.app.showToast("Please fill in all required fields.", "info");
@@ -258,7 +287,8 @@ class InstructorStudio {
       instructor_role,
       authority_name,
       authority_role,
-      authority_title
+      authority_title,
+      passing_score
     };
 
     // --- CASE A: EDITING AN EXISTING PROGRAM ---
@@ -281,6 +311,8 @@ class InstructorStudio {
           prog.duration = duration;
           prog.thumbnail = thumbnail_url;
           prog.skills = skills;
+          prog.passingScore = passing_score;
+          prog.passing_score = passing_score;
           prog.instructor_name = instructor_name;
           prog.instructor_role = instructor_role;
           prog.authority_name = authority_name;
@@ -296,6 +328,13 @@ class InstructorStudio {
             role: authority_role,
             title: authority_title
           };
+          // Cascade passing score to all module quizzes of this program
+          (prog.modules || []).forEach(m => {
+            if (m.quiz) {
+              m.quiz.passingScore = passing_score;
+              m.quiz.passing_score = passing_score;
+            }
+          });
         }
 
         // Sync existing earned certificates in localStorage
@@ -363,6 +402,8 @@ class InstructorStudio {
           title: authority_title
         },
         skills,
+        passingScore: passing_score,
+        passing_score: passing_score,
         modules: []
       };
 
@@ -982,6 +1023,9 @@ class InstructorStudio {
                   <span class="text-amber-400">★ ${p.rating || 5.0}</span>
                 </div>
                 <div class="flex flex-wrap items-center gap-1.5 pt-1.5 text-[11px] text-slate-400">
+                  <span class="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-extrabold" title="Certification Passing Threshold">
+                    🎯 Pass Required: ${p.passingScore || p.passing_score || 80}% Marks
+                  </span>
                   <span class="inline-flex items-center space-x-1 font-semibold text-slate-300 text-[10px]">
                     <span>📜 Cert:</span>
                   </span>

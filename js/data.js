@@ -27,6 +27,8 @@ window.COURSES_DATA = [
       title: "Presiding IC Authority"
     },
     skills: ["POSH Act 2013", "Workplace Ethics & Sensitivity", "Hostile Work Environment Prevention", "Bystander Intervention (4Ds)", "Internal Committee (IC) Redressal"],
+    passingScore: 80,
+    passing_score: 80,
     modules: [
       {
         id: "mod-posh-1",
@@ -276,6 +278,8 @@ window.COURSES_DATA = [
       title: "Academic Board"
     },
     skills: ["React & TypeScript", "RESTful APIs", "Node.js & Express", "Docker & CI/CD", "Tailwind CSS"],
+    passingScore: 85,
+    passing_score: 85,
     modules: [
       {
         id: "mod-fs-1",
@@ -521,6 +525,8 @@ window.COURSES_DATA = [
       title: "Faculty Senate"
     },
     skills: ["Neural Networks", "Transformer Architectures", "Prompt Engineering", "Autonomous Agents", "RAG Systems"],
+    passingScore: 90,
+    passing_score: 90,
     modules: [
       {
         id: "mod-ai-1",
@@ -766,6 +772,8 @@ window.COURSES_DATA = [
       title: "Corporate Governance Board"
     },
     skills: ["Vulnerability Assessment", "OWASP Top 10", "Network Penetration", "Cryptographic Defense", "Zero Trust"],
+    passingScore: 80,
+    passing_score: 80,
     modules: [
       {
         id: "mod-sec-1",

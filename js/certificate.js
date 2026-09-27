@@ -183,7 +183,7 @@ class CertificateStudio {
         <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start space-x-3">
           <div class="text-lg text-amber-400">ℹ️</div>
           <div class="text-xs text-amber-200/90 leading-relaxed">
-            In compliance with academic standards, official certificates are issued <strong>only after 100% of curriculum lessons are fully watched and post-lesson quizzes are passed</strong> with a minimum score of 80%.
+            In compliance with course requirements, official certificates for this program require <strong>completing 100% of curriculum lessons and achieving at least ${program.passingScore || program.passing_score || 80}% marks in assessments</strong>.
           </div>
         </div>
 
@@ -191,7 +191,7 @@ class CertificateStudio {
         <div class="space-y-2 bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
           <div class="flex justify-between items-center text-xs">
             <span class="text-slate-400 font-medium">Curriculum Completion</span>
-            <span class="font-extrabold text-amber-400">${progress.completed} of ${progress.total} Lessons (${progress.percentage}%)</span>
+            <span class="font-extrabold text-amber-400">${progress.completed} of ${progress.total} Lessons (${progress.percentage}%) • Req Pass: ${program.passingScore || program.passing_score || 80}%</span>
           </div>
           <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden p-0.5">
             <div class="bg-gradient-to-r from-amber-500 to-yellow-500 h-full rounded-full transition-all duration-500" style="width: ${progress.percentage}%"></div>
@@ -203,27 +203,33 @@ class CertificateStudio {
           <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Required Lesson Milestones</h4>
           <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
             ${modules.map((m, idx) => {
+              const reqPassing = program.passingScore || program.passing_score || 80;
               const isDone = window.appState.isModuleCompleted(m.id);
               const qRes = window.appState.getQuizResult(m.id);
+              const isPassed = isDone && (!qRes || qRes.percentage >= reqPassing);
               return `
-                <div class="p-3 rounded-xl border flex items-center justify-between text-xs transition ${isDone ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-slate-950/40 border-slate-800'}">
+                <div class="p-3 rounded-xl border flex items-center justify-between text-xs transition ${isPassed ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-slate-950/40 border-slate-800'}">
                   <div class="flex items-center space-x-3">
-                    <div class="w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 ${isDone ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-400'}">
-                      ${isDone ? '✓' : idx + 1}
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 ${isPassed ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-400'}">
+                      ${isPassed ? '✓' : idx + 1}
                     </div>
                     <div>
-                      <div class="font-semibold ${isDone ? 'text-emerald-300' : 'text-slate-300'}">${m.title}</div>
+                      <div class="font-semibold ${isPassed ? 'text-emerald-300' : 'text-slate-300'}">${m.title}</div>
                       <div class="text-[10px] text-slate-500">Duration: ${m.duration}</div>
                     </div>
                   </div>
                   <div>
-                    ${isDone ? `
+                    ${isPassed ? `
                       <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px] border border-emerald-500/30">
-                        Passed (${qRes ? qRes.percentage : 100}%)
+                        Passed (${qRes ? qRes.percentage : 100}% ≥ ${reqPassing}%)
+                      </span>
+                    ` : (qRes && qRes.percentage < reqPassing) ? `
+                      <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold text-[10px] border border-rose-500/30">
+                        Score ${qRes.percentage}% (Need ${reqPassing}%)
                       </span>
                     ` : `
                       <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-semibold text-[10px] border border-amber-500/20">
-                        Pending
+                        Pending (Need ${reqPassing}%)
                       </span>
                     `}
                   </div>

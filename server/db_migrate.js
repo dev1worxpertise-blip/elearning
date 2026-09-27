@@ -14,8 +14,11 @@ async function migrate() {
     ADD COLUMN IF NOT EXISTS failed_login_attempts INT DEFAULT 0,
     ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT FALSE,
     ADD COLUMN IF NOT EXISTS blocked_at TIMESTAMP WITH TIME ZONE;
+
+    ALTER TABLE programs
+    ADD COLUMN IF NOT EXISTS passing_score INT DEFAULT 80;
   `);
-  console.log('✅ Added failed_login_attempts, is_blocked, blocked_at columns to users table.');
+  console.log('✅ Added failed_login_attempts, is_blocked, blocked_at to users table and passing_score to programs table.');
 
   // Check if admin user exists
   const adminCheck = await db.query("SELECT id, email, role FROM users WHERE role = 'admin' OR email = 'admin@learnpulse.dev'");

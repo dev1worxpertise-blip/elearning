@@ -856,6 +856,79 @@
           <input type="text" id="instProgSkills" placeholder="e.g. Next.js, Server Actions, PostgreSQL, Prisma, Tailwind" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#dd1f36]" />
         </div>
 
+        <!-- CERTIFICATION PASSING THRESHOLD (% MARKS REQUIRED) -->
+        <div class="mt-6 pt-6 border-t border-slate-800/80 space-y-4">
+          <div class="bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 p-5 rounded-2xl border border-amber-500/30 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center space-x-3">
+                <span class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-xl shrink-0">🎯</span>
+                <div>
+                  <h4 class="text-sm font-bold text-white flex items-center space-x-2">
+                    <span>Certification Passing Threshold (% Marks Required)</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/40">ADMIN / INSTRUCTOR CONTROL</span>
+                  </h4>
+                  <p class="text-xs text-slate-400 mt-0.5">
+                    Define the minimum assessment score required for learners to pass modules and unlock an official certificate for this course.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Live Required Score Indicator Pill -->
+              <div class="flex items-center space-x-2 bg-slate-950 px-3.5 py-1.5 rounded-xl border border-amber-500/30 shrink-0">
+                <span class="text-xs text-slate-400">Required:</span>
+                <span id="displayPassingScore" class="text-base font-extrabold text-amber-400 font-mono">80%</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center pt-2">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Minimum Passing Score (% Marks) *
+                </label>
+                <div class="relative">
+                  <input 
+                    type="number" 
+                    id="instProgPassingScore" 
+                    name="passing_score" 
+                    min="50" 
+                    max="100" 
+                    step="5" 
+                    value="80" 
+                    class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white font-bold font-mono focus:outline-none focus:border-amber-500" 
+                    oninput="window.instructorStudio.onPassingScoreChange(this.value)"
+                    required 
+                  />
+                  <div class="absolute right-3.5 top-2.5 text-xs font-bold text-amber-400 pointer-events-none">% Marks</div>
+                </div>
+              </div>
+
+              <!-- Quick Presets -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Quick Benchmark Presets
+                </label>
+                <div class="flex flex-wrap gap-2" id="passingScorePresetsContainer">
+                  <button type="button" onclick="window.instructorStudio.setPassingScorePreset(70)" class="passing-preset-btn px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition cursor-pointer" data-score="70">
+                    70% (Basic)
+                  </button>
+                  <button type="button" onclick="window.instructorStudio.setPassingScorePreset(80)" class="passing-preset-btn px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 border border-amber-400 shadow-sm transition cursor-pointer" data-score="80">
+                    80% (Standard)
+                  </button>
+                  <button type="button" onclick="window.instructorStudio.setPassingScorePreset(85)" class="passing-preset-btn px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition cursor-pointer" data-score="85">
+                    85% (Advanced)
+                  </button>
+                  <button type="button" onclick="window.instructorStudio.setPassingScorePreset(90)" class="passing-preset-btn px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition cursor-pointer" data-score="90">
+                    90% (Honors)
+                  </button>
+                  <button type="button" onclick="window.instructorStudio.setPassingScorePreset(100)" class="passing-preset-btn px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700 transition cursor-pointer" data-score="100">
+                    100% (Mastery)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- CERTIFICATE & COURSE SIGNATORIES CONFIGURATION -->
         <div class="mt-6 pt-6 border-t border-slate-800/80 space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-slate-950 to-slate-900/90 p-4 rounded-2xl border border-slate-800">

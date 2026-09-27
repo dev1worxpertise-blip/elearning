@@ -65,7 +65,7 @@ class QuizController {
           </div>
           <div class="text-right">
             <span class="text-sm font-semibold text-slate-300">Question ${this.currentIndex + 1} of ${totalQuestions}</span>
-            <div class="text-xs text-slate-500">Passing Grade: ${this.quiz.passingScore}%</div>
+            <div class="text-xs text-amber-400 font-bold">🎯 Pass Threshold: ${(window.appState && window.appState.getProgramForModule(this.currentModule.id) ? (window.appState.getProgramForModule(this.currentModule.id).passingScore || window.appState.getProgramForModule(this.currentModule.id).passing_score) : null) || this.quiz.passingScore || 80}%</div>
           </div>
         </div>
 
@@ -189,6 +189,7 @@ class QuizController {
     if (modal) modal.scrollTop = 0;
 
     const parentProgram = window.appState.getProgramForModule(this.currentModule.id);
+    const reqPassing = (parentProgram && (parentProgram.passingScore || parentProgram.passing_score)) || this.quiz.passingScore || 80;
     const isProgramComplete = parentProgram ? window.appState.isProgramCompleted(parentProgram.id) : false;
 
     container.innerHTML = `
@@ -204,15 +205,15 @@ class QuizController {
           </div>
 
           <span class="text-xs uppercase font-bold tracking-widest ${passed ? 'text-emerald-400' : 'text-rose-400'}">
-            ${passed ? 'Module Passed Successfully!' : 'Passing Threshold Not Met'}
+            ${passed ? `Module Passed Successfully (≥${reqPassing}%)` : `Passing Threshold Not Met (Requires ${reqPassing}%)`}
           </span>
           <h2 class="text-3xl font-extrabold text-white mt-1">
             You Scored ${percentage}% (${score}/${total})
           </h2>
           <p class="text-sm text-slate-300 mt-2 max-w-md mx-auto">
             ${passed 
-              ? 'Outstanding performance! You demonstrated mastery of this lesson and unlocked the next phase of your program.' 
-              : 'You need at least 80% to pass this module. Review the detailed explanations below and retake the quiz when ready.'}
+              ? `Outstanding performance! You scored ${percentage}% (satisfying the required ${reqPassing}% benchmark) and unlocked the next phase of your program.` 
+              : `You need at least ${reqPassing}% marks in this module to qualify for certification. Review the detailed explanations below and retake the quiz when ready.`}
           </p>
 
           <!-- CTAs -->

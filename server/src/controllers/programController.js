@@ -33,6 +33,8 @@ exports.getAllPrograms = async (req, res) => {
       const enrollment = userEnrollments.find((e) => e.program_id === prog.id);
       return {
         ...prog,
+        passing_score: prog.passing_score || 80,
+        passingScore: prog.passing_score || 80,
         thumbnail: prog.thumbnail_url,
         is_enrolled: !!enrollment,
         is_completed: enrollment ? enrollment.is_completed : false,
@@ -130,6 +132,8 @@ exports.getProgramById = async (req, res) => {
       success: true,
       program: {
         ...program,
+        passing_score: program.passing_score || 80,
+        passingScore: program.passing_score || 80,
         thumbnail: program.thumbnail_url,
         is_enrolled: isEnrolled,
         instructor: {

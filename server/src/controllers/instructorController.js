@@ -17,7 +17,8 @@ exports.createProgram = async (req, res) => {
       instructor_role,
       authority_name,
       authority_role,
-      authority_title
+      authority_title,
+      passing_score = 80
     } = req.body;
 
     let instructorId = (req.user && req.user.id) || null;
@@ -63,8 +64,8 @@ exports.createProgram = async (req, res) => {
       INSERT INTO programs (
         id, title, slug, tagline, category_id, category_name, level, duration,
         thumbnail_url, instructor_id, instructor_name, instructor_role, instructor_avatar,
-        authority_name, authority_role, authority_title, skills, is_published
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, TRUE)
+        authority_name, authority_role, authority_title, skills, passing_score, is_published
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, TRUE)
       RETURNING *
     `;
 
@@ -86,6 +87,7 @@ exports.createProgram = async (req, res) => {
       finalAuthRole,
       finalAuthTitle,
       JSON.stringify(skills),
+      parseInt(passing_score, 10) || 80
     ]);
 
     res.status(201).json({ success: true, message: 'Program created successfully!', program: result.rows[0] });
@@ -194,7 +196,8 @@ exports.updateProgram = async (req, res) => {
       instructor_role,
       authority_name,
       authority_role,
-      authority_title
+      authority_title,
+      passing_score
     } = req.body;
 
     const slug = title ? title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : undefined;
@@ -224,8 +227,9 @@ exports.updateProgram = async (req, res) => {
         authority_name = COALESCE($12, authority_name),
         authority_role = COALESCE($13, authority_role),
         authority_title = COALESCE($14, authority_title),
+        passing_score = COALESCE($15, passing_score),
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $15
+      WHERE id = $16
       RETURNING *
     `;
 
@@ -244,11 +248,25 @@ exports.updateProgram = async (req, res) => {
       authority_name || null,
       authority_role || null,
       authority_title || null,
+      passing_score ? parseInt(passing_score, 10) : null,
       programId
     ]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Program not found.' });
+    }
+
+    // Cascade passing_score to all lesson quizzes under this program
+    if (passing_score) {
+      try {
+        await db.query(`
+          UPDATE quizzes 
+          SET passing_score = $1 
+          WHERE module_id IN (SELECT id FROM modules WHERE program_id = $2)
+        `, [parseInt(passing_score, 10), programId]);
+      } catch (qErr) {
+        console.warn('Failed to cascade passing_score to quizzes:', qErr.message);
+      }
     }
 
     res.json({ success: true, message: 'Program updated successfully!', program: result.rows[0] });

@@ -198,30 +198,35 @@ class AppState {
 
   recordQuizSubmission(moduleId, score, total, userAnswers = {}) {
     const percentage = Math.round((score / total) * 100);
-    const passed = percentage >= 80;
+    const program = this.getProgramForModule(moduleId);
+    const requiredPassingScore = (program && (program.passingScore || program.passing_score)) || 80;
+    const passed = percentage >= requiredPassingScore;
 
     this.quizResults[moduleId] = {
       score,
       total,
       percentage,
       passed,
+      requiredPassingScore,
       userAnswers: { ...userAnswers },
       date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
     };
 
     if (passed && !this.completedModules.includes(moduleId)) {
       this.completedModules.push(moduleId);
+    } else if (!passed && this.completedModules.includes(moduleId)) {
+      // If retaken and failed, remove from completed
+      this.completedModules = this.completedModules.filter(id => id !== moduleId);
     }
 
     this.save();
 
     // Check if the parent program is now fully completed
-    const program = this.getProgramForModule(moduleId);
     if (program && this.isProgramCompleted(program.id)) {
       this.autoIssueCertificate(program.id);
     }
 
-    return { percentage, passed };
+    return { percentage, passed, requiredPassingScore };
   }
 
   getQuizResult(moduleId) {
@@ -237,16 +242,33 @@ class AppState {
     return window.COURSES_DATA.find(p => p.modules.some(m => m.id === moduleId));
   }
 
+  getProgramPassingScore(programId) {
+    const program = (window.COURSES_DATA || []).find(p => p.id === programId);
+    return (program && (program.passingScore || program.passing_score)) || 80;
+  }
+
   getProgramProgress(programId) {
     const program = (window.COURSES_DATA || []).find(p => p.id === programId);
-    if (!program) return { completed: 0, total: 0, percentage: 0, isComplete: false };
+    if (!program) return { completed: 0, total: 0, percentage: 0, isComplete: false, passingScore: 80, averageScore: 0 };
     
+    const passingScore = program.passingScore || program.passing_score || 80;
     const total = program.modules.length;
-    const completed = program.modules.filter(m => this.completedModules.includes(m.id)).length;
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-    const isComplete = total > 0 && completed === total;
+    
+    // Filter modules that are in completedModules AND meet the course passing threshold
+    const completedModulesList = program.modules.filter(m => {
+      if (!this.completedModules.includes(m.id)) return false;
+      const qRes = this.quizResults[m.id];
+      return !qRes || qRes.percentage >= passingScore;
+    });
 
-    return { completed, total, percentage, isComplete };
+    const completed = completedModulesList.length;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+    
+    const scores = program.modules.map(m => this.quizResults[m.id]?.percentage).filter(s => s !== undefined);
+    const averageScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+    const isComplete = total > 0 && completed === total && (scores.length === 0 || averageScore >= passingScore);
+
+    return { completed, total, percentage, isComplete, passingScore, averageScore };
   }
 
   isProgramCompleted(programId) {
@@ -266,6 +288,15 @@ class AppState {
     if (!program) return null;
 
     const certId = "CERT-LP-" + Math.floor(100000 + Math.random() * 900000);
+    const progress = this.getProgramProgress(programId);
+    const avg = progress.averageScore || 100;
+    const reqPassing = progress.passingScore || 80;
+    let honors = "Conferred with Distinction";
+    if (avg >= 95) honors = "High Honors & Academic Excellence";
+    else if (avg >= 90) honors = "Conferred with Honors";
+    else honors = "Certified Professional";
+    const grade = `${honors} (${avg}% • Min Required: ${reqPassing}%)`;
+
     const certificate = {
       id: "cert_" + Date.now(),
       credentialId: certId,
@@ -278,7 +309,9 @@ class AppState {
       authorityName: (program.authority && program.authority.name) || "Prof. Arthur Sterling",
       authorityRole: (program.authority && program.authority.role) || "Dean of Technology",
       authorityTitle: (program.authority && program.authority.title) || "Academic Board",
-      grade: "Distinction (Honors)",
+      grade,
+      score: avg,
+      passingScore: reqPassing,
       verificationCode: "LP-" + Math.random().toString(36).substring(2, 9).toUpperCase()
     };
 
