@@ -358,8 +358,14 @@ class App {
 
     // Quick Persona Switcher Buttons
     document.querySelectorAll("[data-switch-persona]").forEach(btn => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const persona = btn.getAttribute("data-switch-persona");
+        
+        // Securely request verified JWT token for the switched persona from backend
+        if (window.apiService && window.apiService.switchPersona) {
+          await window.apiService.switchPersona(persona);
+        }
+
         if (persona === "admin") {
           window.appState.setCurrentUser({
             id: "usr_admin_master",
@@ -367,7 +373,7 @@ class App {
             email: "admin@learnpulse.dev",
             role: "admin",
             avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
-          });
+          }, window.apiService ? window.apiService.token : null);
           this.showToast("👑 Switched to System Administrator view (Full Role & Lockout Control)", "success");
         } else if (persona === "instructor") {
           window.appState.setCurrentUser({
@@ -376,7 +382,7 @@ class App {
             email: "sarah.chen@learnpulse.dev",
             role: "instructor",
             avatar_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80"
-          });
+          }, window.apiService ? window.apiService.token : null);
           this.showToast("👨‍🏫 Switched to Instructor view (Dr. Sarah Chen)", "success");
         } else if (persona === "student") {
           window.appState.setCurrentUser({
@@ -385,7 +391,7 @@ class App {
             email: "sachin@learnpulse.dev",
             role: "student",
             avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
-          });
+          }, window.apiService ? window.apiService.token : null);
           this.showToast("🎓 Switched to Student view (Sachin Chauhan)", "info");
         }
 

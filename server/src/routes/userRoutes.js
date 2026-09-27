@@ -1,27 +1,31 @@
 /**
  * User Management & Administration Routes
+ * All routes are strictly protected with Admin authentication & authorization.
  */
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const { verifyToken } = require('../middleware/auth');
+const { verifyToken, requireRole } = require('../middleware/auth');
 
-// Public/Admin list of users for administration
+// Strict Protection: Only verified Administrators can access user directory and administrative controls
+router.use(verifyToken, requireRole('admin'));
+
+// Admin: List all registered users
 router.get('/', userController.getAllUsers);
 
-// Role assignment
+// Admin: Role assignment (student <-> instructor <-> admin)
 router.put('/:id/role', userController.updateUserRole);
 
-// Block/Unblock toggle & lockout reset
+// Admin: Block/Unblock toggle & lockout reset
 router.put('/:id/block', userController.toggleBlockStatus);
 
-// Password reset by admin
+// Admin: Password reset
 router.put('/:id/reset-password', userController.resetPassword);
 
-// Create new user with specific role
+// Admin: Create new user with specific role
 router.post('/', userController.createUser);
 
-// Delete user account
+// Admin: Delete user account
 router.delete('/:id', userController.deleteUser);
 
 module.exports = router;

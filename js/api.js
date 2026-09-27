@@ -123,6 +123,24 @@ class ApiService {
     return res.json();
   }
 
+  async switchPersona(persona) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/persona-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ persona }),
+      });
+      const data = await res.json();
+      if (data && data.success && data.token) {
+        this.setToken(data.token);
+        return data;
+      }
+    } catch (e) {
+      console.warn('Persona token fetch notice:', e);
+    }
+    return null;
+  }
+
   // Programs APIs
   async getPrograms(category, search) {
     let url = `${API_BASE_URL}/programs?`;
