@@ -80,8 +80,10 @@ class VideoPlayerController {
     const isYouTubeStream = Boolean(ytFromUrl) || (Boolean(this.ytVideoId) && !isDirectVideo);
     this.activeMode = isYouTubeStream ? "youtube" : "html5";
 
+    const hasDirectMp4 = Boolean(isDirectVideo);
     const hasYouTube = Boolean(this.ytVideoId);
-    const videoUrl = isDirectVideo ? rawVideoUrl : (rawVideoUrl || "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4");
+    const isDualStream = hasDirectMp4 && hasYouTube;
+    const videoUrl = isDirectVideo ? rawVideoUrl : "";
 
     container.innerHTML = `
       <div class="video-wrapper bg-slate-950 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
@@ -93,15 +95,15 @@ class VideoPlayerController {
           </div>
 
           <div class="flex items-center space-x-1.5 shrink-0">
-            <button 
-              id="btnModeHtml5" 
-              type="button"
-              class="px-3 py-1 rounded-lg font-bold text-xs transition ${this.activeMode === 'html5' ? 'bg-[#dd1f36] text-white shadow-sm' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'} flex items-center space-x-1"
-            >
-              <span>🎬</span>
-              <span>MP4 Stream</span>
-            </button>
-            ${hasYouTube ? `
+            ${isDualStream ? `
+              <button 
+                id="btnModeHtml5" 
+                type="button"
+                class="px-3 py-1 rounded-lg font-bold text-xs transition ${this.activeMode === 'html5' ? 'bg-[#dd1f36] text-white shadow-sm' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'} flex items-center space-x-1"
+              >
+                <span>🎬</span>
+                <span>MP4 Stream</span>
+              </button>
               <button 
                 id="btnModeYouTube" 
                 type="button"
@@ -110,7 +112,17 @@ class VideoPlayerController {
                 <span>🔴</span>
                 <span>YouTube Player</span>
               </button>
-            ` : ''}
+            ` : hasYouTube ? `
+              <div class="flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-rose-600/20 text-rose-300 border border-rose-600/30 text-xs font-semibold shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                <span>YouTube Player (Active Stream)</span>
+              </div>
+            ` : `
+              <div class="flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 text-xs font-semibold shadow-sm">
+                <span>🎬</span>
+                <span>Direct MP4 Stream</span>
+              </div>
+            `}
           </div>
         </div>
 
@@ -118,34 +130,49 @@ class VideoPlayerController {
         <div class="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
           <!-- 1. HTML5 Video Player Container -->
           <div id="html5VideoContainer" class="w-full h-full relative flex items-center justify-center bg-black ${this.activeMode === 'youtube' ? 'hidden' : ''}">
-            <video 
-              id="mainLessonVideo" 
-              class="w-full h-full object-contain"
-              playsinline
-              preload="auto"
-              poster="${posterUrl}"
-            >
-              <!-- Primary module stream (direct MP4 only) -->
-              ${!isYouTubeStream && rawVideoUrl ? `<source src="${rawVideoUrl}" type="video/mp4">` : ''}
-              <!-- Local bundled fallback -->
-              <source src="assets/videos/lesson-stream.mp4" type="video/mp4">
-              <source src="http://localhost:5000/assets/videos/lesson-stream.mp4" type="video/mp4">
-              <!-- High-availability global CDN fallbacks -->
-              <source src="https://vjs.zencdn.net/v/oceans.mp4" type="video/mp4">
-              <source src="https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4" type="video/mp4">
-              <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-              Your browser does not support HTML5 video streaming.
-            </video>
+            ${hasDirectMp4 ? `
+              <video 
+                id="mainLessonVideo" 
+                class="w-full h-full object-contain"
+                playsinline
+                preload="auto"
+                poster="${posterUrl}"
+              >
+                <!-- Primary module stream (direct MP4 only) -->
+                <source src="${rawVideoUrl}" type="video/mp4">
+                Your browser does not support HTML5 video streaming.
+              </video>
 
-            <!-- Big Center Play Button Overlay -->
-            <button 
-              id="videoPlayOverlay" 
-              type="button"
-              title="Click to Play Video"
-              class="absolute inset-0 m-auto w-20 h-20 bg-[#dd1f36]/90 hover:bg-[#dd1f36] text-white rounded-full flex items-center justify-center shadow-2xl transition transform hover:scale-110 active:scale-95 focus:outline-none z-10 backdrop-blur-sm cursor-pointer"
-            >
-              <svg class="w-10 h-10 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            </button>
+              <!-- Big Center Play Button Overlay -->
+              <button 
+                id="videoPlayOverlay" 
+                type="button"
+                title="Click to Play Video"
+                class="absolute inset-0 m-auto w-20 h-20 bg-[#dd1f36]/90 hover:bg-[#dd1f36] text-white rounded-full flex items-center justify-center shadow-2xl transition transform hover:scale-110 active:scale-95 focus:outline-none z-10 backdrop-blur-sm cursor-pointer"
+              >
+                <svg class="w-10 h-10 translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+            ` : `
+              <div class="flex flex-col items-center justify-center p-8 text-center space-y-3">
+                <div class="w-14 h-14 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-2xl font-bold border border-rose-500/30">
+                  🔴
+                </div>
+                <h4 class="text-sm font-bold text-white">YouTube Stream Lesson</h4>
+                <p class="text-xs text-slate-400 max-w-sm">
+                  This video lesson is configured to stream directly via YouTube. Standalone MP4 file is not applicable for this lesson.
+                </p>
+                ${hasYouTube ? `
+                  <button 
+                    type="button" 
+                    id="btnSwitchBackYouTube" 
+                    class="mt-2 px-4 py-2 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white text-xs font-bold transition shadow-lg flex items-center space-x-1.5"
+                  >
+                    <span>🔴</span>
+                    <span>Play via YouTube Player</span>
+                  </button>
+                ` : ''}
+              </div>
+            `}
 
             <!-- Stream Error Fallback Banner (Hidden by default) -->
             <div id="videoErrorBanner" class="hidden absolute inset-0 bg-slate-950/90 z-20 flex flex-col items-center justify-center p-6 text-center space-y-3">
@@ -338,8 +365,7 @@ class VideoPlayerController {
     const btnModeYouTube = document.getElementById("btnModeYouTube");
     const btnErrorSwitchYouTube = document.getElementById("btnErrorSwitchYouTube");
     const btnErrorFastTrack = document.getElementById("btnErrorFastTrack");
-
-    if (!this.videoElement) return;
+    const btnSwitchBackYouTube = document.getElementById("btnSwitchBackYouTube");
 
     // Helper: format seconds to MM:SS
     const formatTime = (secs) => {
@@ -363,143 +389,147 @@ class VideoPlayerController {
         return;
       }
 
-      if (this.videoElement.paused) {
-        // Guarantee YouTube player is paused before playing MP4
-        if (this.ytPlayer && typeof this.ytPlayer.pauseVideo === "function") {
-          try { this.ytPlayer.pauseVideo(); } catch (e) {}
-        }
+      if (this.videoElement) {
+        if (this.videoElement.paused) {
+          // Guarantee YouTube player is paused before playing MP4
+          if (this.ytPlayer && typeof this.ytPlayer.pauseVideo === "function") {
+            try { this.ytPlayer.pauseVideo(); } catch (e) {}
+          }
 
-        const playPromise = this.videoElement.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(err => {
-            console.warn("HTML5 playback error:", err);
-            // If primary video source cannot be played, show fallback banner
-            const errorBanner = document.getElementById("videoErrorBanner");
-            if (errorBanner) errorBanner.classList.remove("hidden");
-          });
+          const playPromise = this.videoElement.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(err => {
+              console.warn("HTML5 playback error:", err);
+              // If primary video source cannot be played, show fallback banner
+              const errorBanner = document.getElementById("videoErrorBanner");
+              if (errorBanner) errorBanner.classList.remove("hidden");
+            });
+          }
+        } else {
+          this.videoElement.pause();
         }
-      } else {
-        this.videoElement.pause();
       }
     };
 
-    // React to native video playback events (Guarantees icons always match reality)
-    this.videoElement.addEventListener("playing", () => {
-      if (playOverlay) playOverlay.classList.add("hidden");
-      if (playIcon) playIcon.classList.add("hidden");
-      if (pauseIcon) pauseIcon.classList.remove("hidden");
-      const errorBanner = document.getElementById("videoErrorBanner");
-      if (errorBanner) errorBanner.classList.add("hidden");
-    });
+    if (this.videoElement) {
+      // React to native video playback events (Guarantees icons always match reality)
+      this.videoElement.addEventListener("playing", () => {
+        if (playOverlay) playOverlay.classList.add("hidden");
+        if (playIcon) playIcon.classList.add("hidden");
+        if (pauseIcon) pauseIcon.classList.remove("hidden");
+        const errorBanner = document.getElementById("videoErrorBanner");
+        if (errorBanner) errorBanner.classList.add("hidden");
+      });
 
-    this.videoElement.addEventListener("pause", () => {
-      if (playOverlay) playOverlay.classList.remove("hidden");
-      if (playIcon) playIcon.classList.remove("hidden");
-      if (pauseIcon) pauseIcon.classList.add("hidden");
-    });
+      this.videoElement.addEventListener("pause", () => {
+        if (playOverlay) playOverlay.classList.remove("hidden");
+        if (playIcon) playIcon.classList.remove("hidden");
+        if (pauseIcon) pauseIcon.classList.add("hidden");
+      });
 
-    this.videoElement.addEventListener("loadedmetadata", () => {
-      const duration = this.videoElement.duration;
-      if (timeDisplay && !isNaN(duration) && duration > 0) {
-        timeDisplay.textContent = `${formatTime(this.videoElement.currentTime)} / ${formatTime(duration)}`;
-      }
+      this.videoElement.addEventListener("loadedmetadata", () => {
+        const duration = this.videoElement.duration;
+        if (timeDisplay && !isNaN(duration) && duration > 0) {
+          timeDisplay.textContent = `${formatTime(this.videoElement.currentTime)} / ${formatTime(duration)}`;
+        }
 
-      this.maxWatchedTime = 0;
-      const watchedRangeBar = document.getElementById("videoWatchedRangeBar");
-      if (watchedRangeBar) {
-        watchedRangeBar.style.width = "0%";
-      }
-    });
+        this.maxWatchedTime = 0;
+        const watchedRangeBar = document.getElementById("videoWatchedRangeBar");
+        if (watchedRangeBar) {
+          watchedRangeBar.style.width = "0%";
+        }
+      });
 
-    // Handle HTML5 video errors gracefully
-    this.videoElement.addEventListener("error", (e) => {
-      console.warn("Video element reported error:", e);
-      const errorBanner = document.getElementById("videoErrorBanner");
-      if (errorBanner) errorBanner.classList.remove("hidden");
-    });
+      // Handle HTML5 video errors gracefully
+      this.videoElement.addEventListener("error", (e) => {
+        console.warn("Video element reported error:", e);
+        const errorBanner = document.getElementById("videoErrorBanner");
+        if (errorBanner) errorBanner.classList.remove("hidden");
+      });
 
-    playOverlay?.addEventListener("click", togglePlay);
-    playPauseBtn?.addEventListener("click", togglePlay);
-    this.videoElement.addEventListener("click", togglePlay);
+      this.videoElement.addEventListener("click", togglePlay);
 
-    // Trap native seeking to prevent skipping forward past watched territory
-    this.videoElement.addEventListener("seeking", () => {
-      if (this.videoElement.currentTime > this.maxWatchedTime + 0.5) {
-        // Clamp back to highest watched position
-        this.videoElement.currentTime = this.maxWatchedTime;
-        this.showSkipRestrictedNotice();
-      }
-    });
+      // Trap native seeking to prevent skipping forward past watched territory
+      this.videoElement.addEventListener("seeking", () => {
+        if (this.videoElement.currentTime > this.maxWatchedTime + 0.5) {
+          // Clamp back to highest watched position
+          this.videoElement.currentTime = this.maxWatchedTime;
+          this.showSkipRestrictedNotice();
+        }
+      });
 
-    // Time update listener - handles natural progress tracking & high-water mark advancement
-    this.videoElement.addEventListener("timeupdate", () => {
-      if (this.videoElement.seeking) return;
+      // Time update listener - handles natural progress tracking & high-water mark advancement
+      this.videoElement.addEventListener("timeupdate", () => {
+        if (this.videoElement.seeking) return;
 
-      const current = this.videoElement.currentTime;
-      const duration = this.videoElement.duration || 1;
-      const isFinished = window.appState.isVideoFinished(this.currentModule.id);
+        const current = this.videoElement.currentTime;
+        const duration = this.videoElement.duration || 1;
+        const isFinished = window.appState.isVideoFinished(this.currentModule.id);
 
-      // Only advance maxWatchedTime during legitimate natural forward playback
-      if (!this.videoElement.paused) {
-        if (current > this.maxWatchedTime) {
-          if (current - this.maxWatchedTime <= 3.0) {
-            this.maxWatchedTime = current;
-          } else {
-            // Sudden jump detected - revert back
-            this.videoElement.currentTime = this.maxWatchedTime;
-            return;
+        // Only advance maxWatchedTime during legitimate natural forward playback
+        if (!this.videoElement.paused) {
+          if (current > this.maxWatchedTime) {
+            if (current - this.maxWatchedTime <= 3.0) {
+              this.maxWatchedTime = current;
+            } else {
+              // Sudden jump detected - revert back
+              this.videoElement.currentTime = this.maxWatchedTime;
+              return;
+            }
           }
         }
-      }
 
-      const playheadPercent = Math.min(100, (current / duration) * 100);
-      const watchedPercent = isFinished ? 100 : Math.min(100, (this.maxWatchedTime / duration) * 100);
+        const playheadPercent = Math.min(100, (current / duration) * 100);
+        const watchedPercent = isFinished ? 100 : Math.min(100, (this.maxWatchedTime / duration) * 100);
 
-      if (timeDisplay && !isNaN(duration)) {
-        timeDisplay.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
-      }
-      if (progressBar) {
-        progressBar.style.width = `${playheadPercent}%`;
-      }
-      const watchedRangeBar = document.getElementById("videoWatchedRangeBar");
-      if (watchedRangeBar) {
-        watchedRangeBar.style.width = `${watchedPercent}%`;
-      }
-
-      // Check if watched requirement has legitimately been met
-      const hasCompletedWatching = watchedPercent >= 98;
-      window.appState.recordVideoProgress(
-        this.currentModule.id, 
-        watchedPercent, 
-        hasCompletedWatching,
-        this.maxWatchedTime
-      );
-
-      // Update badge
-      const watchText = document.getElementById("videoWatchText");
-      if (watchText && !isFinished) {
-        if (hasCompletedWatching) {
-          watchText.textContent = "Video Completed ✓";
-        } else {
-          watchText.textContent = `Watching (${Math.round(watchedPercent)}%)`;
+        if (timeDisplay && !isNaN(duration)) {
+          timeDisplay.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
         }
-      }
+        if (progressBar) {
+          progressBar.style.width = `${playheadPercent}%`;
+        }
+        const watchedRangeBar = document.getElementById("videoWatchedRangeBar");
+        if (watchedRangeBar) {
+          watchedRangeBar.style.width = `${watchedPercent}%`;
+        }
 
-      // Automatically complete once full content is genuinely watched
-      if (hasCompletedWatching && !isFinished) {
-        this.onVideoCompleted();
-      }
-    });
+        // Check if watched requirement has legitimately been met
+        const hasCompletedWatching = watchedPercent >= 98;
+        window.appState.recordVideoProgress(
+          this.currentModule.id, 
+          watchedPercent, 
+          hasCompletedWatching,
+          this.maxWatchedTime
+        );
 
-    // On Video Ended
-    this.videoElement.addEventListener("ended", () => {
-      const duration = this.videoElement.duration || 1;
-      // Genuine completion requires having watched practically the whole video
-      if (this.maxWatchedTime >= duration * 0.90 || window.appState.isVideoFinished(this.currentModule.id)) {
-        this.maxWatchedTime = duration;
-        this.onVideoCompleted();
-      }
-    });
+        // Update badge
+        const watchText = document.getElementById("videoWatchText");
+        if (watchText && !isFinished) {
+          if (hasCompletedWatching) {
+            watchText.textContent = "Video Completed ✓";
+          } else {
+            watchText.textContent = `Watching (${Math.round(watchedPercent)}%)`;
+          }
+        }
+
+        // Automatically complete once full content is genuinely watched
+        if (hasCompletedWatching && !isFinished) {
+          this.onVideoCompleted();
+        }
+      });
+
+      // On Video Ended
+      this.videoElement.addEventListener("ended", () => {
+        const duration = this.videoElement.duration || 1;
+        // Genuine completion requires having watched practically the whole video
+        if (this.maxWatchedTime >= duration * 0.90 || window.appState.isVideoFinished(this.currentModule.id)) {
+          this.maxWatchedTime = duration;
+          this.onVideoCompleted();
+        }
+      });
+    }
+
+    btnSwitchBackYouTube?.addEventListener("click", () => this.switchMode("youtube"));
 
     // Speed selector (Applies to both HTML5 and YouTube streams)
     speedSelect?.addEventListener("change", (e) => {
