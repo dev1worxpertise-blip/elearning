@@ -47,6 +47,7 @@ class AppState {
         if (parsed.quizResults) this.quizResults = parsed.quizResults;
         if (Array.isArray(parsed.completedModules)) this.completedModules = parsed.completedModules;
         if (Array.isArray(parsed.certificates)) this.certificates = parsed.certificates;
+        this.purgeUnearnedCertificates();
 
         // Auto-reset any previously skipped videos where quiz was not passed
         if (!localStorage.getItem("lp_antiskip_v2")) {
@@ -136,6 +137,7 @@ class AppState {
     if (token && window.apiService) {
       window.apiService.setToken(token);
     }
+    this.purgeUnearnedCertificates();
     this.save();
     this.notify();
   }
@@ -252,6 +254,12 @@ class AppState {
   }
 
   autoIssueCertificate(programId) {
+    // In student mode, strict academic gate: ALL lessons in the course must be 100% complete!
+    if (this.isStudent() && !this.isProgramCompleted(programId)) {
+      console.warn(`[AppState] Cannot issue certificate for program ${programId}: course is not 100% completed.`);
+      return null;
+    }
+
     if (this.getCertificate(programId)) return this.getCertificate(programId);
 
     const program = (window.COURSES_DATA || []).find(p => p.id === programId);
@@ -280,7 +288,27 @@ class AppState {
   }
 
   getCertificate(programId) {
-    return this.certificates.find(c => c.programId === programId) || null;
+    if (this.isStudent() && !this.isProgramCompleted(programId)) {
+      return null;
+    }
+    return (this.certificates || []).find(c => c.programId === programId) || null;
+  }
+
+  getValidCertificates() {
+    if (this.isStudent()) {
+      return (this.certificates || []).filter(c => this.isProgramCompleted(c.programId));
+    }
+    return this.certificates || [];
+  }
+
+  purgeUnearnedCertificates() {
+    if (this.isStudent()) {
+      const beforeCount = (this.certificates || []).length;
+      this.certificates = (this.certificates || []).filter(c => this.isProgramCompleted(c.programId));
+      if (this.certificates.length !== beforeCount) {
+        this.save();
+      }
+    }
   }
 
   resetAllProgress() {

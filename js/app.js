@@ -533,7 +533,7 @@ class App {
 
     if (nameEl) nameEl.textContent = user.name;
     if (avatarEl && (user.avatar || user.avatar_url)) avatarEl.src = user.avatar || user.avatar_url;
-    if (certCountEl) certCountEl.textContent = (window.appState && window.appState.certificates) ? window.appState.certificates.length : 0;
+    if (certCountEl) certCountEl.textContent = (window.appState && window.appState.getValidCertificates) ? window.appState.getValidCertificates().length : ((window.appState && window.appState.certificates) ? window.appState.certificates.length : 0);
 
     if (roleEl) {
       const normalizedRole = (user.role || 'student').toLowerCase();
@@ -652,7 +652,7 @@ class App {
               </span>
             </div>
 
-            ${hasCert ? `
+            ${hasCert && progress.isComplete ? `
               <div class="absolute bottom-3 right-3">
                 <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500 text-slate-950 flex items-center space-x-1 shadow-lg">
                   <span>🎓 Certified</span>
@@ -722,11 +722,11 @@ class App {
                     <span>${progress.percentage === 100 ? 'Review Modules' : 'Resume Learning'}</span>
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                   </button>
-                  ${hasCert ? `
+                  ${hasCert && progress.isComplete ? `
                     <button 
                       onclick="window.certificateStudio.openCertificateModal('${program.id}')" 
                       title="View Certificate" 
-                      class="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/40 transition"
+                      class="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/40 transition cursor-pointer"
                     >
                       🎓
                     </button>
@@ -912,16 +912,25 @@ class App {
 
   onModulePassed(moduleId) {
     this.renderLearningView();
-    // Auto advance to next module if available
-    const currentIndex = this.activeProgram.modules.findIndex(m => m.id === moduleId);
-    if (currentIndex < this.activeProgram.modules.length - 1) {
-      this.switchModule(this.activeProgram.modules[currentIndex + 1].id);
-      this.showToast("Progress saved! Loaded next video lesson.", "info");
-    } else {
-      // Completed all modules!
+
+    // Check if the whole program is now 100% completed
+    const isProgramComplete = window.appState.isProgramCompleted(this.activeProgram.id);
+    if (isProgramComplete) {
       this.showToast("🎉 Congratulations! You have completed all modules in this program!", "success");
       this.triggerConfetti();
       window.certificateStudio.openCertificateModal(this.activeProgram.id);
+      return;
+    }
+
+    // Auto advance to next uncompleted module or next sequential module
+    const currentIndex = this.activeProgram.modules.findIndex(m => m.id === moduleId);
+    const nextUncompleted = this.activeProgram.modules.find(m => !window.appState.isModuleCompleted(m.id));
+    if (nextUncompleted) {
+      this.switchModule(nextUncompleted.id);
+      this.showToast("Progress saved! Loaded next lesson.", "info");
+    } else if (currentIndex < this.activeProgram.modules.length - 1) {
+      this.switchModule(this.activeProgram.modules[currentIndex + 1].id);
+      this.showToast("Progress saved! Loaded next video lesson.", "info");
     }
   }
 
@@ -965,8 +974,8 @@ class App {
       ? Math.round(quizResults.reduce((acc, q) => acc + q.percentage, 0) / quizResults.length)
       : 0;
 
-    const certsCount = window.appState.certificates.length;
-    const compliantCoursesCount = courses.filter(c => window.appState.isProgramCompleted(c.id) || !!window.appState.getCertificate(c.id)).length;
+    const certsCount = (window.appState && window.appState.getValidCertificates) ? window.appState.getValidCertificates().length : ((window.appState && window.appState.certificates) ? window.appState.certificates.length : 0);
+    const compliantCoursesCount = courses.filter(c => window.appState.isProgramCompleted(c.id)).length;
     const complianceRate = courses.length > 0 ? Math.round((compliantCoursesCount / courses.length) * 100) : 0;
 
     // Render active cut
@@ -1560,7 +1569,7 @@ class App {
     const statsContainer = document.getElementById("myLearningStats");
     if (statsContainer) {
       const completedModulesCount = window.appState.completedModules.length;
-      const certificatesCount = window.appState.certificates.length;
+      const certificatesCount = (window.appState && window.appState.getValidCertificates) ? window.appState.getValidCertificates().length : ((window.appState && window.appState.certificates) ? window.appState.certificates.length : 0);
       const quizResults = Object.values(window.appState.quizResults);
       const avgScore = quizResults.length > 0 
         ? Math.round(quizResults.reduce((acc, q) => acc + q.percentage, 0) / quizResults.length)
@@ -1631,7 +1640,7 @@ class App {
             <div>
               <div class="flex items-center space-x-2">
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#dd1f36]/20 text-[#dd1f36]">${program.category}</span>
-                ${hasCert ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">🎓 Certified</span>' : ''}
+                ${hasCert && progress.isComplete ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">🎓 Certified</span>' : ''}
               </div>
               <h4 class="text-lg font-bold text-white mt-1">${program.title}</h4>
               <p class="text-xs text-slate-400 mt-0.5">${progress.completed} of ${progress.total} modules passed</p>
@@ -1651,14 +1660,14 @@ class App {
           <div class="flex items-center space-x-3 shrink-0">
             <button 
               onclick="window.app.startProgram('${program.id}')"
-              class="px-5 py-2.5 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/20 transition"
+              class="px-5 py-2.5 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/20 transition cursor-pointer"
             >
               ${progress.percentage === 100 ? 'Review Course' : 'Resume Learning'}
             </button>
-            ${hasCert ? `
+            ${hasCert && progress.isComplete ? `
               <button 
                 onclick="window.certificateStudio.openCertificateModal('${program.id}')"
-                class="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs border border-amber-500/40 transition"
+                class="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs border border-amber-500/40 transition cursor-pointer"
               >
                 View Certificate
               </button>
@@ -1674,7 +1683,7 @@ class App {
     const container = document.getElementById("certificatesGrid");
     if (!container) return;
 
-    const certs = window.appState.certificates;
+    const certs = (window.appState && window.appState.getValidCertificates) ? window.appState.getValidCertificates() : ((window.appState && window.appState.certificates) ? window.appState.certificates : []);
 
     if (certs.length === 0) {
       container.innerHTML = `

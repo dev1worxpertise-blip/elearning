@@ -360,7 +360,7 @@ class ReportsManager {
         "Total Video Modules": videoData.length,
         "Completed Modules Count": (window.appState.completedModules || []).length,
         "Total Quizzes Assessed": quizData.length,
-        "Certificates Issued Count": (window.appState.certificates || []).length,
+        "Certificates Issued Count": (window.appState.getValidCertificates ? window.appState.getValidCertificates() : (window.appState.certificates || [])).length,
         "Question Bank Total": questionsData.length,
         "Compliance Health": `${compRate}% Compliant (${compliantCount} of ${courses.length} Tracks Satisfied)`,
         "Anti-Skip Tamper Protection": "Active & Cryptographically Logged",
@@ -592,7 +592,7 @@ class ReportsManager {
 
     const progressData = this.generateProgressData();
     const quizData = this.generateQuizData();
-    const certsCount = (window.appState && window.appState.certificates && window.appState.certificates.length) || 0;
+    const certsCount = (window.appState && window.appState.getValidCertificates) ? window.appState.getValidCertificates().length : ((window.appState && window.appState.certificates && window.appState.certificates.length) || 0);
     const complianceData = this.generatePOSHComplianceData();
     
     const completedProgs = progressData.filter(p => p.Status.includes("100%")).length;

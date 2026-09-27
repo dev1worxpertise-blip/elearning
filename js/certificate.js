@@ -41,10 +41,34 @@ class CertificateStudio {
     const program = (window.COURSES_DATA || []).find(p => p.id === programId);
     if (!program) return;
 
+    const userRole = (window.appState && window.appState.user && window.appState.user.role) || "student";
+    const isStaff = userRole.toLowerCase() === "admin" || userRole.toLowerCase() === "instructor";
+    const progress = window.appState ? window.appState.getProgramProgress(programId) : { isComplete: false, completed: 0, total: 0, percentage: 0 };
+
+    // In student mode, certificates CANNOT be accessed until 100% of lessons are completed!
+    if (!isStaff && !progress.isComplete) {
+      this.showLockedModal(program, progress);
+      if (window.app && window.app.showToast) {
+        window.app.showToast("🔒 Certificate Locked: Please complete all lessons to unlock your certificate.", "warning");
+      }
+      return;
+    }
+
     let cert = window.appState.getCertificate(programId);
     if (!cert) {
+      if (isStaff) {
+        // Staff preview without writing unearned credential to state
+        this.previewCertificateWithCustomSignatures(programId);
+        return;
+      }
       cert = window.appState.autoIssueCertificate(programId);
     }
+
+    if (!cert) {
+      this.showLockedModal(program, progress);
+      return;
+    }
+
     this.currentCert = cert;
     this.currentProgram = program;
 
@@ -115,6 +139,117 @@ class CertificateStudio {
       modal.classList.add("hidden");
       document.body.classList.remove("overflow-hidden");
     }
+  }
+
+  showLockedModal(program, progress) {
+    const modal = document.getElementById("certificateModal");
+    const container = document.getElementById("certificateModalContent");
+    if (!modal || !container) return;
+
+    modal.classList.remove("hidden");
+    modal.scrollTop = 0;
+    document.body.classList.add("overflow-hidden");
+
+    const modules = program.modules || [];
+    const firstUnfinished = modules.find(m => !window.appState.isModuleCompleted(m.id)) || modules[0];
+
+    container.innerHTML = `
+      <div class="max-w-2xl mx-auto p-6 sm:p-8 bg-slate-900 border border-amber-500/30 rounded-3xl shadow-2xl space-y-6 text-slate-200">
+        <!-- Header -->
+        <div class="flex items-start justify-between border-b border-slate-800 pb-5">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-2xl text-amber-400 shrink-0 shadow-inner">
+              🔒
+            </div>
+            <div>
+              <div class="text-[11px] font-bold text-amber-400 uppercase tracking-widest flex items-center space-x-1.5">
+                <span>Certification Prerequisite</span>
+                <span class="w-1 h-1 rounded-full bg-amber-400"></span>
+                <span>Student Mode</span>
+              </div>
+              <h3 class="text-xl font-black text-white mt-0.5">Certificate Locked</h3>
+              <p class="text-xs text-slate-400">${program.title}</p>
+            </div>
+          </div>
+          <button 
+            onclick="window.certificateStudio.closeModal()" 
+            class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Description Box -->
+        <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start space-x-3">
+          <div class="text-lg text-amber-400">ℹ️</div>
+          <div class="text-xs text-amber-200/90 leading-relaxed">
+            In compliance with academic standards, official certificates are issued <strong>only after 100% of curriculum lessons are fully watched and post-lesson quizzes are passed</strong> with a minimum score of 80%.
+          </div>
+        </div>
+
+        <!-- Progress Overview -->
+        <div class="space-y-2 bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-400 font-medium">Curriculum Completion</span>
+            <span class="font-extrabold text-amber-400">${progress.completed} of ${progress.total} Lessons (${progress.percentage}%)</span>
+          </div>
+          <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden p-0.5">
+            <div class="bg-gradient-to-r from-amber-500 to-yellow-500 h-full rounded-full transition-all duration-500" style="width: ${progress.percentage}%"></div>
+          </div>
+        </div>
+
+        <!-- Module Checklist -->
+        <div class="space-y-2.5">
+          <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Required Lesson Milestones</h4>
+          <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+            ${modules.map((m, idx) => {
+              const isDone = window.appState.isModuleCompleted(m.id);
+              const qRes = window.appState.getQuizResult(m.id);
+              return `
+                <div class="p-3 rounded-xl border flex items-center justify-between text-xs transition ${isDone ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-slate-950/40 border-slate-800'}">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 ${isDone ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-400'}">
+                      ${isDone ? '✓' : idx + 1}
+                    </div>
+                    <div>
+                      <div class="font-semibold ${isDone ? 'text-emerald-300' : 'text-slate-300'}">${m.title}</div>
+                      <div class="text-[10px] text-slate-500">Duration: ${m.duration}</div>
+                    </div>
+                  </div>
+                  <div>
+                    ${isDone ? `
+                      <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px] border border-emerald-500/30">
+                        Passed (${qRes ? qRes.percentage : 100}%)
+                      </span>
+                    ` : `
+                      <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-semibold text-[10px] border border-amber-500/20">
+                        Pending
+                      </span>
+                    `}
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="pt-3 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-end gap-3">
+          <button 
+            onclick="window.certificateStudio.closeModal()" 
+            class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition cursor-pointer"
+          >
+            Close
+          </button>
+          <button 
+            onclick="window.certificateStudio.closeModal(); window.app.startProgram('${program.id}'); window.app.switchModule('${firstUnfinished.id}');" 
+            class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/25 transition flex items-center justify-center space-x-2 cursor-pointer"
+          >
+            <span>Resume & Finish Lessons →</span>
+          </button>
+        </div>
+      </div>
+    `;
   }
 
   setTheme(themeName) {
