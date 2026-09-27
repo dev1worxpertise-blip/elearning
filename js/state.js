@@ -87,6 +87,10 @@ class AppState {
     }
   }
 
+  saveState() {
+    this.save();
+  }
+
   subscribe(listener) {
     this.listeners.push(listener);
     return () => {

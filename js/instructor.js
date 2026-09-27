@@ -281,7 +281,7 @@ class InstructorStudio {
               c.authorityTitle = authority_title;
             }
           });
-          window.appState.saveState();
+          window.appState.save();
         }
 
         if (window.app && window.app.renderCatalogGrid) {
