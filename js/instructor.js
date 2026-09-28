@@ -6,11 +6,13 @@
 
 class InstructorStudio {
   constructor() {
-    this.activeTab = "programs"; // "programs" | "modules" | "quiz" | "overview"
+    this.activeTab = "programs"; // "programs" | "modules" | "quiz" | "overview" | "qna"
     this.selectedProgramId = null;
     this.selectedModuleId = null;
     this.quizQuestions = [];
     this.collapsedCourses = {}; // Track expanded/collapsed course lessons in overview
+    this.qnaFilter = "all"; // "all" | "pending" | "resolved"
+    this.qnaCourseFilter = "all";
   }
 
   init() {
@@ -74,15 +76,18 @@ class InstructorStudio {
     const paneMod = document.getElementById("paneAddModule");
     const paneQuiz = document.getElementById("paneAuthorQuiz");
     const paneOverview = document.getElementById("paneInstructorOverview");
+    const paneQnA = document.getElementById("paneInstructorQnA");
 
     if (paneProg) paneProg.classList.toggle("hidden", tabName !== "programs");
     if (paneMod) paneMod.classList.toggle("hidden", tabName !== "modules");
     if (paneQuiz) paneQuiz.classList.toggle("hidden", tabName !== "quiz");
     if (paneOverview) paneOverview.classList.toggle("hidden", tabName !== "overview");
+    if (paneQnA) paneQnA.classList.toggle("hidden", tabName !== "qna");
 
     if (tabName === "modules") this.populateProgramDropdowns();
     if (tabName === "quiz") this.populateQuizDropdowns();
     if (tabName === "overview") this.renderOverview();
+    if (tabName === "qna") this.renderQnAInbox();
   }
 
   // =========================================================================
@@ -1185,6 +1190,277 @@ class InstructorStudio {
         </div>
       `;
     }).join("");
+  }
+
+  // =========================================================================
+  // --- TAB 5: STUDENT INQUIRIES & Q&A INBOX ---
+  // =========================================================================
+  setQnAFilter(filter) {
+    this.qnaFilter = filter;
+    this.renderQnAInbox();
+  }
+
+  setQnACourseFilter(courseId) {
+    this.qnaCourseFilter = courseId;
+    this.renderQnAInbox();
+  }
+
+  jumpToLessonVideo(programId, moduleId) {
+    if (window.app && typeof window.app.startLearning === "function") {
+      window.app.startLearning(programId, moduleId);
+    }
+  }
+
+  async submitInstructorQnAReply(moduleId, postId) {
+    const input = document.getElementById(`instQnAReplyInput-${postId}`);
+    const text = input ? input.value.trim() : "";
+    if (!text) {
+      if (window.app && window.app.showToast) {
+        window.app.showToast("Please enter your official faculty answer text.", "warning");
+      }
+      return;
+    }
+
+    const user = (window.appState && window.appState.user) || { name: 'Dr. Rajesh Sharma', role: 'instructor' };
+
+    // 1. Add reply via appState
+    if (window.appState && typeof window.appState.addDiscussionReply === "function") {
+      window.appState.addDiscussionReply(moduleId, postId, {
+        author_name: user.name,
+        role: user.role,
+        content: text,
+        isFacultyAnswer: true
+      });
+    }
+
+    // 2. Sync to PostgreSQL API
+    if (window.apiService && window.apiService.postDiscussionReply) {
+      try {
+        await window.apiService.postDiscussionReply(postId, {
+          content: text,
+          user_name: user.name,
+          user_role: user.role,
+          is_faculty: true
+        });
+      } catch (err) {
+        console.warn("Backend Q&A reply sync:", err);
+      }
+    }
+
+    if (window.app && window.app.showToast) {
+      window.app.showToast("🎓 Official Faculty Resolution posted! (+25 XP)", "success");
+    }
+
+    this.renderQnAInbox();
+  }
+
+  renderQnAInbox() {
+    const container = document.getElementById("paneInstructorQnA");
+    if (!container) return;
+
+    const allDiscussions = (window.appState && typeof window.appState.getAllDiscussions === "function")
+      ? window.appState.getAllDiscussions()
+      : [];
+
+    const totalQuestions = allDiscussions.length;
+    const answeredCount = allDiscussions.filter(d => (d.replies || []).some(r => r.isFacultyAnswer)).length;
+    const pendingCount = totalQuestions - answeredCount;
+
+    // Update badge in studio tab header
+    const tabBadge = document.getElementById("instQnABadge");
+    if (tabBadge) {
+      tabBadge.textContent = pendingCount > 0 ? `${pendingCount} Pending` : 'All Resolved';
+      tabBadge.className = `ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-black ${pendingCount > 0 ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`;
+    }
+
+    // Apply Filters
+    let filtered = allDiscussions;
+    if (this.qnaCourseFilter && this.qnaCourseFilter !== "all") {
+      filtered = filtered.filter(d => d.programId === this.qnaCourseFilter);
+    }
+    if (this.qnaFilter === "pending") {
+      filtered = filtered.filter(d => !(d.replies || []).some(r => r.isFacultyAnswer));
+    } else if (this.qnaFilter === "resolved") {
+      filtered = filtered.filter(d => (d.replies || []).some(r => r.isFacultyAnswer));
+    }
+
+    const courses = window.COURSES_DATA || [];
+
+    container.innerHTML = `
+      <div class="space-y-6">
+        <!-- Top Metrics & Filter Bar -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center space-x-3.5">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-lg font-bold">💬</div>
+            <div>
+              <div class="text-2xl font-black text-white">${totalQuestions}</div>
+              <div class="text-xs text-slate-400">Total Student Inquiries</div>
+            </div>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center space-x-3.5">
+            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg font-bold">⏳</div>
+            <div>
+              <div class="text-2xl font-black text-rose-400">${pendingCount}</div>
+              <div class="text-xs text-slate-400">Awaiting Faculty Resolution</div>
+            </div>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center space-x-3.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg font-bold">✓</div>
+            <div>
+              <div class="text-2xl font-black text-emerald-400">${answeredCount}</div>
+              <div class="text-xs text-slate-400">Faculty Verified Answers</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls Bar -->
+        <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+          <!-- Status Tabs -->
+          <div class="flex flex-wrap gap-2">
+            <button 
+              type="button"
+              onclick="window.instructorStudio.setQnAFilter('all')" 
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${this.qnaFilter === 'all' ? 'bg-[#dd1f36] text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}"
+            >
+              All Inquiries (${totalQuestions})
+            </button>
+            <button 
+              type="button"
+              onclick="window.instructorStudio.setQnAFilter('pending')" 
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${this.qnaFilter === 'pending' ? 'bg-rose-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}"
+            >
+              ⚠️ Needs Faculty Answer (${pendingCount})
+            </button>
+            <button 
+              type="button"
+              onclick="window.instructorStudio.setQnAFilter('resolved')" 
+              class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${this.qnaFilter === 'resolved' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}"
+            >
+              ✓ Verified / Resolved (${answeredCount})
+            </button>
+          </div>
+
+          <!-- Course Filter Dropdown -->
+          <div class="flex items-center space-x-2">
+            <span class="text-xs text-slate-400 shrink-0">Filter Track:</span>
+            <select 
+              onchange="window.instructorStudio.setQnACourseFilter(this.value)"
+              class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-[#dd1f36]"
+            >
+              <option value="all">All Curricula Tracks</option>
+              ${courses.map(c => `
+                <option value="${c.id}" ${this.qnaCourseFilter === c.id ? 'selected' : ''}>${c.title}</option>
+              `).join("")}
+            </select>
+          </div>
+        </div>
+
+        <!-- Question Cards List -->
+        <div class="space-y-4">
+          ${filtered.length === 0 ? `
+            <div class="py-16 text-center text-slate-400 bg-slate-900/60 rounded-3xl border border-slate-800">
+              <span class="text-3xl">🎉</span>
+              <h4 class="text-base font-bold text-white mt-2">No Inquiries Found</h4>
+              <p class="text-xs text-slate-500 mt-1">All student questions in this view have been reviewed or resolved.</p>
+            </div>
+          ` : filtered.map(post => {
+            const replies = Array.isArray(post.replies) ? post.replies : [];
+            const hasFacultyAnswer = replies.some(r => r.isFacultyAnswer);
+            const author = post.author_name || post.user_name || post.userName || 'Student';
+            const avatar = post.avatar_url || post.user_avatar || post.userAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
+            const dateStr = post.createdAt || (post.created_at ? new Date(post.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently');
+
+            return `
+              <div class="p-5 rounded-2xl bg-slate-900 border ${hasFacultyAnswer ? 'border-emerald-500/40 bg-gradient-to-r from-emerald-950/10 to-transparent' : 'border-rose-500/40 bg-gradient-to-r from-rose-950/10 to-transparent'} space-y-4">
+                <!-- Header with Student & Context -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                  <div class="flex items-center space-x-3">
+                    <img src="${avatar}" class="w-8 h-8 rounded-full object-cover border border-slate-700 shrink-0" alt="${author}" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'" />
+                    <div>
+                      <div class="flex items-center space-x-2">
+                        <span class="text-xs font-bold text-white">${author}</span>
+                        <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-slate-800 text-slate-300">Student</span>
+                        <span class="text-[10px] text-slate-500">${dateStr}</span>
+                      </div>
+                      <div class="flex items-center space-x-2 mt-0.5">
+                        <span class="text-[10px] font-semibold text-rose-300">${post.programTitle || 'Certification Course'}</span>
+                        <span class="text-slate-600">•</span>
+                        <span class="text-[10px] text-slate-400">${post.moduleTitle || 'Lesson'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center space-x-2">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${hasFacultyAnswer ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">
+                      ${hasFacultyAnswer ? '✓ Verified Answered' : '⚠️ Pending Answer'}
+                    </span>
+                    <button 
+                      type="button" 
+                      onclick="window.instructorStudio.jumpToLessonVideo('${post.programId}', '${post.moduleId}')"
+                      class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-bold transition flex items-center space-x-1 cursor-pointer"
+                      title="Open Video Player Lesson"
+                    >
+                      <span>▶️ Lesson</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Question Text -->
+                <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+                  <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Student Inquiry</div>
+                  <p class="text-xs text-slate-100 font-medium leading-relaxed">${post.content}</p>
+                </div>
+
+                <!-- Existing Replies -->
+                ${replies.length > 0 ? `
+                  <div class="space-y-2 pl-4 border-l-2 border-slate-800">
+                    <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Responses & Faculty Notes</div>
+                    ${replies.map(rep => `
+                      <div class="p-3 rounded-xl ${rep.isFacultyAnswer ? 'bg-rose-950/20 border border-rose-500/40 text-rose-200' : 'bg-slate-950 border border-slate-800 text-slate-300'} space-y-1">
+                        <div class="flex items-center justify-between text-[11px]">
+                          <div class="flex items-center space-x-1.5 font-bold">
+                            <span>👨‍🏫</span>
+                            <span class="${rep.isFacultyAnswer ? 'text-rose-300' : 'text-white'}">${rep.userName}</span>
+                            ${rep.isFacultyAnswer ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30">Official Resolution</span>' : ''}
+                          </div>
+                          <span class="text-[10px] text-slate-500">${rep.createdAt || 'Recent'}</span>
+                        </div>
+                        <p class="text-xs leading-relaxed font-sans">${rep.content}</p>
+                      </div>
+                    `).join("")}
+                  </div>
+                ` : ''}
+
+                <!-- Inline Answer Form -->
+                <div class="pt-2 border-t border-slate-800/80 space-y-2">
+                  <div class="flex items-center space-x-2 text-xs font-bold text-slate-300">
+                    <span class="text-rose-400">✍️</span>
+                    <span>Post Official Faculty Answer</span>
+                    <span class="text-[10px] text-slate-500 font-normal">(Visible to all students in video classroom)</span>
+                  </div>
+                  <textarea 
+                    id="instQnAReplyInput-${post.id}" 
+                    rows="2" 
+                    placeholder="Provide authoritative explanation, case study reference, or legal resolution..." 
+                    class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition resize-none"
+                  ></textarea>
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] text-slate-500">Learner will be notified automatically via email & notification ledger</span>
+                    <button 
+                      type="button" 
+                      onclick="window.instructorStudio.submitInstructorQnAReply('${post.moduleId}', '${post.id}')"
+                      class="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-bold text-xs shadow-md transition flex items-center space-x-1.5 cursor-pointer"
+                    >
+                      <span>Post Official Answer (+25 XP)</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
   }
 }
 

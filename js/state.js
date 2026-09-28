@@ -417,11 +417,45 @@ class AppState {
   }
 
   // --- Module Discussions & Q&A ---
+  // --- Module Discussions & Q&A ---
   getDiscussions(moduleId) {
     if (!this.discussions[moduleId]) {
+      const isPosh = moduleId.includes("posh") || moduleId.includes("mod-1");
       this.discussions[moduleId] = [
         {
-          id: 'disc_seed_' + moduleId,
+          id: 'disc_seed_q1_' + moduleId,
+          userId: 'usr_student_sachin',
+          userName: 'Sachin Chauhan',
+          author_name: 'Sachin Chauhan',
+          userRole: 'student',
+          role: 'student',
+          userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+          avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+          content: isPosh 
+            ? 'Does the POSH Act apply to remote workers or employees working from home (WFH)?' 
+            : 'How does this architecture handle distributed failovers during network partition?',
+          createdAt: '1 day ago',
+          created_at: new Date(Date.now() - 86400000).toISOString(),
+          likes: 4,
+          replies: [
+            {
+              id: 'reply_seed_a1_' + moduleId,
+              userId: 'usr_instructor_rajesh',
+              userName: 'Dr. Rajesh Sharma',
+              author_name: 'Dr. Rajesh Sharma',
+              userRole: 'instructor',
+              userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+              content: isPosh 
+                ? 'Yes, absolutely! Under Section 2(o) of the POSH Act, "workplace" is defined comprehensively. Any place visited or used by the employee arising out of or in the course of employment—including home workstations, video calls, Slack/Teams chats, and company emails—is strictly under the jurisdiction of the Internal Committee.' 
+                : 'Excellent question! Consensus nodes use the Raft protocol with quorum-based lease renewal to elect a new leader within 150ms of heartbeat loss.',
+              createdAt: '18 hours ago',
+              created_at: new Date(Date.now() - 64800000).toISOString(),
+              isFacultyAnswer: true
+            }
+          ]
+        },
+        {
+          id: 'disc_seed_welcome_' + moduleId,
           userId: 'usr_instructor_1',
           userName: 'Dr. Sarah Chen',
           author_name: 'Dr. Sarah Chen',
@@ -429,10 +463,11 @@ class AppState {
           role: 'instructor',
           userAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200',
           avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200',
-          content: 'Welcome everyone! Feel free to ask questions about this lesson or share your real-world observations.',
+          content: 'Welcome everyone! Feel free to ask questions about this lesson or share your real-world observations. Faculty actively monitors this thread.',
           createdAt: '2 days ago',
           created_at: new Date(Date.now() - 172800000).toISOString(),
-          likes: 12
+          likes: 12,
+          replies: []
         }
       ];
     }
@@ -472,14 +507,82 @@ class AppState {
       content: text,
       createdAt: 'Just now',
       created_at: new Date().toISOString(),
-      likes: 0
+      likes: 0,
+      replies: []
     };
 
     // Prepend to show immediately at top of discussion thread
     this.discussions[moduleId].unshift(newPost);
     this.addXP(10, 'Community Q&A Discussion Post');
+    this.logAudit('LEARNER_QUESTION_POSTED', moduleId, { author: authorName, question: text });
     this.save();
     return newPost;
+  }
+
+  addDiscussionReply(moduleId, discussionId, data) {
+    const list = this.getDiscussions(moduleId);
+    const post = list.find(p => p.id === discussionId);
+    if (!post) return null;
+
+    if (!Array.isArray(post.replies)) {
+      post.replies = [];
+    }
+
+    let text = '';
+    let authorName = (this.user && this.user.name) || 'Dr. Rajesh Sharma';
+    let authorRole = (this.user && this.user.role) || 'instructor';
+    let authorAvatar = (this.user && this.user.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200';
+
+    if (typeof data === 'string') {
+      text = data.trim();
+    } else if (data && typeof data === 'object') {
+      text = (data.content || data.text || '').trim();
+      if (data.author_name || data.userName) authorName = data.author_name || data.userName;
+      if (data.role || data.userRole) authorRole = data.role || data.userRole;
+      if (data.userAvatar || data.avatar_url) authorAvatar = data.userAvatar || data.avatar_url;
+    }
+
+    if (!text) return null;
+
+    const isFaculty = authorRole.toLowerCase() === 'instructor' || authorRole.toLowerCase() === 'admin' || authorRole.toLowerCase() === 'faculty';
+
+    const newReply = {
+      id: 'reply_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      userId: (this.user && this.user.id) || 'usr_current',
+      userName: authorName,
+      author_name: authorName,
+      userRole: authorRole.toLowerCase(),
+      userAvatar: authorAvatar,
+      content: text,
+      createdAt: 'Just now',
+      created_at: new Date().toISOString(),
+      isFacultyAnswer: isFaculty
+    };
+
+    post.replies.push(newReply);
+    this.addXP(isFaculty ? 25 : 15, isFaculty ? 'Faculty Q&A Resolution' : 'Discussion Reply');
+    this.logAudit(isFaculty ? 'INSTRUCTOR_QA_ANSWER_POSTED' : 'COMMUNITY_QA_REPLY_POSTED', discussionId, {
+      author: authorName,
+      role: authorRole,
+      isFacultyAnswer: isFaculty,
+      moduleId
+    });
+
+    // Automated Notification to learner that faculty answered
+    this.logEmail(
+      post.userEmail || 'student@learnpulse.dev',
+      `🎓 Faculty Answered Your Question: "${post.content.substring(0, 45)}..."`,
+      'FACULTY_QA_RESPONSE',
+      {
+        question: post.content,
+        facultyAnswer: text,
+        answeredBy: authorName,
+        moduleId
+      }
+    );
+
+    this.save();
+    return newReply;
   }
 
   likeDiscussion(moduleId, postId) {
@@ -489,6 +592,28 @@ class AppState {
       post.likes = (post.likes || 0) + 1;
       this.save();
     }
+  }
+
+  getAllDiscussions() {
+    const all = [];
+    const courses = window.COURSES_DATA || [];
+    
+    courses.forEach(prog => {
+      (prog.modules || []).forEach(mod => {
+        const posts = this.getDiscussions(mod.id);
+        posts.forEach(p => {
+          all.push({
+            ...p,
+            moduleId: mod.id,
+            moduleTitle: mod.title,
+            programId: prog.id,
+            programTitle: prog.title
+          });
+        });
+      });
+    });
+
+    return all.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   }
 
   // --- Gamification Engine ---
@@ -594,6 +719,43 @@ class AppState {
 
   getEmailLogs() {
     return this.emailLogs || [];
+  }
+
+  // --- SMTP & Notification Gateway Configuration ---
+  getSmtpConfig() {
+    const saved = localStorage.getItem("lp_smtp_gateway_config");
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return {
+      is_live_mode: false,
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      username: "notifications@worxpertise.com",
+      password: "",
+      sender_name: "Worxpertise Academy",
+      sender_email: "noreply@worxpertise.com",
+      webhook_url: "",
+      notify_on_cert: true,
+      notify_on_reminder: true,
+      notify_on_lockout: true,
+      notify_on_qa: true
+    };
+  }
+
+  saveSmtpConfig(config) {
+    localStorage.setItem("lp_smtp_gateway_config", JSON.stringify(config));
+    this.logAudit("SMTP_GATEWAY_CONFIG_UPDATED", "System Settings", {
+      host: config.host,
+      port: config.port,
+      is_live_mode: config.is_live_mode,
+      webhook_active: !!config.webhook_url
+    });
+    if (window.apiService && window.apiService.saveSmtpSettings) {
+      window.apiService.saveSmtpSettings(config).catch(() => {});
+    }
+    return config;
   }
 
   resetAllProgress() {

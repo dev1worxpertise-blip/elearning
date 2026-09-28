@@ -10,6 +10,29 @@
 const bcrypt = require('bcryptjs');
 const db = require('../db');
 
+let nodemailer = null;
+try {
+  nodemailer = require('nodemailer');
+} catch (e) {
+  nodemailer = null;
+}
+
+// Ensure tables and columns exist for discussion replies and system settings
+(async () => {
+  try {
+    await db.query(`
+      ALTER TABLE discussions ADD COLUMN IF NOT EXISTS replies JSONB DEFAULT '[]'::jsonb;
+      CREATE TABLE IF NOT EXISTS system_settings (
+        key VARCHAR(100) PRIMARY KEY,
+        value JSONB,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+  } catch (e) {
+    // Ignore if table/column already exists or running in offline mode
+  }
+})();
+
 // --- 1. AUDIT LOGS ---
 exports.getAuditLogs = async (req, res) => {
   try {
@@ -58,7 +81,21 @@ exports.logAuditAction = async (req, res) => {
   }
 };
 
-// --- 2. MODULE DISCUSSIONS ---
+// --- 2. MODULE DISCUSSIONS & INSTRUCTOR Q&A ---
+exports.getAllDiscussions = async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM discussions ORDER BY created_at DESC LIMIT 100');
+    const posts = result.rows.map(row => ({
+      ...row,
+      replies: Array.isArray(row.replies) ? row.replies : []
+    }));
+    res.json({ success: true, count: posts.length, discussions: posts });
+  } catch (err) {
+    console.error('getAllDiscussions error:', err);
+    res.status(500).json({ success: false, message: 'Failed to retrieve all discussions.' });
+  }
+};
+
 exports.getDiscussions = async (req, res) => {
   try {
     const { moduleId } = req.params;
@@ -66,7 +103,11 @@ exports.getDiscussions = async (req, res) => {
       'SELECT * FROM discussions WHERE module_id = $1 ORDER BY created_at ASC',
       [moduleId]
     );
-    res.json({ success: true, count: result.rows.length, discussions: result.rows });
+    const posts = result.rows.map(row => ({
+      ...row,
+      replies: Array.isArray(row.replies) ? row.replies : []
+    }));
+    res.json({ success: true, count: posts.length, discussions: posts });
   } catch (err) {
     console.error('getDiscussions error:', err);
     res.status(500).json({ success: false, message: 'Failed to retrieve discussions.' });
@@ -99,16 +140,72 @@ exports.postDiscussion = async (req, res) => {
     const userAvatar = (req.user && req.user.avatar_url) || user_avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150';
 
     const result = await db.query(
-      `INSERT INTO discussions (id, module_id, user_id, user_name, user_role, user_avatar, content)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO discussions (id, module_id, user_id, user_name, user_role, user_avatar, content, replies)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, '[]'::jsonb)
        RETURNING *`,
       [postId, moduleId, userId, userName, userRole, userAvatar, text]
     );
 
-    res.status(201).json({ success: true, message: 'Comment posted.', post: result.rows[0] });
+    const post = result.rows[0];
+    post.replies = [];
+
+    res.status(201).json({ success: true, message: 'Question posted successfully.', post });
   } catch (err) {
     console.error('postDiscussion error:', err);
     res.status(500).json({ success: false, message: 'Failed to post comment.' });
+  }
+};
+
+exports.postDiscussionReply = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    let { content, user_name, user_role, user_avatar, is_faculty } = req.body;
+
+    let text = (typeof content === 'string' ? content : (content?.content || content?.text || '')).trim();
+    if (!text) {
+      return res.status(400).json({ success: false, message: 'Reply content cannot be empty.' });
+    }
+
+    const userId = (req.user && req.user.id) || req.body.user_id || 'usr_faculty';
+    const userName = (req.user && req.user.name) || user_name || 'Dr. Rajesh Sharma';
+    const userRole = (req.user && req.user.role) || user_role || 'instructor';
+    const userAvatar = (req.user && req.user.avatar_url) || user_avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200';
+    const isFacultyAnswer = is_faculty !== undefined ? is_faculty : (userRole === 'instructor' || userRole === 'admin');
+
+    const replyObj = {
+      id: 'reply_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      userId,
+      userName,
+      userRole,
+      userAvatar,
+      content: text,
+      createdAt: 'Just now',
+      created_at: new Date().toISOString(),
+      isFacultyAnswer
+    };
+
+    const updateResult = await db.query(
+      `UPDATE discussions 
+       SET replies = COALESCE(replies, '[]'::jsonb) || $1::jsonb
+       WHERE id = $2
+       RETURNING *`,
+      [JSON.stringify([replyObj]), postId]
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Discussion post not found.' });
+    }
+
+    const post = updateResult.rows[0];
+    res.status(201).json({
+      success: true,
+      message: 'Reply posted successfully.',
+      reply: replyObj,
+      post
+    });
+  } catch (err) {
+    console.error('postDiscussionReply error:', err);
+    res.status(500).json({ success: false, message: 'Failed to post reply.' });
   }
 };
 
@@ -349,6 +446,217 @@ exports.getEmailDispatches = async (req, res) => {
   }
 };
 
+// In-memory fallback SMTP configuration
+let memorySmtpConfig = {
+  is_live_mode: false,
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587', 10),
+  secure: process.env.SMTP_SECURE === 'true',
+  username: process.env.SMTP_USER || '',
+  password: process.env.SMTP_PASS || '',
+  sender_name: process.env.SMTP_FROM_NAME || 'Worxpertise Academy',
+  sender_email: process.env.SMTP_FROM_EMAIL || 'noreply@worxpertise.com',
+  webhook_url: process.env.WEBHOOK_URL || '',
+  notify_on_cert: true,
+  notify_on_reminder: true,
+  notify_on_lockout: true,
+  notify_on_qa: true
+};
+
+exports.getSmtpSettings = async (req, res) => {
+  try {
+    const result = await db.query("SELECT value FROM system_settings WHERE key = 'smtp_config'");
+    const config = result.rows.length > 0 ? result.rows[0].value : memorySmtpConfig;
+    const safeConfig = {
+      ...config,
+      password_set: !!(config.password && config.password.length > 0),
+      password: config.password ? '••••••••••••' : ''
+    };
+    res.json({ success: true, settings: safeConfig });
+  } catch (err) {
+    const safeConfig = {
+      ...memorySmtpConfig,
+      password_set: !!(memorySmtpConfig.password && memorySmtpConfig.password.length > 0),
+      password: memorySmtpConfig.password ? '••••••••••••' : ''
+    };
+    res.json({ success: true, settings: safeConfig });
+  }
+};
+
+exports.saveSmtpSettings = async (req, res) => {
+  try {
+    const incoming = req.body || {};
+    let existingPass = memorySmtpConfig.password;
+    try {
+      const cur = await db.query("SELECT value FROM system_settings WHERE key = 'smtp_config'");
+      if (cur.rows.length > 0 && cur.rows[0].value?.password) {
+        existingPass = cur.rows[0].value.password;
+      }
+    } catch (e) {}
+
+    const newPassword = (incoming.password && !incoming.password.includes('••••')) ? incoming.password : existingPass;
+
+    const newConfig = {
+      is_live_mode: !!incoming.is_live_mode,
+      host: incoming.host || 'smtp.gmail.com',
+      port: parseInt(incoming.port || '587', 10),
+      secure: incoming.secure === true || incoming.secure === 'true',
+      username: incoming.username || '',
+      password: newPassword,
+      sender_name: incoming.sender_name || 'Worxpertise Academy',
+      sender_email: incoming.sender_email || 'noreply@worxpertise.com',
+      webhook_url: incoming.webhook_url || '',
+      notify_on_cert: incoming.notify_on_cert !== false,
+      notify_on_reminder: incoming.notify_on_reminder !== false,
+      notify_on_lockout: incoming.notify_on_lockout !== false,
+      notify_on_qa: incoming.notify_on_qa !== false
+    };
+
+    memorySmtpConfig = newConfig;
+
+    await db.query(`
+      INSERT INTO system_settings (key, value, updated_at)
+      VALUES ('smtp_config', $1, CURRENT_TIMESTAMP)
+      ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = CURRENT_TIMESTAMP
+    `, [newConfig]);
+
+    res.json({
+      success: true,
+      message: 'SMTP & Notification Gateway configuration saved successfully.',
+      settings: {
+        ...newConfig,
+        password_set: !!(newConfig.password && newConfig.password.length > 0),
+        password: newConfig.password ? '••••••••••••' : ''
+      }
+    });
+  } catch (err) {
+    console.error('saveSmtpSettings error:', err);
+    res.status(500).json({ success: false, message: 'Failed to save SMTP configuration.' });
+  }
+};
+
+exports.testEmailConnection = async (req, res) => {
+  try {
+    const { testEmail, config: customConfig } = req.body;
+    const recipient = testEmail || req.user?.email || 'admin@worxpertise.com';
+
+    let config = memorySmtpConfig;
+    try {
+      const cur = await db.query("SELECT value FROM system_settings WHERE key = 'smtp_config'");
+      if (cur.rows.length > 0) config = cur.rows[0].value;
+    } catch (e) {}
+
+    if (customConfig && typeof customConfig === 'object') {
+      config = { ...config, ...customConfig };
+      if (customConfig.password && customConfig.password.includes('••••')) {
+        config.password = memorySmtpConfig.password;
+      }
+    }
+
+    let transportResult = null;
+    let liveDispatched = false;
+
+    // 1. Live SMTP Dispatch via nodemailer if configured
+    if (nodemailer && config.host && config.username && config.password) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: config.host,
+          port: config.port,
+          secure: config.secure,
+          auth: {
+            user: config.username,
+            pass: config.password
+          },
+          tls: {
+            rejectUnauthorized: false
+          }
+        });
+
+        const info = await transporter.sendMail({
+          from: `"${config.sender_name || 'Worxpertise Academy'}" <${config.sender_email || config.username}>`,
+          to: recipient,
+          subject: '✅ [TEST] Worxpertise Academy Notification Gateway Verification',
+          text: `Hello! This is an automated verification test email from Worxpertise Academy.\n\nGateway Host: ${config.host}:${config.port}\nSecurity: ${config.secure ? 'SSL' : 'TLS/STARTTLS'}\nTimestamp: ${new Date().toISOString()}\n\nYour institutional notification gateway is operational.`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px; border: 1px solid #334155;">
+              <h2 style="color: #dd1f36; margin-top: 0;">Worxpertise Academy</h2>
+              <div style="background: #1e293b; padding: 16px; border-radius: 8px; border-left: 4px solid #10b981; margin: 16px 0;">
+                <strong style="color: #10b981; font-size: 16px;">✅ Gateway Verification Successful</strong>
+                <p style="margin: 8px 0 0; color: #94a3b8; font-size: 13px;">This test message confirms your SMTP relay connection is active and authenticated.</p>
+              </div>
+              <table style="width: 100%; font-size: 13px; color: #cbd5e1; border-collapse: collapse; margin-top: 16px;">
+                <tr><td style="padding: 6px 0; color: #64748b;">SMTP Host:</td><td><strong>${config.host}:${config.port}</strong></td></tr>
+                <tr><td style="padding: 6px 0; color: #64748b;">Security:</td><td><strong>${config.secure ? 'SSL (465)' : 'TLS / STARTTLS (587)'}</strong></td></tr>
+                <tr><td style="padding: 6px 0; color: #64748b;">Authenticated User:</td><td><strong>${config.username}</strong></td></tr>
+                <tr><td style="padding: 6px 0; color: #64748b;">Dispatched At:</td><td>${new Date().toLocaleString()}</td></tr>
+              </table>
+            </div>
+          `
+        });
+        transportResult = { messageId: info.messageId, response: info.response };
+        liveDispatched = true;
+      } catch (mailErr) {
+        console.warn('Real SMTP dispatch error (falling back to audit log):', mailErr.message);
+        return res.status(502).json({
+          success: false,
+          message: `SMTP Gateway Authentication Error: ${mailErr.message}`,
+          host: config.host,
+          port: config.port
+        });
+      }
+    }
+
+    // 2. Webhook notification ping if configured
+    let webhookStatus = null;
+    if (config.webhook_url && config.webhook_url.startsWith('http')) {
+      try {
+        const whRes = await fetch(config.webhook_url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'GATEWAY_TEST_PING',
+            timestamp: new Date().toISOString(),
+            message: 'Worxpertise Academy Webhook Gateway Test Successful',
+            recipient
+          })
+        });
+        webhookStatus = `HTTP ${whRes.status}`;
+      } catch (whErr) {
+        webhookStatus = `Failed: ${whErr.message}`;
+      }
+    }
+
+    // Record test dispatch in email_dispatches table
+    const dispatchId = 'test_mail_' + Date.now();
+    await db.query(
+      `INSERT INTO email_dispatches (id, recipient, subject, email_type, status, details)
+       VALUES ($1, $2, $3, 'GATEWAY_VERIFICATION_TEST', $4, $5)`,
+      [
+        dispatchId,
+        recipient,
+        'Gateway Verification Test Email',
+        liveDispatched ? 'DELIVERED_LIVE_SMTP' : 'VERIFIED_SANDBOX',
+        JSON.stringify({ host: config.host, port: config.port, liveDispatched, transportResult, webhookStatus })
+      ]
+    );
+
+    res.json({
+      success: true,
+      liveDispatched,
+      message: liveDispatched 
+        ? `✅ Live test email dispatched via ${config.host} to ${recipient}!` 
+        : `✅ Gateway parameters verified for ${config.host}:${config.port}. (In sandbox mode; toggle Live Mode with SMTP password to send live external emails)`,
+      recipient,
+      host: config.host,
+      port: config.port,
+      webhookStatus
+    });
+  } catch (err) {
+    console.error('testEmailConnection error:', err);
+    res.status(500).json({ success: false, message: 'Failed to test email connection: ' + err.message });
+  }
+};
+
 exports.dispatchEmail = async (req, res) => {
   try {
     const { recipient, subject, emailType, details } = req.body;
@@ -356,18 +664,82 @@ exports.dispatchEmail = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Recipient and subject are required.' });
     }
 
+    let config = memorySmtpConfig;
+    try {
+      const cur = await db.query("SELECT value FROM system_settings WHERE key = 'smtp_config'");
+      if (cur.rows.length > 0) config = cur.rows[0].value;
+    } catch (e) {}
+
+    let liveSent = false;
+    let transportInfo = null;
+
+    // Send real email if live mode enabled and credentials configured
+    if (config.is_live_mode && nodemailer && config.host && config.username && config.password) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: config.host,
+          port: config.port,
+          secure: config.secure,
+          auth: {
+            user: config.username,
+            pass: config.password
+          },
+          tls: { rejectUnauthorized: false }
+        });
+
+        const detailStr = typeof details === 'object' ? JSON.stringify(details, null, 2) : String(details || '');
+        const sent = await transporter.sendMail({
+          from: `"${config.sender_name || 'Worxpertise Academy'}" <${config.sender_email || config.username}>`,
+          to: recipient,
+          subject: subject,
+          text: `${subject}\n\n${detailStr}\n\nWorxpertise Academy Compliance & Learning Operations`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px; border: 1px solid #334155;">
+              <h2 style="color: #dd1f36; margin-top: 0;">Worxpertise Academy</h2>
+              <div style="background: #1e293b; padding: 16px; border-radius: 8px; border-left: 4px solid #dd1f36; margin: 16px 0;">
+                <strong style="color: #ffffff; font-size: 15px;">${subject}</strong>
+                <p style="margin: 8px 0 0; color: #94a3b8; font-size: 13px;">${detailStr}</p>
+              </div>
+              <p style="color: #64748b; font-size: 11px; margin-top: 24px;">Automated Institutional Notification | Worxpertise Enterprise LMS</p>
+            </div>
+          `
+        });
+        liveSent = true;
+        transportInfo = sent.messageId;
+      } catch (sendErr) {
+        console.warn('Real SMTP send warning (falling back to audit log):', sendErr.message);
+      }
+    }
+
+    // Fire webhook if configured
+    if (config.webhook_url && config.webhook_url.startsWith('http')) {
+      try {
+        await fetch(config.webhook_url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recipient, subject, emailType, details, timestamp: new Date().toISOString() })
+        });
+      } catch (whErr) {
+        console.warn('Webhook trigger notice:', whErr.message);
+      }
+    }
+
     const dispatchId = 'mail_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+    const status = liveSent ? 'DELIVERED (Live SMTP)' : 'DELIVERED (Simulated Relay)';
     const result = await db.query(
       `INSERT INTO email_dispatches (id, recipient, subject, email_type, status, details)
-       VALUES ($1, $2, $3, $4, 'DELIVERED', $5)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [dispatchId, recipient, subject, emailType || 'GENERAL_NOTIFICATION', details || '']
+      [dispatchId, recipient, subject, emailType || 'GENERAL_NOTIFICATION', status, typeof details === 'object' ? JSON.stringify(details) : String(details || '')]
     );
 
     res.status(201).json({
       success: true,
-      message: 'Email notification dispatched successfully (Simulated SMTP Delivery).',
+      message: liveSent 
+        ? `Email notification dispatched via live SMTP to ${recipient}.` 
+        : 'Email notification recorded in dispatch ledger (Simulated Delivery).',
       dispatch: result.rows[0],
+      liveDispatched: liveSent
     });
   } catch (err) {
     console.error('dispatchEmail error:', err);

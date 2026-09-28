@@ -353,6 +353,28 @@ class ApiService {
     return res.json();
   }
 
+  async getAllDiscussions() {
+    const res = await fetch(`${API_BASE_URL}/enterprise/discussions-all`, {
+      headers: this.getHeaders(),
+    });
+    return res.json();
+  }
+
+  async postDiscussionReply(postId, content, metadata = {}) {
+    let payload = {};
+    if (typeof content === 'string') {
+      payload = { content, ...metadata };
+    } else if (content && typeof content === 'object') {
+      payload = { ...content, ...metadata };
+    }
+    const res = await fetch(`${API_BASE_URL}/enterprise/discussions/${postId}/replies`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return res.json();
+  }
+
   async likeDiscussion(postId) {
     const res = await fetch(`${API_BASE_URL}/enterprise/discussions/like/${postId}`, {
       method: 'POST',
@@ -434,6 +456,32 @@ class ApiService {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify({ recipient, subject, emailType, details }),
+    });
+    return res.json();
+  }
+
+  // --- SMTP & Webhook Gateway Configuration ---
+  async getSmtpSettings() {
+    const res = await fetch(`${API_BASE_URL}/enterprise/smtp-settings`, {
+      headers: this.getHeaders(),
+    });
+    return res.json();
+  }
+
+  async saveSmtpSettings(config) {
+    const res = await fetch(`${API_BASE_URL}/enterprise/smtp-settings`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(config),
+    });
+    return res.json();
+  }
+
+  async testEmailConnection(testEmail, config = null) {
+    const res = await fetch(`${API_BASE_URL}/enterprise/test-email`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ testEmail, config }),
     });
     return res.json();
   }

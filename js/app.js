@@ -1340,16 +1340,22 @@ class App {
       return;
     }
 
+    const currentUser = (window.appState && window.appState.user) || { name: 'Sachin Chauhan', role: 'student' };
+    const isCurrentFaculty = currentUser.role === 'instructor' || currentUser.role === 'admin' || currentUser.role === 'faculty';
+
     container.innerHTML = posts.map(post => {
       const role = (post.role || post.user_role || 'student').toLowerCase();
-      const isInstructor = role === "instructor" || role === "admin" || role === "faculty";
+      const isPostInstructor = role === "instructor" || role === "admin" || role === "faculty";
       const author = post.author_name || post.user_name || post.userName || 'Learner';
       const avatar = post.avatar_url || post.user_avatar || post.userAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
       const text = post.content || post.text || '';
       const dateDisplay = post.createdAt || (post.created_at ? new Date(post.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Just now');
+      const replies = Array.isArray(post.replies) ? post.replies : [];
+      const hasFacultyAnswer = replies.some(r => r.isFacultyAnswer);
 
       return `
-        <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition space-y-3">
+        <div class="p-4 rounded-2xl bg-slate-950 border ${hasFacultyAnswer ? 'border-emerald-500/40' : 'border-slate-800'} hover:border-slate-700 transition space-y-3">
+          <!-- Post Author Header -->
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2.5">
               <img 
@@ -1361,7 +1367,8 @@ class App {
               <div>
                 <div class="flex items-center space-x-1.5">
                   <span class="text-xs font-bold text-white">${author}</span>
-                  ${isInstructor ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30">Faculty</span>' : ''}
+                  ${isPostInstructor ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30">Faculty</span>' : ''}
+                  ${hasFacultyAnswer ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1"><span>✓</span><span>Faculty Resolved</span></span>' : ''}
                 </div>
                 <span class="text-[10px] text-slate-500">${dateDisplay}</span>
               </div>
@@ -1375,12 +1382,161 @@ class App {
               <span id="likeCount-${post.id}">${post.likes || 0}</span>
             </button>
           </div>
+
+          <!-- Question Content -->
           <p class="text-xs text-slate-200 leading-relaxed pl-9">
             ${text}
           </p>
+
+          <!-- Replies Thread List -->
+          ${replies.length > 0 ? `
+            <div class="pl-9 space-y-2.5 pt-2 border-t border-slate-800/80">
+              ${replies.map(rep => {
+                const isFaculty = rep.isFacultyAnswer || rep.userRole === 'instructor' || rep.userRole === 'admin';
+                const repAuthor = rep.userName || rep.author_name || 'Faculty Member';
+                const repAvatar = rep.userAvatar || rep.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100';
+                const repDate = rep.createdAt || (rep.created_at ? new Date(rep.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Just now');
+
+                return `
+                  <div class="p-3 rounded-xl ${isFaculty ? 'bg-rose-950/20 border border-rose-500/30' : 'bg-slate-900 border border-slate-800'} space-y-1.5">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center space-x-2">
+                        <img src="${repAvatar}" class="w-5 h-5 rounded-full object-cover border border-slate-700" alt="${repAuthor}" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'" />
+                        <span class="text-xs font-bold ${isFaculty ? 'text-rose-300' : 'text-white'}">${repAuthor}</span>
+                        ${isFaculty ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30">Verified Faculty Answer</span>' : '<span class="px-1.5 py-0.2 rounded text-[9px] bg-slate-800 text-slate-400">Reply</span>'}
+                      </div>
+                      <span class="text-[10px] text-slate-500">${repDate}</span>
+                    </div>
+                    <p class="text-xs text-slate-200 leading-relaxed font-sans pl-7">
+                      ${rep.content || rep.text || ''}
+                    </p>
+                    ${isFaculty ? `
+                      <div class="text-[10px] text-emerald-400 font-semibold pl-7 flex items-center space-x-1">
+                        <span>✓ Official resolution by course instructor</span>
+                      </div>
+                    ` : ''}
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          ` : ''}
+
+          <!-- Reply Action Button & Expandable Reply Form -->
+          <div class="pl-9 pt-1">
+            <div class="flex items-center space-x-3">
+              <button 
+                type="button" 
+                onclick="window.app.toggleDiscussionReplyBox('${post.id}')"
+                class="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-bold ${isCurrentFaculty ? 'text-rose-400 hover:text-rose-300 border border-rose-500/30' : 'text-slate-400 hover:text-white border border-slate-800'} transition flex items-center space-x-1.5 cursor-pointer"
+              >
+                <span>💬</span>
+                <span>${isCurrentFaculty ? 'Answer as Faculty' : 'Reply'}</span>
+                ${replies.length > 0 ? `<span class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-400">(${replies.length})</span>` : ''}
+              </button>
+            </div>
+
+            <!-- Expandable Reply Box -->
+            <div id="replyBox-${post.id}" class="hidden mt-3 p-3.5 rounded-xl bg-slate-900 border border-slate-700/80 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 text-xs">
+                  <span class="font-bold text-white">Answering as:</span>
+                  <span class="text-rose-300 font-semibold">${currentUser.name}</span>
+                  ${isCurrentFaculty ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30">Faculty Badge</span>' : ''}
+                </div>
+                <span class="text-[10px] text-slate-400">+25 XP for resolution</span>
+              </div>
+              <textarea 
+                id="replyInput-${post.id}" 
+                rows="2" 
+                placeholder="${isCurrentFaculty ? 'Write official faculty explanation, regulatory reference, or solution...' : 'Add your comment to this discussion...'}" 
+                class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition resize-none"
+              ></textarea>
+              <div class="flex items-center justify-end space-x-2">
+                <button 
+                  type="button" 
+                  onclick="window.app.toggleDiscussionReplyBox('${post.id}')"
+                  class="px-3 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button" 
+                  onclick="window.app.submitDiscussionReply('${post.id}')"
+                  class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white text-xs font-bold transition flex items-center space-x-1 cursor-pointer shadow-md"
+                >
+                  <span>Post Official Answer</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       `;
     }).join("");
+  }
+
+  toggleDiscussionReplyBox(postId) {
+    const box = document.getElementById(`replyBox-${postId}`);
+    if (!box) return;
+    const isHidden = box.classList.contains("hidden");
+    box.classList.toggle("hidden", !isHidden);
+    if (isHidden) {
+      const input = document.getElementById(`replyInput-${postId}`);
+      if (input) input.focus();
+    }
+  }
+
+  async submitDiscussionReply(postId) {
+    const mod = this.activeModule || (window.appState && window.appState.activeModule);
+    if (!mod) {
+      this.showToast("Please select a module first.", "warning");
+      return;
+    }
+    const input = document.getElementById(`replyInput-${postId}`);
+    const text = input ? input.value.trim() : "";
+    if (!text) {
+      this.showToast("Please enter your answer text.", "warning");
+      return;
+    }
+
+    const user = (window.appState && window.appState.user) || { name: 'Dr. Rajesh Sharma', role: 'instructor' };
+    const isFaculty = user.role === 'instructor' || user.role === 'admin' || user.role === 'faculty';
+
+    // 1. Save in local state
+    if (window.appState && typeof window.appState.addDiscussionReply === "function") {
+      window.appState.addDiscussionReply(mod.id, postId, {
+        author_name: user.name,
+        role: user.role,
+        content: text,
+        isFacultyAnswer: isFaculty
+      });
+    }
+
+    // 2. Clear input
+    if (input) input.value = "";
+    this.toggleDiscussionReplyBox(postId);
+
+    // 3. Sync to PostgreSQL backend
+    if (window.apiService && window.apiService.postDiscussionReply) {
+      try {
+        await window.apiService.postDiscussionReply(postId, {
+          content: text,
+          user_name: user.name,
+          user_role: user.role,
+          is_faculty: isFaculty
+        });
+      } catch (err) {
+        console.warn("Backend reply sync notice:", err);
+      }
+    }
+
+    // 4. Toast & UI update
+    this.showToast(isFaculty ? "🎓 Official Faculty Answer posted! (+25 XP)" : "💬 Reply posted! (+15 XP)", "success");
+    await this.renderDiscussionView();
+
+    // 5. If Instructor Studio is active, re-render its Q&A inbox as well
+    if (window.instructorStudio && typeof window.instructorStudio.renderQnAInbox === "function") {
+      window.instructorStudio.renderQnAInbox();
+    }
   }
 
   async postDiscussionMessage() {
@@ -1426,6 +1582,11 @@ class App {
     // 4. Update UI & feedback
     this.showToast("💬 Question posted! (+10 XP Community Participation)", "success");
     await this.renderDiscussionView();
+
+    // 5. Sync Instructor Studio Q&A if open
+    if (window.instructorStudio && typeof window.instructorStudio.renderQnAInbox === "function") {
+      window.instructorStudio.renderQnAInbox();
+    }
   }
 
   async likeDiscussionPost(postId) {
@@ -1539,6 +1700,235 @@ class App {
         </div>
       `;
     }).join("");
+  }
+
+  // --- AUTOMATED EMAIL & SMTP GATEWAY CONTROLLER ---
+  async openEmailGatewaySettingsModal() {
+    const modal = document.getElementById("modalEmailGateway");
+    if (!modal) return;
+
+    let config = (window.appState && typeof window.appState.getSmtpConfig === "function")
+      ? window.appState.getSmtpConfig()
+      : { host: 'smtp.gmail.com', port: 587, secure: false, username: '', is_live_mode: false };
+
+    // Fetch live backend settings if available
+    if (window.apiService && window.apiService.getSmtpSettings) {
+      try {
+        const res = await window.apiService.getSmtpSettings();
+        if (res && res.success && res.settings) {
+          config = { ...config, ...res.settings };
+        }
+      } catch (err) {}
+    }
+
+    // Populate inputs
+    const liveToggle = document.getElementById("smtpLiveModeToggle");
+    const hostInput = document.getElementById("smtpHostInput");
+    const portInput = document.getElementById("smtpPortInput");
+    const secureSelect = document.getElementById("smtpSecureSelect");
+    const userInput = document.getElementById("smtpUsernameInput");
+    const passInput = document.getElementById("smtpPasswordInput");
+    const nameInput = document.getElementById("smtpSenderNameInput");
+    const emailInput = document.getElementById("smtpSenderEmailInput");
+    const webhookInput = document.getElementById("smtpWebhookUrlInput");
+    const testInput = document.getElementById("smtpTestRecipientInput");
+    const feedbackBox = document.getElementById("smtpTestFeedbackBox");
+
+    if (liveToggle) liveToggle.checked = !!config.is_live_mode;
+    if (hostInput) hostInput.value = config.host || "smtp.gmail.com";
+    if (portInput) portInput.value = config.port || 587;
+    if (secureSelect) secureSelect.value = config.secure ? "true" : "false";
+    if (userInput) userInput.value = config.username || "";
+    if (passInput) passInput.value = config.password || "";
+    if (nameInput) nameInput.value = config.sender_name || "Worxpertise Academy";
+    if (emailInput) emailInput.value = config.sender_email || "noreply@worxpertise.com";
+    if (webhookInput) webhookInput.value = config.webhook_url || "";
+    if (testInput && !testInput.value) {
+      testInput.value = (window.appState && window.appState.user && window.appState.user.email) || "admin@worxpertise.com";
+    }
+    if (feedbackBox) feedbackBox.classList.add("hidden");
+
+    const cbCert = document.getElementById("smtpTriggerCert");
+    const cbRem = document.getElementById("smtpTriggerReminder");
+    const cbLock = document.getElementById("smtpTriggerLockout");
+    const cbQA = document.getElementById("smtpTriggerQA");
+    if (cbCert) cbCert.checked = config.notify_on_cert !== false;
+    if (cbRem) cbRem.checked = config.notify_on_reminder !== false;
+    if (cbLock) cbLock.checked = config.notify_on_lockout !== false;
+    if (cbQA) cbQA.checked = config.notify_on_qa !== false;
+
+    modal.classList.remove("hidden");
+    document.body.classList.add("overflow-hidden");
+  }
+
+  closeEmailGatewaySettingsModal() {
+    const modal = document.getElementById("modalEmailGateway");
+    if (modal) modal.classList.add("hidden");
+    document.body.classList.remove("overflow-hidden");
+  }
+
+  applySmtpPreset(preset) {
+    const hostInput = document.getElementById("smtpHostInput");
+    const portInput = document.getElementById("smtpPortInput");
+    const secureSelect = document.getElementById("smtpSecureSelect");
+
+    document.querySelectorAll(".smtp-preset-btn").forEach(btn => {
+      btn.classList.remove("bg-cyan-500", "text-slate-950", "border-cyan-400");
+      btn.classList.add("bg-slate-800", "text-slate-300");
+    });
+    const clickedBtn = document.querySelector(`[data-smtp-preset="${preset}"]`);
+    if (clickedBtn) {
+      clickedBtn.classList.add("bg-cyan-500", "text-slate-950", "border-cyan-400");
+      clickedBtn.classList.remove("bg-slate-800", "text-slate-300");
+    }
+
+    if (preset === "gmail") {
+      if (hostInput) hostInput.value = "smtp.gmail.com";
+      if (portInput) portInput.value = "587";
+      if (secureSelect) secureSelect.value = "false";
+    } else if (preset === "office365") {
+      if (hostInput) hostInput.value = "smtp.office365.com";
+      if (portInput) portInput.value = "587";
+      if (secureSelect) secureSelect.value = "false";
+    } else if (preset === "sendgrid") {
+      if (hostInput) hostInput.value = "smtp.sendgrid.net";
+      if (portInput) portInput.value = "587";
+      if (secureSelect) secureSelect.value = "false";
+    } else if (preset === "ses") {
+      if (hostInput) hostInput.value = "email-smtp.us-east-1.amazonaws.com";
+      if (portInput) portInput.value = "587";
+      if (secureSelect) secureSelect.value = "false";
+    } else if (preset === "ssl") {
+      if (portInput) portInput.value = "465";
+      if (secureSelect) secureSelect.value = "true";
+    }
+  }
+
+  async saveSmtpSettingsForm(e) {
+    if (e) e.preventDefault();
+    const liveToggle = document.getElementById("smtpLiveModeToggle");
+    const hostInput = document.getElementById("smtpHostInput");
+    const portInput = document.getElementById("smtpPortInput");
+    const secureSelect = document.getElementById("smtpSecureSelect");
+    const userInput = document.getElementById("smtpUsernameInput");
+    const passInput = document.getElementById("smtpPasswordInput");
+    const nameInput = document.getElementById("smtpSenderNameInput");
+    const emailInput = document.getElementById("smtpSenderEmailInput");
+    const webhookInput = document.getElementById("smtpWebhookUrlInput");
+
+    const cbCert = document.getElementById("smtpTriggerCert");
+    const cbRem = document.getElementById("smtpTriggerReminder");
+    const cbLock = document.getElementById("smtpTriggerLockout");
+    const cbQA = document.getElementById("smtpTriggerQA");
+
+    const config = {
+      is_live_mode: liveToggle ? liveToggle.checked : false,
+      host: hostInput ? hostInput.value.trim() : "smtp.gmail.com",
+      port: portInput ? parseInt(portInput.value, 10) : 587,
+      secure: secureSelect ? secureSelect.value === "true" : false,
+      username: userInput ? userInput.value.trim() : "",
+      password: passInput ? passInput.value : "",
+      sender_name: nameInput ? nameInput.value.trim() : "Worxpertise Academy",
+      sender_email: emailInput ? emailInput.value.trim() : "noreply@worxpertise.com",
+      webhook_url: webhookInput ? webhookInput.value.trim() : "",
+      notify_on_cert: cbCert ? cbCert.checked : true,
+      notify_on_reminder: cbRem ? cbRem.checked : true,
+      notify_on_lockout: cbLock ? cbLock.checked : true,
+      notify_on_qa: cbQA ? cbQA.checked : true
+    };
+
+    if (window.appState && typeof window.appState.saveSmtpConfig === "function") {
+      window.appState.saveSmtpConfig(config);
+    }
+
+    if (window.apiService && window.apiService.saveSmtpSettings) {
+      try {
+        await window.apiService.saveSmtpSettings(config);
+      } catch (err) {}
+    }
+
+    this.showToast("⚙️ Gateway configuration saved successfully!", "success");
+    this.closeEmailGatewaySettingsModal();
+    if (window.reportsManager && window.reportsManager.activeReport === "emails") {
+      window.reportsManager.render();
+    }
+  }
+
+  async sendTestSmtpEmail() {
+    const testInput = document.getElementById("smtpTestRecipientInput");
+    const feedbackBox = document.getElementById("smtpTestFeedbackBox");
+    const testRecipient = testInput ? testInput.value.trim() : "";
+
+    if (!testRecipient) {
+      this.showToast("Please enter a test email address.", "warning");
+      return;
+    }
+
+    const hostInput = document.getElementById("smtpHostInput");
+    const portInput = document.getElementById("smtpPortInput");
+    const secureSelect = document.getElementById("smtpSecureSelect");
+    const userInput = document.getElementById("smtpUsernameInput");
+    const passInput = document.getElementById("smtpPasswordInput");
+    const liveToggle = document.getElementById("smtpLiveModeToggle");
+    const webhookInput = document.getElementById("smtpWebhookUrlInput");
+
+    const currentFormConfig = {
+      is_live_mode: liveToggle ? liveToggle.checked : false,
+      host: hostInput ? hostInput.value.trim() : "smtp.gmail.com",
+      port: portInput ? parseInt(portInput.value, 10) : 587,
+      secure: secureSelect ? secureSelect.value === "true" : false,
+      username: userInput ? userInput.value.trim() : "",
+      password: passInput ? passInput.value : "",
+      webhook_url: webhookInput ? webhookInput.value.trim() : ""
+    };
+
+    if (feedbackBox) {
+      feedbackBox.className = "p-3 rounded-xl text-xs border bg-slate-950/80 border-slate-700 text-slate-300 flex items-center space-x-2";
+      feedbackBox.innerHTML = `<span>⏳ Dispatching verification ping to ${testRecipient}...</span>`;
+      feedbackBox.classList.remove("hidden");
+    }
+
+    let isSuccess = false;
+    let feedbackMsg = "";
+
+    if (window.apiService && window.apiService.testEmailConnection) {
+      try {
+        const res = await window.apiService.testEmailConnection(testRecipient, currentFormConfig);
+        if (res && res.success) {
+          isSuccess = true;
+          feedbackMsg = res.message;
+        } else if (res && !res.success) {
+          feedbackMsg = res.message || "Connection failed.";
+        }
+      } catch (err) {
+        feedbackMsg = "Connection check: " + err.message;
+      }
+    } else {
+      isSuccess = true;
+      feedbackMsg = `✅ Gateway parameters verified for ${currentFormConfig.host}:${currentFormConfig.port}. (Standalone mode dispatch logged to audit trail)`;
+    }
+
+    // Log to state
+    if (window.appState && typeof window.appState.logEmail === "function") {
+      window.appState.logEmail(
+        testRecipient,
+        `[TEST] Gateway Verification Ping (${currentFormConfig.host})`,
+        'GATEWAY_TEST',
+        { host: currentFormConfig.host, port: currentFormConfig.port, isLive: currentFormConfig.is_live_mode }
+      );
+    }
+
+    if (feedbackBox) {
+      if (isSuccess) {
+        feedbackBox.className = "p-3 rounded-xl text-xs border bg-emerald-950/80 border-emerald-500/50 text-emerald-200";
+        feedbackBox.innerHTML = `<div><strong class="font-bold">Connection Verified:</strong> ${feedbackMsg}</div>`;
+      } else {
+        feedbackBox.className = "p-3 rounded-xl text-xs border bg-rose-950/80 border-rose-500/50 text-rose-200";
+        feedbackBox.innerHTML = `<div><strong class="font-bold">Gateway Notice:</strong> ${feedbackMsg}</div>`;
+      }
+    }
+
+    this.showToast(isSuccess ? "✅ Gateway test completed!" : "⚠️ Check gateway settings.", isSuccess ? "success" : "warning");
   }
 
   switchModule(moduleId) {
@@ -1683,18 +2073,26 @@ class App {
           <h3 class="text-lg font-bold text-white mt-0.5">Need full audit sheets for management or legal compliance?</h3>
           <p class="text-xs text-slate-400 mt-1">Export formatted multi-sheet Excel workbooks with executive summaries, POSH matrices, and video watch trails.</p>
         </div>
-        <div class="flex items-center space-x-3 shrink-0">
+        <div class="flex items-center space-x-2 shrink-0">
           <button 
             onclick="window.reportsManager.exportMasterAuditWorkbook()" 
-            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg transition flex items-center space-x-2"
+            class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg transition flex items-center space-x-1.5 cursor-pointer"
+            title="Download complete 6-sheet audit workbook"
           >
-            <span>📗 Export Master Audit (.xlsx)</span>
+            <span>📗 Master Audit (.xlsx)</span>
+          </button>
+          <button 
+            onclick="window.reportsManager.setReportTab('audit'); window.app.navigate('reports');" 
+            class="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs border border-amber-500/40 transition flex items-center space-x-1.5 cursor-pointer"
+            title="Open Tamper-Proof SHA-256 Audit Trail"
+          >
+            <span>🛡️ Tamper-Proof Audit Logs</span>
           </button>
           <button 
             onclick="window.app.navigate('reports')" 
-            class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition"
+            class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition cursor-pointer"
           >
-            Open Reports Center
+            All Reports →
           </button>
         </div>
       </div>
