@@ -211,17 +211,16 @@ class AppState {
   }
 
   resetVideoProgress(moduleId) {
-    if (this.videoStatus[moduleId]) {
-      this.videoStatus[moduleId] = {
-        percent: 0,
-        isFinished: false,
-        maxWatchedSeconds: 0
-      };
+    this.videoStatus[moduleId] = {
+      percent: 0,
+      isFinished: false,
+      maxWatchedSeconds: 0
+    };
+    if (this.playbackPositions) {
+      delete this.playbackPositions[moduleId];
     }
-    // Remove from completed modules if quiz wasn't passed
-    if (!this.quizResults[moduleId] || !this.quizResults[moduleId].passed) {
-      this.completedModules = this.completedModules.filter(id => id !== moduleId);
-    }
+    delete this.quizResults[moduleId];
+    this.completedModules = this.completedModules.filter(id => id !== moduleId);
     this.save();
   }
 
@@ -570,11 +569,18 @@ class AppState {
 
   resetAllProgress() {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("lp_antiskip_v2");
     this.enrolledPrograms = window.COURSES_DATA && window.COURSES_DATA.length > 0 ? [window.COURSES_DATA[0].id] : [];
     this.videoStatus = {};
     this.quizResults = {};
     this.completedModules = [];
     this.certificates = [];
+    this.playbackPositions = {};
+    this.videoNotes = {};
+    this.xp = 0;
+    this.streakDays = 1;
+    this.auditLogs = [];
+    this.emailLogs = [];
     this.save();
   }
 }

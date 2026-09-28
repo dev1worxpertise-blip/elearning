@@ -608,13 +608,7 @@ class VideoPlayerController {
     // Reset Watch Status (Allows instructors / testers to re-test the anti-skip gate)
     btnResetLesson?.addEventListener("click", () => {
       window.appState.resetVideoProgress(this.currentModule.id);
-      this.maxWatchedTime = 0;
-      if (this.activeMode === "youtube" && this.ytPlayer && typeof this.ytPlayer.seekTo === "function") {
-        try {
-          this.ytPlayer.seekTo(0, true);
-          this.ytPlayer.pauseVideo();
-        } catch (e) {}
-      }
+      this.resetPlayer();
       this.init(this.containerId || "videoPlayerMount", this.currentModule, this.currentProgram);
       if (window.app && window.app.showToast) {
         window.app.showToast("Lesson watch progress reset to 0%. Locked & ready for testing.", "info");
@@ -1001,6 +995,80 @@ class VideoPlayerController {
         this.ytPlayer.seekTo(this.maxWatchedTime, true);
       }
       this.showSkipRestrictedNotice();
+    }
+  }
+
+  resetPlayer() {
+    this.maxWatchedTime = 0;
+    this.stopYouTubeSync();
+
+    // 1. Pause and reset HTML5 video
+    if (this.videoElement) {
+      try {
+        this.videoElement.pause();
+        this.videoElement.currentTime = 0;
+      } catch (e) {}
+    }
+
+    // 2. Pause and reset YouTube video
+    if (this.ytPlayer && typeof this.ytPlayer.seekTo === "function") {
+      try {
+        this.ytPlayer.pauseVideo();
+        this.ytPlayer.seekTo(0, true);
+      } catch (e) {}
+    }
+
+    // 3. Reset UI badges and lock assessment
+    const watchBadge = document.getElementById("videoWatchBadge");
+    const watchText = document.getElementById("videoWatchText");
+    const antiSkipBadge = document.getElementById("antiSkipBadge");
+    const quizBanner = document.getElementById("quizUnlockBanner");
+    const startQuizBtn = document.getElementById("btnStartQuiz");
+    const progressBar = document.getElementById("videoProgressBar");
+    const watchedRangeBar = document.getElementById("videoWatchedRangeBar");
+    const timeDisplay = document.getElementById("timeDisplay");
+    const playIcon = document.getElementById("playIcon");
+    const pauseIcon = document.getElementById("pauseIcon");
+    const playOverlay = document.getElementById("videoPlayOverlay");
+
+    if (watchBadge) {
+      watchBadge.className = "flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30";
+    }
+    if (watchText) {
+      watchText.textContent = "Watching (0%)";
+    }
+    if (antiSkipBadge) {
+      antiSkipBadge.className = "hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-rose-950/40 text-rose-300 border border-rose-800/40";
+      antiSkipBadge.innerHTML = "<span>🔒</span><span>Anti-Skip Locked</span>";
+    }
+    if (quizBanner) {
+      quizBanner.className = "mt-6 p-5 rounded-3xl border transition-all duration-300 bg-slate-900 border-slate-800";
+      const iconContainer = quizBanner.querySelector("div.w-12");
+      if (iconContainer) {
+        iconContainer.className = "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-slate-800 text-slate-500";
+        iconContainer.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>`;
+      }
+      const titleWrapper = quizBanner.querySelector("div > div.flex.items-center.space-x-2");
+      if (titleWrapper) {
+        titleWrapper.innerHTML = `<h4 class="font-bold text-white text-base">Module Assessment Quiz</h4><span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-medium">Locked</span>`;
+      }
+      const descEl = quizBanner.querySelector("p.text-xs");
+      if (descEl) {
+        descEl.textContent = 'Watch the entire video lesson or click "Instant Complete" above to unlock the required Q&A assessment.';
+      }
+    }
+    if (startQuizBtn) {
+      startQuizBtn.disabled = true;
+      startQuizBtn.className = "w-full sm:w-auto px-6 py-3 rounded-2xl font-bold text-sm transition flex items-center justify-center space-x-2 shrink-0 bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700";
+      startQuizBtn.innerHTML = `<span>Locked (Watch Video)</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+    }
+    if (progressBar) progressBar.style.width = "0%";
+    if (watchedRangeBar) watchedRangeBar.style.width = "0%";
+    if (playIcon) playIcon.classList.remove("hidden");
+    if (pauseIcon) pauseIcon.classList.add("hidden");
+    if (playOverlay) playOverlay.classList.remove("hidden");
+    if (timeDisplay && this.currentModule) {
+      timeDisplay.textContent = `00:00 / ${this.currentModule.duration || '--:--'}`;
     }
   }
 }

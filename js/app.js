@@ -151,9 +151,27 @@ class App {
     if (resetBtn) {
       resetBtn.addEventListener("click", () => {
         if (confirm("Reset all course enrollments, video progress, quiz scores, and certificates?")) {
+          // 1. Reset persistent state
           window.appState.resetAllProgress();
-          this.showToast("Progress reset successfully!", "info");
-          this.render();
+
+          // 2. Reset active video player instance if mounted
+          if (window.videoPlayer && typeof window.videoPlayer.resetPlayer === "function") {
+            window.videoPlayer.resetPlayer();
+          }
+
+          // 3. Clear any active quiz modal
+          if (window.quizController && typeof window.quizController.closeQuizModal === "function") {
+            window.quizController.closeQuizModal();
+          }
+
+          this.showToast("All demo progress, videos, quiz scores & certificates reset!", "info");
+
+          // 4. Refresh view
+          if (this.currentView === "learning" && this.activeModule) {
+            this.renderLearningView();
+          } else {
+            this.render();
+          }
         }
       });
     }
