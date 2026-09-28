@@ -324,6 +324,29 @@ class CertificateStudio {
             </button>
           </div>
 
+          <!-- Official Seal Customizer -->
+          <div class="flex items-center space-x-1.5">
+            <button 
+              type="button"
+              onclick="window.certificateStudio.triggerSealUpload()"
+              class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
+              title="Upload custom organization rubber seal or digital stamp PNG"
+            >
+              <span>🏵️</span>
+              <span>${(this.customSealUrl || localStorage.getItem('worxpertise_custom_seal')) ? 'Change Custom Seal' : 'Upload Seal PNG'}</span>
+            </button>
+            ${(this.customSealUrl || localStorage.getItem('worxpertise_custom_seal')) ? `
+              <button 
+                type="button"
+                onclick="window.certificateStudio.resetCustomSeal()"
+                class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-950 text-slate-400 hover:text-rose-300 border border-slate-700 text-xs font-bold transition cursor-pointer"
+                title="Reset to default official registrar stamp"
+              >
+                ✕ Reset
+              </button>
+            ` : ''}
+          </div>
+
           <!-- Actions -->
           <div class="flex flex-wrap items-center gap-2">
             <button 
@@ -472,15 +495,10 @@ class CertificateStudio {
                   <div class="text-[10px] text-slate-500">Lead Faculty</div>
                 </div>
 
-                <!-- Gold / Themed Seal -->
+                <!-- Official Registrar Seal -->
                 <div class="flex flex-col items-center justify-center">
-                  <div class="certificate-seal">
-                    <div class="text-center text-white">
-                      <div class="text-lg">★</div>
-                      <div class="text-[9px] font-black uppercase tracking-tighter">VERIFIED</div>
-                    </div>
-                  </div>
-                  <div class="text-[10px] font-mono text-slate-600 mt-2">ID: ${cert.credentialId}</div>
+                  ${this.getOfficialSealHTML(cert, this.currentTheme)}
+                  <div class="text-[10px] font-mono text-slate-600 mt-1">ID: ${cert.credentialId}</div>
                 </div>
 
                 <!-- Academic Dean / Governing Authority Signature -->
@@ -586,6 +604,29 @@ class CertificateStudio {
             >
               📄 Official Transcript
             </button>
+          </div>
+
+          <!-- Official Seal Customizer -->
+          <div class="flex items-center space-x-1.5">
+            <button 
+              type="button"
+              onclick="window.certificateStudio.triggerSealUpload()"
+              class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
+              title="Upload custom organization rubber seal or digital stamp PNG"
+            >
+              <span>🏵️</span>
+              <span>${(this.customSealUrl || localStorage.getItem('worxpertise_custom_seal')) ? 'Change Custom Seal' : 'Upload Seal PNG'}</span>
+            </button>
+            ${(this.customSealUrl || localStorage.getItem('worxpertise_custom_seal')) ? `
+              <button 
+                type="button"
+                onclick="window.certificateStudio.resetCustomSeal()"
+                class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-950 text-slate-400 hover:text-rose-300 border border-slate-700 text-xs font-bold transition cursor-pointer"
+                title="Reset to default official registrar stamp"
+              >
+                ✕ Reset
+              </button>
+            ` : ''}
           </div>
 
           <!-- Actions -->
@@ -707,8 +748,8 @@ class CertificateStudio {
                 <div class="text-[10px] text-slate-600 uppercase font-bold mt-1">${cert.authorityRole || (program.authority && program.authority.role) || "Academic Registrar"}</div>
               </div>
 
-              <div class="w-14 h-14 rounded-full border-2 border-[#dd1f36] flex items-center justify-center text-center p-1 text-[8px] font-black uppercase text-[#dd1f36]">
-                Official Registrar Seal
+              <div>
+                ${this.getOfficialSealHTML(cert, "red-stamp")}
               </div>
             </div>
           </div>
@@ -736,6 +777,124 @@ class CertificateStudio {
         </div>
       </div>
     `;
+  }
+
+  getOfficialSealHTML(cert, style = "red-stamp") {
+    const customSeal = this.customSealUrl || localStorage.getItem("worxpertise_custom_seal");
+    if (customSeal) {
+      return `
+        <div class="relative group cursor-pointer inline-block" onclick="window.certificateStudio.openVerificationModal('${cert.credentialId}')" title="Verified Institutional Registrar Seal • Click to verify online">
+          <div class="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center transform -rotate-3 transition-transform duration-300 group-hover:scale-105 group-hover:rotate-0">
+            <img src="${customSeal}" alt="Official Registrar Seal" class="max-w-full max-h-full object-contain filter drop-shadow-sm" />
+          </div>
+          <div class="text-[8px] font-bold text-center text-emerald-600 mt-0.5 uppercase tracking-tight flex items-center justify-center space-x-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Verified Online</span>
+          </div>
+        </div>
+      `;
+    }
+
+    const safeId = ((cert && cert.credentialId) || 'REG').replace(/[^a-zA-Z0-9]/g, '');
+    const isGold = style === "gold" || style === "royal-gold" || this.currentTheme === "royal-gold";
+    const isEmerald = style === "emerald" || style === "executive-emerald" || this.currentTheme === "executive-emerald";
+    const sealColor = isGold ? "#b45309" : (isEmerald ? "#059669" : "#dd1f36");
+
+    return `
+      <div class="relative group cursor-pointer inline-block select-none" onclick="window.certificateStudio.openVerificationModal('${cert.credentialId}')" title="Official Registrar Seal • Verified Online (Click to verify authenticity)">
+        <div class="w-20 h-20 sm:w-24 sm:h-24 relative flex items-center justify-center transform -rotate-6 transition-all duration-300 group-hover:rotate-0 group-hover:scale-105">
+          <svg class="w-full h-full drop-shadow-sm" style="color: ${sealColor};" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <!-- Outer Serrated/Dashed Ring (Rubber Stamp Texture) -->
+            <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="2.4" stroke-dasharray="4.5 2.5"/>
+            <!-- Outer Solid Ring -->
+            <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" stroke-width="2"/>
+            <!-- Inner Solid Concentric Ring -->
+            <circle cx="60" cy="60" r="34" fill="none" stroke="currentColor" stroke-width="1.2"/>
+            <!-- Inner Center Dashed Ring -->
+            <circle cx="60" cy="60" r="31" fill="none" stroke="currentColor" stroke-width="0.8" stroke-dasharray="2 2"/>
+            
+            <!-- Circular Top Text Path -->
+            <path id="sealPathTop-${safeId}" d="M 18,60 A 42,42 0 1,1 102,60" fill="none"/>
+            <!-- Circular Bottom Text Path -->
+            <path id="sealPathBottom-${safeId}" d="M 102,60 A 42,42 0 0,1 18,60" fill="none"/>
+            
+            <text fill="currentColor" font-size="7.5" font-weight="900" letter-spacing="1.6" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+              <textPath href="#sealPathTop-${safeId}" startOffset="50%" text-anchor="middle">
+                ★ WORXPERTISE ACADEMY ★
+              </textPath>
+            </text>
+            <text fill="currentColor" font-size="6.8" font-weight="800" letter-spacing="1.2" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+              <textPath href="#sealPathBottom-${safeId}" startOffset="50%" text-anchor="middle">
+                OFFICIAL REGISTRAR
+              </textPath>
+            </text>
+            
+            <!-- Center Emblem & Authentic Stamp Details -->
+            <g transform="translate(60, 52)">
+              <polygon points="0,-10 3,-3 10,-3 4.5,1.5 7,8.5 0,4.5 -7,8.5 -4.5,1.5 -10,-3 -3,-3" fill="currentColor"/>
+              <text y="9" text-anchor="middle" fill="currentColor" font-size="5.8" font-weight="900" letter-spacing="0.8" font-family="'Segoe UI', Roboto, sans-serif">REGISTERED</text>
+              <text y="15" text-anchor="middle" fill="currentColor" font-size="4.8" font-weight="800" font-family="'Segoe UI', Roboto, sans-serif">SEAL • 2026</text>
+              <text y="20" text-anchor="middle" fill="currentColor" font-size="3.6" font-weight="700" letter-spacing="0.5" font-family="monospace">VERIFIED ✓</text>
+            </g>
+          </svg>
+        </div>
+        <div class="text-[9px] font-bold text-center text-slate-500 mt-1 uppercase tracking-tight flex items-center justify-center space-x-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Online Verified</span>
+        </div>
+      </div>
+    `;
+  }
+
+  triggerSealUpload() {
+    let input = document.getElementById("customSealFileInput");
+    if (!input) {
+      input = document.createElement("input");
+      input.type = "file";
+      input.id = "customSealFileInput";
+      input.accept = "image/*";
+      input.style.display = "none";
+      input.onchange = (e) => this.handleCustomSealUpload(e);
+      document.body.appendChild(input);
+    }
+    input.click();
+  }
+
+  handleCustomSealUpload(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      if (window.app && window.app.showToast) {
+        window.app.showToast("Please select a valid image file (PNG, JPG, SVG).", "warning");
+      }
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      try {
+        localStorage.setItem("worxpertise_custom_seal", dataUrl);
+      } catch (err) {
+        console.warn("Storage notice:", err);
+      }
+      this.customSealUrl = dataUrl;
+      this.render();
+      if (window.app && window.app.showToast) {
+        window.app.showToast("🏵️ Official Registrar Seal updated with your custom image!", "success");
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  resetCustomSeal() {
+    localStorage.removeItem("worxpertise_custom_seal");
+    this.customSealUrl = null;
+    this.render();
+    if (window.app && window.app.showToast) {
+      window.app.showToast("Restored standard official registrar seal.", "info");
+    }
   }
 
   updateRecipientName() {
