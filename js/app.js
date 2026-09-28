@@ -230,9 +230,9 @@ class App {
       }
     };
 
-    const openModal = () => {
+    const openModal = (tab = "login") => {
       if (authModal) authModal.classList.remove("hidden");
-      switchAuthTab("login");
+      switchAuthTab(tab);
     };
 
     const closeModal = () => {
@@ -240,11 +240,11 @@ class App {
       clearAlert();
     };
 
-    if (btnOpen) btnOpen.addEventListener("click", openModal);
+    if (btnOpen) btnOpen.addEventListener("click", () => openModal("login"));
     if (profilePill) {
       profilePill.addEventListener("click", (e) => {
         if (e.target.closest("#btnEditProfile")) return;
-        openModal();
+        openModal("quickswitch");
       });
     }
     if (btnClose) btnClose.addEventListener("click", closeModal);
@@ -561,6 +561,27 @@ class App {
       } else {
         roleEl.textContent = '🎓 Student';
         roleEl.className = 'px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+      }
+    }
+
+    // Toggle Sign In vs User Profile Pill based on active session
+    const authBtn = document.getElementById("btnOpenAuthModal");
+    const profilePill = document.getElementById("userProfilePill");
+    if (user && user.name) {
+      if (authBtn) {
+        authBtn.classList.add("hidden");
+        authBtn.classList.remove("flex");
+      }
+      if (profilePill) {
+        profilePill.classList.remove("hidden");
+      }
+    } else {
+      if (authBtn) {
+        authBtn.classList.remove("hidden");
+        authBtn.classList.add("flex");
+      }
+      if (profilePill) {
+        profilePill.classList.add("hidden");
       }
     }
 

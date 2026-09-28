@@ -72,8 +72,8 @@ class ApiService {
     const badge = document.getElementById('backendStatusBadge');
     if (badge) {
       badge.innerHTML = online 
-        ? `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span class="text-[10px] text-emerald-400 font-bold">PostgreSQL Connected</span>`
-        : `<span class="w-2 h-2 rounded-full bg-slate-500"></span><span class="text-[10px] text-slate-400 font-medium">Standalone Mode</span>`;
+        ? `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span><span class="text-[10px] text-emerald-400 font-bold hidden xl:inline whitespace-nowrap">PostgreSQL Connected</span><span class="text-[10px] text-emerald-400 font-bold inline xl:hidden whitespace-nowrap">DB Online</span>`
+        : `<span class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span><span class="text-[10px] text-slate-400 font-medium hidden xl:inline whitespace-nowrap">Standalone Mode</span><span class="text-[10px] text-slate-400 font-medium inline xl:hidden whitespace-nowrap">Standalone</span>`;
     }
   }
 
