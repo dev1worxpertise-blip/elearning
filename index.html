@@ -576,11 +576,13 @@
                 placeholder="Have a doubt about this lesson topic? Post your question here..."
                 class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
               ></textarea>
-              <div class="flex justify-end">
+              <div class="flex items-center justify-between pt-1">
+                <span class="text-[10px] text-slate-500">Press <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[9px] text-slate-400">Ctrl + Enter</kbd> to submit</span>
                 <button 
+                  id="btnPostDiscussionQuestion"
                   type="button" 
                   onclick="window.app.postDiscussionMessage()" 
-                  class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs shadow-md transition flex items-center space-x-1.5 cursor-pointer"
+                  class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 active:scale-95 text-white font-bold text-xs shadow-md transition flex items-center space-x-1.5 cursor-pointer"
                 >
                   <span>Post Question</span>
                 </button>

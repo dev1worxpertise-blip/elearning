@@ -987,7 +987,19 @@ class App {
 
     if (tabName === "notes") this.renderNotesList();
     if (tabName === "transcript") this.renderTranscriptView();
-    if (tabName === "discussion") this.renderDiscussionView();
+    if (tabName === "discussion") {
+      this.renderDiscussionView();
+      const txt = document.getElementById("newDiscussionQuestion");
+      if (txt && !txt.dataset.boundKey) {
+        txt.dataset.boundKey = "true";
+        txt.addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+            e.preventDefault();
+            this.postDiscussionMessage();
+          }
+        });
+      }
+    }
   }
 
   renderClassroomTabs() {
@@ -1232,19 +1244,22 @@ class App {
 
   // --- DISCUSSION & Q&A CONTROLLER ---
   async renderDiscussionView() {
-    if (!this.activeModule) return;
+    const mod = this.activeModule || (window.appState && window.appState.activeModule);
+    if (!mod) return;
     const container = document.getElementById("moduleDiscussionList");
     if (!container) return;
 
     let posts = (window.appState && typeof window.appState.getDiscussions === "function")
-      ? window.appState.getDiscussions(this.activeModule.id)
+      ? window.appState.getDiscussions(mod.id)
       : [];
 
     if (window.apiService && window.apiService.getDiscussions) {
       try {
-        const res = await window.apiService.getDiscussions(this.activeModule.id);
+        const res = await window.apiService.getDiscussions(mod.id);
         if (res && res.success && Array.isArray(res.discussions) && res.discussions.length > 0) {
-          posts = res.discussions;
+          const dbIds = new Set(res.discussions.map(d => d.id));
+          const localOnly = posts.filter(p => !dbIds.has(p.id));
+          posts = [...localOnly, ...res.discussions];
         }
       } catch (err) {}
     }
@@ -1263,22 +1278,29 @@ class App {
     }
 
     container.innerHTML = posts.map(post => {
-      const isInstructor = (post.role || post.user_role) === "instructor" || (post.role || post.user_role) === "admin";
+      const role = (post.role || post.user_role || 'student').toLowerCase();
+      const isInstructor = role === "instructor" || role === "admin" || role === "faculty";
+      const author = post.author_name || post.user_name || post.userName || 'Learner';
+      const avatar = post.avatar_url || post.user_avatar || post.userAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100';
+      const text = post.content || post.text || '';
+      const dateDisplay = post.createdAt || (post.created_at ? new Date(post.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Just now');
+
       return `
         <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition space-y-3">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2.5">
               <img 
-                src="${post.avatar_url || 'https://images.unsplash.com/photo-1535713875002?w=100'}" 
+                src="${avatar}" 
                 class="w-7 h-7 rounded-full object-cover border border-slate-700" 
-                alt="Avatar"
+                alt="${author}"
+                onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'"
               />
               <div>
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-xs font-bold text-white">${post.author_name || post.user_name || 'Learner'}</span>
+                  <span class="text-xs font-bold text-white">${author}</span>
                   ${isInstructor ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30">Faculty</span>' : ''}
                 </div>
-                <span class="text-[10px] text-slate-500">${new Date(post.created_at || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                <span class="text-[10px] text-slate-500">${dateDisplay}</span>
               </div>
             </div>
             <button 
@@ -1291,7 +1313,7 @@ class App {
             </button>
           </div>
           <p class="text-xs text-slate-200 leading-relaxed pl-9">
-            ${post.content || post.text || ''}
+            ${text}
           </p>
         </div>
       `;
@@ -1299,7 +1321,11 @@ class App {
   }
 
   async postDiscussionMessage() {
-    if (!this.activeModule) return;
+    const mod = this.activeModule || (window.appState && window.appState.activeModule);
+    if (!mod) {
+      this.showToast("Please select a module to post your question.", "warning");
+      return;
+    }
     const textEl = document.getElementById("newDiscussionQuestion");
     const text = textEl ? textEl.value.trim() : "";
     if (!text) {
@@ -1309,40 +1335,45 @@ class App {
 
     const user = (window.appState && window.appState.user) || { name: 'Sachin Chauhan', role: 'student' };
 
-    if (window.apiService && window.apiService.postDiscussion) {
-      try {
-        await window.apiService.postDiscussion(this.activeModule.id, {
-          content: text,
-          user_name: user.name,
-          user_role: user.role
-        });
-      } catch (err) {}
-    }
-
+    // 1. Store in local state immediately for instant feedback
     if (window.appState && typeof window.appState.addDiscussion === "function") {
-      window.appState.addDiscussion(this.activeModule.id, {
+      window.appState.addDiscussion(mod.id, {
         author_name: user.name,
         role: user.role,
         content: text
       });
-      if (typeof window.appState.addXP === "function") {
-        window.appState.addXP(10, "Community Q&A Discussion Post");
+    }
+
+    // 2. Clear input
+    if (textEl) textEl.value = "";
+
+    // 3. Sync to PostgreSQL backend
+    if (window.apiService && window.apiService.postDiscussion) {
+      try {
+        await window.apiService.postDiscussion(mod.id, {
+          content: text,
+          user_name: user.name,
+          user_role: user.role
+        });
+      } catch (err) {
+        console.warn("Backend discussion sync notice:", err);
       }
     }
 
-    if (textEl) textEl.value = "";
+    // 4. Update UI & feedback
     this.showToast("💬 Question posted! (+10 XP Community Participation)", "success");
-    this.renderDiscussionView();
+    await this.renderDiscussionView();
   }
 
   async likeDiscussionPost(postId) {
+    const mod = this.activeModule || (window.appState && window.appState.activeModule);
+    if (window.appState && typeof window.appState.likeDiscussion === "function" && mod) {
+      window.appState.likeDiscussion(mod.id, postId);
+    }
     if (window.apiService && window.apiService.likeDiscussion) {
       try {
         await window.apiService.likeDiscussion(postId);
       } catch (e) {}
-    }
-    if (window.appState && typeof window.appState.likeDiscussion === "function") {
-      window.appState.likeDiscussion(this.activeModule.id, postId);
     }
     const countEl = document.getElementById(`likeCount-${postId}`);
     if (countEl) {
@@ -1352,10 +1383,11 @@ class App {
   }
 
   updateDiscussionBadge(count = null) {
-    if (!this.activeModule) return;
+    const mod = this.activeModule || (window.appState && window.appState.activeModule);
+    if (!mod) return;
     const badge = document.getElementById("classroomDiscussionCountBadge");
     if (!badge) return;
-    const c = (count !== null) ? count : ((window.appState && typeof window.appState.getDiscussions === "function") ? window.appState.getDiscussions(this.activeModule.id).length : 0);
+    const c = (count !== null) ? count : ((window.appState && typeof window.appState.getDiscussions === "function") ? window.appState.getDiscussions(mod.id).length : 0);
     badge.textContent = c;
   }
 

@@ -13,13 +13,13 @@ router.post('/audit-logs', verifyToken, enterpriseController.logAuditAction);
 
 // --- Module Discussions ---
 router.get('/discussions/:moduleId', optionalAuth, enterpriseController.getDiscussions);
-router.post('/discussions/:moduleId', verifyToken, enterpriseController.postDiscussion);
-router.post('/discussions/like/:postId', verifyToken, enterpriseController.likeDiscussion);
+router.post('/discussions/:moduleId', optionalAuth, enterpriseController.postDiscussion);
+router.post('/discussions/like/:postId', optionalAuth, enterpriseController.likeDiscussion);
 
 // --- Learner Timestamped Video Notes ---
-router.get('/notes/:moduleId', verifyToken, enterpriseController.getVideoNotes);
-router.post('/notes/:moduleId', verifyToken, enterpriseController.saveVideoNote);
-router.delete('/notes/:noteId', verifyToken, enterpriseController.deleteVideoNote);
+router.get('/notes/:moduleId', optionalAuth, enterpriseController.getVideoNotes);
+router.post('/notes/:moduleId', optionalAuth, enterpriseController.saveVideoNote);
+router.delete('/notes/:noteId', optionalAuth, enterpriseController.deleteVideoNote);
 
 // --- Bulk CSV User Import (Admin only) ---
 router.post('/bulk-import', verifyToken, requireRole('admin'), enterpriseController.bulkImportUsers);

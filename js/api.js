@@ -338,11 +338,17 @@ class ApiService {
     return res.json();
   }
 
-  async postDiscussion(moduleId, content) {
+  async postDiscussion(moduleId, content, metadata = {}) {
+    let payload = {};
+    if (typeof content === 'string') {
+      payload = { content, ...metadata };
+    } else if (content && typeof content === 'object') {
+      payload = { ...content, ...metadata };
+    }
     const res = await fetch(`${API_BASE_URL}/enterprise/discussions/${moduleId}`, {
       method: 'POST',
       headers: this.getHeaders(),
-      body: JSON.stringify({ content }),
+      body: JSON.stringify(payload),
     });
     return res.json();
   }

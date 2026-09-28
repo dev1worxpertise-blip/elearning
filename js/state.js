@@ -415,38 +415,67 @@ class AppState {
 
   // --- Module Discussions & Q&A ---
   getDiscussions(moduleId) {
-    return this.discussions[moduleId] || [
-      {
-        id: 'disc_seed_1',
-        userId: 'usr_instructor_1',
-        userName: 'Dr. Sarah Chen',
-        userRole: 'instructor',
-        userAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200',
-        content: 'Welcome everyone! Feel free to ask questions about this lesson or share your real-world observations.',
-        createdAt: '2 days ago',
-        likes: 12
-      }
-    ];
+    if (!this.discussions[moduleId]) {
+      this.discussions[moduleId] = [
+        {
+          id: 'disc_seed_' + moduleId,
+          userId: 'usr_instructor_1',
+          userName: 'Dr. Sarah Chen',
+          author_name: 'Dr. Sarah Chen',
+          userRole: 'instructor',
+          role: 'instructor',
+          userAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200',
+          avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200',
+          content: 'Welcome everyone! Feel free to ask questions about this lesson or share your real-world observations.',
+          createdAt: '2 days ago',
+          created_at: new Date(Date.now() - 172800000).toISOString(),
+          likes: 12
+        }
+      ];
+    }
+    return this.discussions[moduleId];
   }
 
-  addDiscussion(moduleId, content) {
-    if (!this.discussions[moduleId]) this.discussions[moduleId] = [];
+  addDiscussion(moduleId, data) {
+    if (!this.discussions[moduleId]) {
+      this.discussions[moduleId] = [];
+    }
+
+    let text = '';
+    let authorName = (this.user && this.user.name) || 'Sachin Chauhan';
+    let authorRole = (this.user && this.user.role) || 'student';
+    let authorAvatar = (this.user && this.user.avatar) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150';
+
+    if (typeof data === 'string') {
+      text = data.trim();
+    } else if (data && typeof data === 'object') {
+      text = (data.content || data.text || '').trim();
+      if (data.author_name || data.userName) authorName = data.author_name || data.userName;
+      if (data.role || data.userRole) authorRole = data.role || data.userRole;
+      if (data.userAvatar || data.avatar_url) authorAvatar = data.userAvatar || data.avatar_url;
+    }
+
+    if (!text) return null;
+
     const newPost = {
       id: 'disc_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-      userId: this.user.id || 'usr_current',
-      userName: this.user.name || 'Learner',
-      userRole: (this.user.role || 'student').toLowerCase(),
-      userAvatar: this.user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-      content: content.trim(),
+      userId: (this.user && this.user.id) || 'usr_current',
+      userName: authorName,
+      author_name: authorName,
+      userRole: authorRole.toLowerCase(),
+      role: authorRole.toLowerCase(),
+      userAvatar: authorAvatar,
+      avatar_url: authorAvatar,
+      content: text,
       createdAt: 'Just now',
+      created_at: new Date().toISOString(),
       likes: 0
     };
-    this.discussions[moduleId].push(newPost);
-    this.addXP(25, 'Community Discussion Contribution');
+
+    // Prepend to show immediately at top of discussion thread
+    this.discussions[moduleId].unshift(newPost);
+    this.addXP(10, 'Community Q&A Discussion Post');
     this.save();
-    if (window.apiService && window.apiService.postDiscussion) {
-      window.apiService.postDiscussion(moduleId, content).catch(() => {});
-    }
     return newPost;
   }
 
@@ -456,9 +485,6 @@ class AppState {
     if (post) {
       post.likes = (post.likes || 0) + 1;
       this.save();
-      if (window.apiService && window.apiService.likeDiscussion) {
-        window.apiService.likeDiscussion(postId).catch(() => {});
-      }
     }
   }
 
@@ -577,6 +603,7 @@ class AppState {
     this.certificates = [];
     this.playbackPositions = {};
     this.videoNotes = {};
+    this.discussions = {};
     this.xp = 0;
     this.streakDays = 1;
     this.auditLogs = [];
