@@ -32,6 +32,19 @@ class AppState {
     // Issued certificates: array of certificate objects
     this.certificates = [];
 
+    // Enterprise additions:
+    this.playbackPositions = {}; // moduleId -> seconds
+    this.videoNotes = {}; // moduleId -> array of notes { id, timestamp, text, createdAt }
+    this.discussions = {}; // moduleId -> array of posts { id, userId, userName, userRole, userAvatar, content, createdAt, likes }
+    this.xp = 350;
+    this.streakDays = 3;
+    this.badges = [
+      { id: 'b_welcome', name: 'Curious Learner', icon: '🚀', description: 'Started your e-learning journey', unlockedAt: '2026-09-27' },
+      { id: 'b_safety', name: 'Compliance Champion', icon: '🛡️', description: 'Enrolled in corporate compliance training', unlockedAt: '2026-09-27' }
+    ];
+    this.auditLogs = [];
+    this.emailLogs = [];
+
     this.listeners = [];
     this.load();
   }
@@ -47,6 +60,14 @@ class AppState {
         if (parsed.quizResults) this.quizResults = parsed.quizResults;
         if (Array.isArray(parsed.completedModules)) this.completedModules = parsed.completedModules;
         if (Array.isArray(parsed.certificates)) this.certificates = parsed.certificates;
+        if (parsed.playbackPositions) this.playbackPositions = parsed.playbackPositions;
+        if (parsed.videoNotes) this.videoNotes = parsed.videoNotes;
+        if (parsed.discussions) this.discussions = parsed.discussions;
+        if (typeof parsed.xp === 'number') this.xp = parsed.xp;
+        if (typeof parsed.streakDays === 'number') this.streakDays = parsed.streakDays;
+        if (Array.isArray(parsed.badges)) this.badges = parsed.badges;
+        if (Array.isArray(parsed.auditLogs)) this.auditLogs = parsed.auditLogs;
+        if (Array.isArray(parsed.emailLogs)) this.emailLogs = parsed.emailLogs;
         this.purgeUnearnedCertificates();
 
         // Auto-reset any previously skipped videos where quiz was not passed
@@ -79,7 +100,15 @@ class AppState {
         videoStatus: this.videoStatus,
         quizResults: this.quizResults,
         completedModules: this.completedModules,
-        certificates: this.certificates
+        certificates: this.certificates,
+        playbackPositions: this.playbackPositions,
+        videoNotes: this.videoNotes,
+        discussions: this.discussions,
+        xp: this.xp,
+        streakDays: this.streakDays,
+        badges: this.badges,
+        auditLogs: this.auditLogs,
+        emailLogs: this.emailLogs
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
       this.notify();
@@ -342,6 +371,201 @@ class AppState {
         this.save();
       }
     }
+  }
+
+  // --- Video Position Memory ---
+  saveVideoPosition(moduleId, seconds) {
+    if (!moduleId) return;
+    this.playbackPositions[moduleId] = Math.round(seconds);
+    this.save();
+  }
+
+  getVideoPosition(moduleId) {
+    return this.playbackPositions[moduleId] || 0;
+  }
+
+  // --- Timestamped Learner Notes ---
+  getVideoNotes(moduleId) {
+    return this.videoNotes[moduleId] || [];
+  }
+
+  addVideoNote(moduleId, timestamp, text) {
+    if (!this.videoNotes[moduleId]) this.videoNotes[moduleId] = [];
+    const newNote = {
+      id: 'note_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      timestamp: Math.round(timestamp),
+      text: text.trim(),
+      createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    };
+    this.videoNotes[moduleId].unshift(newNote);
+    this.save();
+    if (window.apiService && window.apiService.saveVideoNote) {
+      window.apiService.saveVideoNote(moduleId, timestamp, text).catch(() => {});
+    }
+    return newNote;
+  }
+
+  deleteVideoNote(moduleId, noteId) {
+    if (!this.videoNotes[moduleId]) return;
+    this.videoNotes[moduleId] = this.videoNotes[moduleId].filter(n => n.id !== noteId);
+    this.save();
+    if (window.apiService && window.apiService.deleteVideoNote) {
+      window.apiService.deleteVideoNote(noteId).catch(() => {});
+    }
+  }
+
+  // --- Module Discussions & Q&A ---
+  getDiscussions(moduleId) {
+    return this.discussions[moduleId] || [
+      {
+        id: 'disc_seed_1',
+        userId: 'usr_instructor_1',
+        userName: 'Dr. Sarah Chen',
+        userRole: 'instructor',
+        userAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200',
+        content: 'Welcome everyone! Feel free to ask questions about this lesson or share your real-world observations.',
+        createdAt: '2 days ago',
+        likes: 12
+      }
+    ];
+  }
+
+  addDiscussion(moduleId, content) {
+    if (!this.discussions[moduleId]) this.discussions[moduleId] = [];
+    const newPost = {
+      id: 'disc_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      userId: this.user.id || 'usr_current',
+      userName: this.user.name || 'Learner',
+      userRole: (this.user.role || 'student').toLowerCase(),
+      userAvatar: this.user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+      content: content.trim(),
+      createdAt: 'Just now',
+      likes: 0
+    };
+    this.discussions[moduleId].push(newPost);
+    this.addXP(25, 'Community Discussion Contribution');
+    this.save();
+    if (window.apiService && window.apiService.postDiscussion) {
+      window.apiService.postDiscussion(moduleId, content).catch(() => {});
+    }
+    return newPost;
+  }
+
+  likeDiscussion(moduleId, postId) {
+    const list = this.getDiscussions(moduleId);
+    const post = list.find(p => p.id === postId);
+    if (post) {
+      post.likes = (post.likes || 0) + 1;
+      this.save();
+      if (window.apiService && window.apiService.likeDiscussion) {
+        window.apiService.likeDiscussion(postId).catch(() => {});
+      }
+    }
+  }
+
+  // --- Gamification Engine ---
+  addXP(amount, reason = 'Activity', streakIncrement = false) {
+    this.xp = (this.xp || 0) + amount;
+    if (streakIncrement) {
+      this.streakDays = (this.streakDays || 1) + 1;
+    }
+    this.checkBadges();
+    this.save();
+    if (window.app && window.app.showToast) {
+      window.app.showToast(`⚡ +${amount} XP Earned! (${reason})`, 'info');
+    }
+    if (window.apiService && window.apiService.awardXP) {
+      window.apiService.awardXP(amount, reason, streakIncrement).catch(() => {});
+    }
+  }
+
+  getLearnerStats() {
+    const level = Math.floor((this.xp || 0) / 250) + 1;
+    const progressInLevel = (this.xp || 0) % 250;
+    const levelPercentage = Math.round((progressInLevel / 250) * 100);
+    return {
+      xp: this.xp || 0,
+      level,
+      levelPercentage,
+      streakDays: this.streakDays || 3,
+      badges: this.badges || []
+    };
+  }
+
+  checkBadges() {
+    if (!this.badges) this.badges = [];
+    const certCount = (this.certificates || []).length;
+    if (certCount >= 1 && !this.badges.some(b => b.id === 'b_first_cert')) {
+      this.badges.push({
+        id: 'b_first_cert',
+        name: 'Certified Professional',
+        icon: '🎓',
+        description: 'Earned your first official verified credential',
+        unlockedAt: new Date().toISOString().split('T')[0]
+      });
+      if (window.app && window.app.showToast) {
+        window.app.showToast('🏆 Badge Unlocked: Certified Professional!', 'success');
+      }
+    }
+    if ((this.xp || 0) >= 500 && !this.badges.some(b => b.id === 'b_master')) {
+      this.badges.push({
+        id: 'b_master',
+        name: 'Knowledge Seeker',
+        icon: '⚡',
+        description: 'Accumulated over 500 Knowledge XP',
+        unlockedAt: new Date().toISOString().split('T')[0]
+      });
+    }
+  }
+
+  // --- Audit Trail & Security Activity Logging ---
+  logAudit(action, target, details, severity = 'INFO') {
+    const entry = {
+      id: 'audit_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      timestamp: new Date().toISOString(),
+      user: this.user ? `${this.user.name} (${this.user.role})` : 'System',
+      action,
+      target: target || 'Platform',
+      details: details || '',
+      severity
+    };
+    if (!this.auditLogs) this.auditLogs = [];
+    this.auditLogs.unshift(entry);
+    if (this.auditLogs.length > 200) this.auditLogs.pop();
+    this.save();
+    if (window.apiService && window.apiService.logAudit) {
+      window.apiService.logAudit(action, target, details, severity).catch(() => {});
+    }
+    return entry;
+  }
+
+  getAuditLogs() {
+    return this.auditLogs || [];
+  }
+
+  // --- Automated Email & Notification Logging ---
+  logEmail(recipient, subject, emailType, details) {
+    const entry = {
+      id: 'mail_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      timestamp: new Date().toISOString(),
+      recipient,
+      subject,
+      emailType,
+      status: 'DELIVERED (Simulated)',
+      details
+    };
+    if (!this.emailLogs) this.emailLogs = [];
+    this.emailLogs.unshift(entry);
+    if (this.emailLogs.length > 100) this.emailLogs.pop();
+    this.save();
+    if (window.apiService && window.apiService.dispatchEmail) {
+      window.apiService.dispatchEmail(recipient, subject, emailType, details).catch(() => {});
+    }
+    return entry;
+  }
+
+  getEmailLogs() {
+    return this.emailLogs || [];
   }
 
   resetAllProgress() {

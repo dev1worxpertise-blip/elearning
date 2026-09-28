@@ -1,6 +1,11 @@
 /**
  * LearnPulse E-Learning Platform - Interactive Post-Video Q&A Engine
- * Handles questions navigation, scoring, explanations, and certificate eligibility.
+ * Enhanced with Exam Integrity & Anti-Cheating Proctoring:
+ * 1. Tab-Switch & Blur Detection with 3-Strikes Lockout
+ * 2. Fullscreen Mode Enforcement
+ * 3. Question & Option Shuffling (Fisher-Yates)
+ * 4. Timed Assessments with Auto-Submit Countdown
+ * 5. Gamification XP & Badge Dispatch
  */
 
 class QuizController {
@@ -8,8 +13,21 @@ class QuizController {
     this.currentModule = null;
     this.quiz = null;
     this.currentIndex = 0;
-    this.userAnswers = {}; // questionId -> selectedIndex
+    this.userAnswers = {}; // questionId -> originalOptionIndex
     this.isSubmitted = false;
+
+    // Proctoring & Integrity State
+    this.shuffledQuestions = [];
+    this.timerSeconds = 600; // 10 minutes default
+    this.timerInterval = null;
+    this.proctoringStrikes = 0;
+    this.maxStrikes = 3;
+    this.isProctoringActive = false;
+
+    // Bound listeners for clean removal
+    this.boundVisibilityHandler = this.handleVisibilityChange.bind(this);
+    this.boundBlurHandler = this.handleWindowBlur.bind(this);
+    this.boundFullscreenHandler = this.handleFullscreenChange.bind(this);
   }
 
   openQuiz(moduleData) {
@@ -28,6 +46,14 @@ class QuizController {
     this.currentIndex = 0;
     this.userAnswers = {};
     this.isSubmitted = false;
+    this.proctoringStrikes = 0;
+
+    // 1. Prepare Question & Option Shuffling
+    this.prepareShuffledQuestions();
+
+    // 2. Setup Timed Assessment (2 minutes per question or min 10 mins)
+    const totalQ = this.shuffledQuestions.length;
+    this.timerSeconds = Math.max(600, totalQ * 120);
 
     const modal = document.getElementById("quizModal");
     if (!modal) return;
@@ -35,10 +61,191 @@ class QuizController {
     modal.classList.remove("hidden");
     modal.scrollTop = 0;
     document.body.classList.add("overflow-hidden");
+
+    // 3. Initiate Proctoring & Fullscreen Mode
+    this.initProctoring();
+
+    // 4. Render First Question
     this.renderCurrentQuestion();
   }
 
+  // Fisher-Yates Question & Option Shuffling
+  prepareShuffledQuestions() {
+    if (!this.quiz || !Array.isArray(this.quiz.questions)) return;
+
+    // Deep copy questions
+    const rawQuestions = JSON.parse(JSON.stringify(this.quiz.questions));
+
+    // Shuffle questions order
+    for (let i = rawQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [rawQuestions[i], rawQuestions[j]] = [rawQuestions[j], rawQuestions[i]];
+    }
+
+    // For each question, shuffle options while preserving the original index mapping
+    this.shuffledQuestions = rawQuestions.map(q => {
+      const mappedOptions = q.options.map((optText, origIdx) => ({
+        text: optText,
+        originalIndex: origIdx
+      }));
+
+      // Shuffle options
+      for (let i = mappedOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [mappedOptions[i], mappedOptions[j]] = [mappedOptions[j], mappedOptions[i]];
+      }
+
+      return {
+        ...q,
+        shuffledOptions: mappedOptions
+      };
+    });
+  }
+
+  // Anti-Cheating & Proctoring Lifecycle
+  initProctoring() {
+    this.isProctoringActive = true;
+    this.proctoringStrikes = 0;
+
+    // Request fullscreen for exam integrity
+    this.requestFullscreen();
+
+    // Attach listeners
+    document.addEventListener("visibilitychange", this.boundVisibilityHandler);
+    window.addEventListener("blur", this.boundBlurHandler);
+    document.addEventListener("fullscreenchange", this.boundFullscreenHandler);
+
+    // Start live countdown timer
+    this.startCountdownTimer();
+  }
+
+  cleanupProctoring() {
+    this.isProctoringActive = false;
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+    document.removeEventListener("visibilitychange", this.boundVisibilityHandler);
+    window.removeEventListener("blur", this.boundBlurHandler);
+    document.removeEventListener("fullscreenchange", this.boundFullscreenHandler);
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  requestFullscreen() {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {
+          // Fullscreen request may be blocked by browser without direct user gesture; handled gracefully
+        });
+      }
+    } catch (e) {}
+  }
+
+  handleFullscreenChange() {
+    if (!this.isProctoringActive || this.isSubmitted) return;
+    if (!document.fullscreenElement) {
+      this.recordStrike("Fullscreen Mode Exited");
+    }
+  }
+
+  handleVisibilityChange() {
+    if (!this.isProctoringActive || this.isSubmitted) return;
+    if (document.hidden) {
+      this.recordStrike("Tab Switch or Application Hidden");
+    }
+  }
+
+  handleWindowBlur() {
+    if (!this.isProctoringActive || this.isSubmitted) return;
+    this.recordStrike("Window Focus Lost (Alt-Tab or Screen Split)");
+  }
+
+  recordStrike(reason) {
+    if (this.isSubmitted) return;
+    this.proctoringStrikes++;
+
+    const strikesLeft = Math.max(0, this.maxStrikes - this.proctoringStrikes);
+
+    if (window.appState) {
+      window.appState.logAudit(
+        "PROCTORING_INFRACTION",
+        this.quiz ? this.quiz.title : "Assessment",
+        `Strike ${this.proctoringStrikes}/${this.maxStrikes}: ${reason}`,
+        this.proctoringStrikes >= this.maxStrikes ? "CRITICAL" : "WARNING"
+      );
+    }
+
+    if (this.proctoringStrikes >= this.maxStrikes) {
+      // Auto-terminate assessment due to cheating strikes
+      alert(`🚨 EXAM INTEGRITY VIOLATION!\n\nYou have triggered ${this.maxStrikes} proctoring strikes (${reason}).\nYour assessment has been automatically locked and submitted for evaluation.`);
+      this.submitQuiz(true);
+      return;
+    }
+
+    // Show high-priority proctoring alert
+    if (window.app && window.app.showToast) {
+      window.app.showToast(`⚠️ Proctoring Alert [Strike ${this.proctoringStrikes}/${this.maxStrikes}]: ${reason}. Remaining on screen in fullscreen is mandatory.`, "warning");
+    }
+
+    // Refresh UI banner
+    this.updateProctoringBanner();
+  }
+
+  startCountdownTimer() {
+    if (this.timerInterval) clearInterval(this.timerInterval);
+
+    this.timerInterval = setInterval(() => {
+      if (this.isSubmitted) {
+        clearInterval(this.timerInterval);
+        return;
+      }
+
+      this.timerSeconds--;
+
+      // Update timer pill in UI
+      const timerDisplay = document.getElementById("quizTimerDisplay");
+      if (timerDisplay) {
+        const mins = Math.floor(this.timerSeconds / 60);
+        const secs = this.timerSeconds % 60;
+        timerDisplay.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        
+        if (this.timerSeconds <= 60) {
+          timerDisplay.classList.add("text-rose-500", "animate-pulse");
+        } else if (this.timerSeconds <= 180) {
+          timerDisplay.classList.add("text-amber-400");
+        }
+      }
+
+      if (this.timerSeconds <= 0) {
+        clearInterval(this.timerInterval);
+        if (window.app && window.app.showToast) {
+          window.app.showToast("⏱ Time Expired! Assessment automatically submitted.", "warning");
+        }
+        this.submitQuiz(true);
+      }
+    }, 1000);
+  }
+
+  updateProctoringBanner() {
+    const badge = document.getElementById("quizProctoringBadge");
+    if (badge) {
+      badge.innerHTML = `
+        <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+          this.proctoringStrikes === 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'
+        }">
+          <span>🛡️ Proctoring Active</span>
+          <span>•</span>
+          <span>Strikes: ${this.proctoringStrikes}/${this.maxStrikes}</span>
+        </span>
+      `;
+    }
+  }
+
   closeQuiz() {
+    this.cleanupProctoring();
     const modal = document.getElementById("quizModal");
     if (modal) {
       modal.classList.add("hidden");
@@ -48,24 +255,59 @@ class QuizController {
 
   renderCurrentQuestion() {
     const container = document.getElementById("quizContentArea");
-    if (!container) return;
+    if (!container || !this.shuffledQuestions || this.shuffledQuestions.length === 0) return;
 
-    const question = this.quiz.questions[this.currentIndex];
-    const totalQuestions = this.quiz.questions.length;
+    const question = this.shuffledQuestions[this.currentIndex];
+    const totalQuestions = this.shuffledQuestions.length;
     const progressPercent = Math.round(((this.currentIndex + 1) / totalQuestions) * 100);
-    const selectedOption = this.userAnswers[question.id];
+    const selectedOriginalOption = this.userAnswers[question.id];
+
+    const mins = Math.floor(this.timerSeconds / 60);
+    const secs = this.timerSeconds % 60;
+    const timeFormatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+    const parentProgram = window.appState ? window.appState.getProgramForModule(this.currentModule.id) : null;
+    const passScore = (parentProgram && (parentProgram.passingScore || parentProgram.passing_score)) || this.quiz.passingScore || 80;
 
     container.innerHTML = `
       <div class="space-y-6">
+        <!-- Proctoring & Exam Integrity Banner -->
+        <div class="p-3 rounded-2xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex items-center space-x-2" id="quizProctoringBadge">
+            <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full font-bold ${
+              this.proctoringStrikes === 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'
+            }">
+              <span>🛡️ Proctoring Active</span>
+              <span>•</span>
+              <span>Strikes: ${this.proctoringStrikes}/${this.maxStrikes}</span>
+            </span>
+          </div>
+
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-slate-950 border border-slate-800 font-mono text-sm font-bold text-white">
+              <span>⏱</span>
+              <span id="quizTimerDisplay">${timeFormatted}</span>
+            </div>
+
+            <button 
+              onclick="window.quizController.requestFullscreen()"
+              class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition"
+              title="Lock Screen Fullscreen"
+            >
+              ⛶ Fullscreen Lock
+            </button>
+          </div>
+        </div>
+
         <!-- Quiz Header Info -->
         <div class="flex items-center justify-between border-b border-slate-800 pb-4">
           <div>
-            <span class="text-xs uppercase font-bold tracking-wider text-[#dd1f36]">Post-Video Q&A Assessment</span>
+            <span class="text-xs uppercase font-bold tracking-wider text-[#dd1f36]">Certified Assessment & Exam</span>
             <h3 class="text-xl font-bold text-white mt-1">${this.quiz.title}</h3>
           </div>
           <div class="text-right">
             <span class="text-sm font-semibold text-slate-300">Question ${this.currentIndex + 1} of ${totalQuestions}</span>
-            <div class="text-xs text-amber-400 font-bold">🎯 Pass Threshold: ${(window.appState && window.appState.getProgramForModule(this.currentModule.id) ? (window.appState.getProgramForModule(this.currentModule.id).passingScore || window.appState.getProgramForModule(this.currentModule.id).passing_score) : null) || this.quiz.passingScore || 80}%</div>
+            <div class="text-xs text-amber-400 font-bold">🎯 Pass Threshold: ${passScore}% Marks</div>
           </div>
         </div>
 
@@ -75,25 +317,29 @@ class QuizController {
         </div>
 
         <!-- Question Card -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 select-none">
           <h4 class="text-lg font-semibold text-slate-100 leading-relaxed mb-6">
             ${this.currentIndex + 1}. ${question.question}
           </h4>
 
-          <!-- Options List -->
+          <!-- Shuffled Options List -->
           <div class="space-y-3">
-            ${question.options.map((option, idx) => {
-              const isSelected = selectedOption === idx;
+            ${question.shuffledOptions.map((optObj, sIdx) => {
+              const isSelected = selectedOriginalOption === optObj.originalIndex;
               return `
                 <div 
-                  class="quiz-option p-4 rounded-xl flex items-center justify-between ${isSelected ? 'selected' : ''}" 
-                  onclick="window.quizController.selectAnswer('${question.id}', ${idx})"
+                  class="quiz-option p-4 rounded-xl flex items-center justify-between cursor-pointer border ${
+                    isSelected ? 'border-[#dd1f36] bg-[#dd1f36]/10 text-white' : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:border-slate-700'
+                  } transition" 
+                  onclick="window.quizController.selectAnswer('${question.id}', ${optObj.originalIndex})"
                 >
                   <div class="flex items-center space-x-3.5">
-                    <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${isSelected ? 'bg-[#dd1f36] text-white' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
-                      ${String.fromCharCode(65 + idx)}
+                    <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
+                      isSelected ? 'bg-[#dd1f36] text-white' : 'bg-slate-800 text-slate-400 border border-slate-700'
+                    }">
+                      ${String.fromCharCode(65 + sIdx)}
                     </span>
-                    <span class="text-sm font-medium ${isSelected ? 'text-white' : 'text-slate-300'}">${option}</span>
+                    <span class="text-sm font-medium ${isSelected ? 'text-white font-semibold' : 'text-slate-300'}">${optObj.text}</span>
                   </div>
                   <div class="w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? 'border-[#dd1f36] bg-[#dd1f36]' : 'border-slate-700'}">
                     ${isSelected ? '<span class="w-2 h-2 rounded-full bg-white"></span>' : ''}
@@ -107,8 +353,9 @@ class QuizController {
         <!-- Navigation Buttons -->
         <div class="flex items-center justify-between pt-2">
           <button 
-            onclick="window.quizController.prevQuestion()" 
-            class="px-5 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 text-sm font-semibold transition ${this.currentIndex === 0 ? 'invisible' : ''}"
+            onclick="window.quizController.prevQuestion()"
+            class="px-5 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 font-semibold text-sm transition ${this.currentIndex === 0 ? 'opacity-40 cursor-not-allowed' : ''}"
+            ${this.currentIndex === 0 ? 'disabled' : ''}
           >
             ← Previous
           </button>
@@ -116,18 +363,17 @@ class QuizController {
           <div class="flex items-center space-x-3">
             ${this.currentIndex < totalQuestions - 1 ? `
               <button 
-                onclick="window.quizController.nextQuestion()" 
-                class="px-6 py-2.5 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white text-sm font-bold shadow-lg shadow-[#dd1f36]/25 transition"
+                onclick="window.quizController.nextQuestion()"
+                class="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm transition"
               >
-                Next Question →
+                Next →
               </button>
             ` : `
               <button 
-                onclick="window.quizController.submitQuiz()" 
-                class="px-7 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-sm font-bold shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2"
+                onclick="window.quizController.submitQuiz(false)"
+                class="px-6 py-2.5 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-sm shadow-lg shadow-[#dd1f36]/30 transition transform hover:scale-105"
               >
-                <span>Submit Assessment</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Submit Assessment 🚀
               </button>
             `}
           </div>
@@ -136,13 +382,14 @@ class QuizController {
     `;
   }
 
-  selectAnswer(questionId, optionIndex) {
-    this.userAnswers[questionId] = optionIndex;
+  selectAnswer(questionId, originalOptionIndex) {
+    if (this.isSubmitted) return;
+    this.userAnswers[questionId] = originalOptionIndex;
     this.renderCurrentQuestion();
   }
 
   nextQuestion() {
-    if (this.currentIndex < this.quiz.questions.length - 1) {
+    if (this.currentIndex < this.shuffledQuestions.length - 1) {
       this.currentIndex++;
       this.renderCurrentQuestion();
       const modal = document.getElementById("quizModal");
@@ -159,25 +406,49 @@ class QuizController {
     }
   }
 
-  submitQuiz() {
-    // Check if all questions are answered
-    const unanswered = this.quiz.questions.filter(q => this.userAnswers[q.id] === undefined);
-    if (unanswered.length > 0) {
-      if (!confirm(`You have ${unanswered.length} unanswered questions. Submit anyway?`)) {
-        return;
+  submitQuiz(force = false) {
+    if (this.isSubmitted) return;
+
+    // Check unanswered questions if not force-submitted
+    if (!force) {
+      const unanswered = this.shuffledQuestions.filter(q => this.userAnswers[q.id] === undefined);
+      if (unanswered.length > 0) {
+        if (!confirm(`You have ${unanswered.length} unanswered question(s). Submit examination anyway?`)) {
+          return;
+        }
       }
     }
 
+    // Cleanup proctoring listeners and timer
+    this.cleanupProctoring();
+
     let correctCount = 0;
-    this.quiz.questions.forEach(q => {
+    this.shuffledQuestions.forEach(q => {
       if (this.userAnswers[q.id] === q.correctAnswer) {
         correctCount++;
       }
     });
 
-    const total = this.quiz.questions.length;
-    const { percentage, passed } = window.appState.recordQuizSubmission(this.currentModule.id, correctCount, total, this.userAnswers);
+    const total = this.shuffledQuestions.length;
+    const { percentage, passed } = window.appState.recordQuizSubmission(
+      this.currentModule.id,
+      correctCount,
+      total,
+      this.userAnswers
+    );
+
     this.isSubmitted = true;
+
+    // Award Gamification XP
+    if (passed) {
+      window.appState.addXP(100, `Passed Assessment: ${this.quiz.title}`, true);
+      if (percentage >= 95) {
+        window.appState.addXP(50, 'Mastery Score (≥95%) Bonus');
+      }
+    } else {
+      window.appState.addXP(15, 'Assessment Attempted');
+    }
+
     this.renderResults(correctCount, total, percentage, passed);
   }
 
@@ -204,9 +475,13 @@ class QuizController {
             `}
           </div>
 
-          <span class="text-xs uppercase font-bold tracking-widest ${passed ? 'text-emerald-400' : 'text-rose-400'}">
-            ${passed ? `Module Passed Successfully (≥${reqPassing}%)` : `Passing Threshold Not Met (Requires ${reqPassing}%)`}
-          </span>
+          <div class="flex items-center justify-center space-x-2 mb-2">
+            <span class="text-xs uppercase font-bold tracking-widest ${passed ? 'text-emerald-400' : 'text-rose-400'}">
+              ${passed ? `Module Passed Successfully (≥${reqPassing}%)` : `Passing Threshold Not Met (Requires ${reqPassing}%)`}
+            </span>
+            ${passed ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30">+100 XP ⚡</span>` : ''}
+          </div>
+
           <h2 class="text-3xl font-extrabold text-white mt-1">
             You Scored ${percentage}% (${score}/${total})
           </h2>
@@ -248,40 +523,51 @@ class QuizController {
         <!-- Answers Review & Explanations Accordion -->
         <div class="space-y-4 pt-4">
           <h4 class="text-sm uppercase font-bold text-slate-400 tracking-wider">Detailed Answers & Conceptual Explanations</h4>
-          ${this.quiz.questions.map((q, idx) => {
-            const userChoice = this.userAnswers[q.id];
-            const isCorrect = userChoice === q.correctAnswer;
-            return `
-              <div class="p-5 rounded-2xl border ${isCorrect ? 'bg-slate-900/60 border-emerald-900/40' : 'bg-slate-900/60 border-rose-900/40'} space-y-3">
-                <div class="flex items-start justify-between gap-3">
-                  <h5 class="text-sm font-semibold text-slate-200">
-                    ${idx + 1}. ${q.question}
-                  </h5>
-                  <span class="text-xs px-2.5 py-1 rounded-full font-bold shrink-0 ${isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">
-                    ${isCorrect ? 'Correct ✓' : 'Incorrect ✗'}
-                  </span>
-                </div>
+          
+          <div class="space-y-4">
+            ${this.shuffledQuestions.map((q, idx) => {
+              const selectedOriginal = this.userAnswers[q.id];
+              const isCorrect = selectedOriginal === q.correctAnswer;
 
-                <div class="text-xs space-y-1">
-                  <div class="text-slate-400">Your Answer: <span class="${isCorrect ? 'text-emerald-400 font-medium' : 'text-rose-400 font-medium'}">${userChoice !== undefined ? q.options[userChoice] : 'Not Answered'}</span></div>
-                  ${!isCorrect ? `<div class="text-slate-400">Correct Answer: <span class="text-emerald-400 font-medium">${q.options[q.correctAnswer]}</span></div>` : ''}
-                </div>
+              return `
+                <div class="p-5 rounded-2xl border ${isCorrect ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-rose-950/20 border-rose-500/30'}">
+                  <div class="flex items-start justify-between gap-4">
+                    <div class="space-y-1">
+                      <div class="flex items-center space-x-2">
+                        <span class="text-xs font-bold px-2 py-0.5 rounded ${isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">
+                          ${isCorrect ? '✓ Correct' : '✕ Incorrect'}
+                        </span>
+                        <span class="text-xs text-slate-400 font-semibold">Question ${idx + 1}</span>
+                      </div>
+                      <h5 class="text-base font-semibold text-white mt-1">${q.question}</h5>
+                    </div>
+                  </div>
 
-                <div class="mt-2 p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300">
-                  <span class="font-bold text-[#dd1f36]">Explanation:</span> ${q.explanation}
+                  <!-- Explanations Box -->
+                  <div class="mt-4 pt-4 border-t border-slate-800/80 space-y-2 text-xs">
+                    <p class="text-slate-300">
+                      <span class="font-bold text-slate-400">Correct Answer:</span> 
+                      <span class="text-emerald-400 font-semibold">${q.options[q.correctAnswer]}</span>
+                    </p>
+                    ${!isCorrect && selectedOriginal !== undefined ? `
+                      <p class="text-slate-300">
+                        <span class="font-bold text-slate-400">Your Selection:</span> 
+                        <span class="text-rose-400 font-semibold">${q.options[selectedOriginal]}</span>
+                      </p>
+                    ` : ''}
+                    <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 leading-relaxed mt-2">
+                      <span class="font-bold text-[#dd1f36]">Explanation:</span> ${q.explanation}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            `;
-          }).join("")}
+              `;
+            }).join("")}
+          </div>
         </div>
       </div>
     `;
-
-    // Trigger fireworks/celebration if program is completed
-    if (isProgramComplete) {
-      window.app.triggerConfetti();
-    }
   }
 }
 
+// Global instance
 window.quizController = new QuizController();

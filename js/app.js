@@ -541,6 +541,15 @@ class App {
     if (avatarEl && (user.avatar || user.avatar_url)) avatarEl.src = user.avatar || user.avatar_url;
     if (certCountEl) certCountEl.textContent = (window.appState && window.appState.getValidCertificates) ? window.appState.getValidCertificates().length : ((window.appState && window.appState.certificates) ? window.appState.certificates.length : 0);
 
+    // Header Gamification Pill (XP and Streaks)
+    const xpEl = document.getElementById("headerXp");
+    const streakEl = document.getElementById("headerStreak");
+    const stats = (window.appState && typeof window.appState.getLearnerStats === "function") 
+      ? window.appState.getLearnerStats() 
+      : { xp: 0, streakDays: 1 };
+    if (xpEl) xpEl.textContent = stats.xp;
+    if (streakEl) streakEl.textContent = stats.streakDays;
+
     if (roleEl) {
       const normalizedRole = (user.role || 'student').toLowerCase();
       if (normalizedRole === 'admin') {
@@ -910,6 +919,492 @@ class App {
         </div>
       `).join("");
     }
+
+    // Render & sync interactive classroom workspace tabs
+    this.renderClassroomTabs();
+  }
+
+  // --- CLASSROOM TABS CONTROLLER (OVERVIEW / NOTES / TRANSCRIPT / DISCUSSION) ---
+  setClassroomTab(tabName) {
+    this.activeClassroomTab = tabName;
+    const tabs = ["overview", "notes", "transcript", "discussion"];
+
+    tabs.forEach(t => {
+      const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+      const content = document.getElementById(`tabContent${t.charAt(0).toUpperCase() + t.slice(1)}`);
+
+      if (t === tabName) {
+        if (btn) {
+          btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-[#dd1f36] text-white flex items-center space-x-1.5 cursor-pointer";
+        }
+        if (content) content.classList.remove("hidden");
+      } else {
+        if (btn) {
+          btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5 cursor-pointer";
+        }
+        if (content) content.classList.add("hidden");
+      }
+    });
+
+    if (tabName === "notes") this.renderNotesList();
+    if (tabName === "transcript") this.renderTranscriptView();
+    if (tabName === "discussion") this.renderDiscussionView();
+  }
+
+  renderClassroomTabs() {
+    this.activeClassroomTab = this.activeClassroomTab || "overview";
+    this.setClassroomTab(this.activeClassroomTab);
+    this.updateNotesBadge();
+    this.updateDiscussionBadge();
+  }
+
+  captureCurrentPlayhead() {
+    const curSec = (window.videoPlayer && typeof window.videoPlayer.getCurrentTime === "function") 
+      ? window.videoPlayer.getCurrentTime() 
+      : 0;
+    const formatted = (window.videoPlayer && typeof window.videoPlayer.formatTime === "function") 
+      ? window.videoPlayer.formatTime(curSec) 
+      : "00:00";
+    const tsEl = document.getElementById("currentNoteTimestamp");
+    if (tsEl) tsEl.textContent = formatted;
+    this.capturedNoteTime = curSec;
+    this.showToast(`📍 Captured playhead at ${formatted}`, "info");
+  }
+
+  async saveVideoNote() {
+    if (!this.activeModule) return;
+    const textEl = document.getElementById("newNoteText");
+    const text = textEl ? textEl.value.trim() : "";
+    if (!text) {
+      this.showToast("Please enter note text first.", "warning");
+      return;
+    }
+
+    const curSec = (typeof this.capturedNoteTime === "number") 
+      ? this.capturedNoteTime 
+      : ((window.videoPlayer && typeof window.videoPlayer.getCurrentTime === "function") ? window.videoPlayer.getCurrentTime() : 0);
+
+    const noteObj = {
+      moduleId: this.activeModule.id,
+      timestamp_seconds: curSec,
+      content: text
+    };
+
+    if (window.apiService && window.apiService.saveVideoNote) {
+      try {
+        await window.apiService.saveVideoNote(noteObj);
+      } catch (err) {
+        console.warn("Backend note save fallback:", err);
+      }
+    }
+
+    if (window.appState && typeof window.appState.addVideoNote === "function") {
+      window.appState.addVideoNote(this.activeModule.id, curSec, text);
+    }
+
+    if (textEl) textEl.value = "";
+    this.capturedNoteTime = null;
+    const tsEl = document.getElementById("currentNoteTimestamp");
+    if (tsEl) tsEl.textContent = "00:00";
+
+    this.showToast("📌 Note saved with clickable timestamp jump!", "success");
+    this.renderNotesList();
+    this.updateNotesBadge();
+  }
+
+  async deleteVideoNote(noteId) {
+    if (!this.activeModule) return;
+    if (window.apiService && window.apiService.deleteVideoNote) {
+      try {
+        await window.apiService.deleteVideoNote(noteId);
+      } catch (e) {}
+    }
+    if (window.appState && typeof window.appState.deleteVideoNote === "function") {
+      window.appState.deleteVideoNote(this.activeModule.id, noteId);
+    }
+    this.renderNotesList();
+    this.updateNotesBadge();
+    this.showToast("Note deleted.", "info");
+  }
+
+  renderNotesList() {
+    if (!this.activeModule) return;
+    const container = document.getElementById("videoNotesList");
+    if (!container) return;
+
+    const notes = (window.appState && typeof window.appState.getVideoNotes === "function")
+      ? window.appState.getVideoNotes(this.activeModule.id)
+      : [];
+
+    if (notes.length === 0) {
+      container.innerHTML = `
+        <div class="p-6 rounded-2xl bg-slate-950/60 border border-slate-800 text-center space-y-2">
+          <span class="text-2xl">📝</span>
+          <p class="text-xs text-slate-400 font-medium">No timestamped notes yet for this lesson.</p>
+          <p class="text-[11px] text-slate-500">Play the video, click "Grab Playhead", and save key concepts or timestamps.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const sorted = [...notes].sort((a, b) => (a.timestamp_seconds || 0) - (b.timestamp_seconds || 0));
+
+    container.innerHTML = sorted.map(note => {
+      const timeFmt = (window.videoPlayer && typeof window.videoPlayer.formatTime === "function")
+        ? window.videoPlayer.formatTime(note.timestamp_seconds || 0)
+        : "00:00";
+
+      return `
+        <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition flex items-start justify-between gap-3 group">
+          <div class="flex items-start space-x-3">
+            <button 
+              type="button" 
+              onclick="window.videoPlayer.seekTo(${note.timestamp_seconds || 0})"
+              class="px-2.5 py-1 rounded-lg bg-[#dd1f36]/20 hover:bg-[#dd1f36] text-[#dd1f36] hover:text-white border border-[#dd1f36]/40 text-xs font-mono font-bold transition flex items-center space-x-1 shrink-0 cursor-pointer"
+              title="Click to jump video to ${timeFmt}"
+            >
+              <span>▶</span>
+              <span>${timeFmt}</span>
+            </button>
+            <div>
+              <p class="text-xs text-slate-200 leading-relaxed">${note.content || note.note || ''}</p>
+              <span class="text-[10px] text-slate-500 mt-1 block">${new Date(note.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            onclick="window.app.deleteVideoNote('${note.id}')"
+            class="text-slate-500 hover:text-rose-400 p-1 rounded-lg hover:bg-slate-900 transition opacity-0 group-hover:opacity-100 cursor-pointer"
+            title="Delete note"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </div>
+      `;
+    }).join("");
+  }
+
+  updateNotesBadge() {
+    if (!this.activeModule) return;
+    const badge = document.getElementById("classroomNotesCountBadge");
+    if (!badge) return;
+    const notes = (window.appState && typeof window.appState.getVideoNotes === "function")
+      ? window.appState.getVideoNotes(this.activeModule.id)
+      : [];
+    badge.textContent = notes.length;
+  }
+
+  // --- TRANSCRIPT & LIVE SEARCH CONTROLLER ---
+  getModuleTranscript(mod) {
+    if (!mod) return [];
+    if (mod.transcript && Array.isArray(mod.transcript)) return mod.transcript;
+
+    const lines = [];
+    lines.push({
+      time: 0,
+      formatted: "00:00",
+      text: `Introduction to ${mod.title}. In this module we analyze statutory definitions, core legal doctrines, and practical enterprise workflows.`
+    });
+
+    if (mod.takeaways && mod.takeaways.length > 0) {
+      let t = 25;
+      mod.takeaways.forEach((tk, idx) => {
+        lines.push({
+          time: t,
+          formatted: (window.videoPlayer && typeof window.videoPlayer.formatTime === "function") ? window.videoPlayer.formatTime(t) : `00:${t}`,
+          text: `Core Takeaway ${idx + 1}: ${tk}`
+        });
+        t += 75;
+      });
+    }
+
+    if (mod.description) {
+      lines.push({
+        time: 180,
+        formatted: "03:00",
+        text: `Analysis: ${mod.description}`
+      });
+    }
+
+    lines.push({
+      time: 320,
+      formatted: "05:20",
+      text: "Operational Standards: Review organizational policies, reporting chains, and evidentiary recordkeeping requirements."
+    });
+    lines.push({
+      time: 480,
+      formatted: "08:00",
+      text: "Assessment Readiness: Verify full comprehension of statutory frameworks and take the proctored certification quiz upon completion."
+    });
+
+    return lines;
+  }
+
+  renderTranscriptView() {
+    if (!this.activeModule) return;
+    const container = document.getElementById("transcriptLinesContainer");
+    if (!container) return;
+
+    this.transcriptData = this.getModuleTranscript(this.activeModule);
+    this.filterTranscript(this.transcriptSearchTerm || "");
+  }
+
+  filterTranscript(query) {
+    this.transcriptSearchTerm = (query || "").toLowerCase().trim();
+    const container = document.getElementById("transcriptLinesContainer");
+    if (!container || !this.transcriptData) return;
+
+    const filtered = this.transcriptSearchTerm
+      ? this.transcriptData.filter(line => line.text.toLowerCase().includes(this.transcriptSearchTerm))
+      : this.transcriptData;
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="p-6 rounded-2xl bg-slate-950/60 border border-slate-800 text-center text-xs text-slate-400">
+          No transcript segments matching "<strong>${this.transcriptSearchTerm}</strong>".
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = filtered.map(line => {
+      let highlighted = line.text;
+      if (this.transcriptSearchTerm) {
+        const regex = new RegExp(`(${this.transcriptSearchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi");
+        highlighted = line.text.replace(regex, `<mark class="bg-amber-500/30 text-amber-200 px-1 rounded">$1</mark>`);
+      }
+
+      return `
+        <div 
+          onclick="window.videoPlayer.seekTo(${line.time})"
+          class="p-3 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800/80 hover:border-[#dd1f36]/40 transition flex items-start space-x-3 cursor-pointer group"
+          title="Click to seek video to ${line.formatted}"
+        >
+          <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-800 group-hover:bg-[#dd1f36] text-slate-400 group-hover:text-white transition shrink-0">
+            ${line.formatted}
+          </span>
+          <p class="text-xs text-slate-300 group-hover:text-white leading-relaxed">
+            ${highlighted}
+          </p>
+        </div>
+      `;
+    }).join("");
+  }
+
+  // --- DISCUSSION & Q&A CONTROLLER ---
+  async renderDiscussionView() {
+    if (!this.activeModule) return;
+    const container = document.getElementById("moduleDiscussionList");
+    if (!container) return;
+
+    let posts = (window.appState && typeof window.appState.getDiscussions === "function")
+      ? window.appState.getDiscussions(this.activeModule.id)
+      : [];
+
+    if (window.apiService && window.apiService.getDiscussions) {
+      try {
+        const res = await window.apiService.getDiscussions(this.activeModule.id);
+        if (res && res.success && Array.isArray(res.discussions) && res.discussions.length > 0) {
+          posts = res.discussions;
+        }
+      } catch (err) {}
+    }
+
+    this.updateDiscussionBadge(posts.length);
+
+    if (posts.length === 0) {
+      container.innerHTML = `
+        <div class="p-6 rounded-2xl bg-slate-950/60 border border-slate-800 text-center space-y-2">
+          <span class="text-2xl">💬</span>
+          <p class="text-xs text-slate-400 font-medium">No discussion questions yet for this lesson.</p>
+          <p class="text-[11px] text-slate-500">Post your question to discuss with the instructor & fellow learners!</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = posts.map(post => {
+      const isInstructor = (post.role || post.user_role) === "instructor" || (post.role || post.user_role) === "admin";
+      return `
+        <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <img 
+                src="${post.avatar_url || 'https://images.unsplash.com/photo-1535713875002?w=100'}" 
+                class="w-7 h-7 rounded-full object-cover border border-slate-700" 
+                alt="Avatar"
+              />
+              <div>
+                <div class="flex items-center space-x-1.5">
+                  <span class="text-xs font-bold text-white">${post.author_name || post.user_name || 'Learner'}</span>
+                  ${isInstructor ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30">Faculty</span>' : ''}
+                </div>
+                <span class="text-[10px] text-slate-500">${new Date(post.created_at || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+              </div>
+            </div>
+            <button 
+              type="button" 
+              onclick="window.app.likeDiscussionPost('${post.id}')"
+              class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-purple-950/50 text-slate-400 hover:text-purple-300 border border-slate-800 hover:border-purple-500/30 text-xs font-bold transition flex items-center space-x-1 cursor-pointer"
+            >
+              <span>👍</span>
+              <span id="likeCount-${post.id}">${post.likes || 0}</span>
+            </button>
+          </div>
+          <p class="text-xs text-slate-200 leading-relaxed pl-9">
+            ${post.content || post.text || ''}
+          </p>
+        </div>
+      `;
+    }).join("");
+  }
+
+  async postDiscussionMessage() {
+    if (!this.activeModule) return;
+    const textEl = document.getElementById("newDiscussionQuestion");
+    const text = textEl ? textEl.value.trim() : "";
+    if (!text) {
+      this.showToast("Please enter a question or comment.", "warning");
+      return;
+    }
+
+    const user = (window.appState && window.appState.user) || { name: 'Sachin Chauhan', role: 'student' };
+
+    if (window.apiService && window.apiService.postDiscussion) {
+      try {
+        await window.apiService.postDiscussion(this.activeModule.id, {
+          content: text,
+          user_name: user.name,
+          user_role: user.role
+        });
+      } catch (err) {}
+    }
+
+    if (window.appState && typeof window.appState.addDiscussion === "function") {
+      window.appState.addDiscussion(this.activeModule.id, {
+        author_name: user.name,
+        role: user.role,
+        content: text
+      });
+      if (typeof window.appState.addXP === "function") {
+        window.appState.addXP(10, "Community Q&A Discussion Post");
+      }
+    }
+
+    if (textEl) textEl.value = "";
+    this.showToast("💬 Question posted! (+10 XP Community Participation)", "success");
+    this.renderDiscussionView();
+  }
+
+  async likeDiscussionPost(postId) {
+    if (window.apiService && window.apiService.likeDiscussion) {
+      try {
+        await window.apiService.likeDiscussion(postId);
+      } catch (e) {}
+    }
+    if (window.appState && typeof window.appState.likeDiscussion === "function") {
+      window.appState.likeDiscussion(this.activeModule.id, postId);
+    }
+    const countEl = document.getElementById(`likeCount-${postId}`);
+    if (countEl) {
+      const cur = parseInt(countEl.textContent, 10) || 0;
+      countEl.textContent = cur + 1;
+    }
+  }
+
+  updateDiscussionBadge(count = null) {
+    if (!this.activeModule) return;
+    const badge = document.getElementById("classroomDiscussionCountBadge");
+    if (!badge) return;
+    const c = (count !== null) ? count : ((window.appState && typeof window.appState.getDiscussions === "function") ? window.appState.getDiscussions(this.activeModule.id).length : 0);
+    badge.textContent = c;
+  }
+
+  // --- GAMIFICATION & LEADERBOARD CONTROLLER ---
+  openLeaderboardModal() {
+    const modal = document.getElementById("leaderboardModal");
+    if (!modal) return;
+    modal.classList.remove("hidden");
+    document.body.classList.add("overflow-hidden");
+    this.renderLeaderboard();
+  }
+
+  closeLeaderboardModal() {
+    const modal = document.getElementById("leaderboardModal");
+    if (modal) modal.classList.add("hidden");
+    document.body.classList.remove("overflow-hidden");
+  }
+
+  async renderLeaderboard() {
+    const container = document.getElementById("leaderboardListContainer");
+    if (!container) return;
+
+    let leaders = [];
+    if (window.apiService && window.apiService.getLeaderboard) {
+      try {
+        const res = await window.apiService.getLeaderboard();
+        if (res && res.success && Array.isArray(res.leaderboard)) {
+          leaders = res.leaderboard;
+        }
+      } catch (err) {}
+    }
+
+    if (leaders.length === 0) {
+      const studentStats = (window.appState && typeof window.appState.getLearnerStats === "function")
+        ? window.appState.getLearnerStats()
+        : { xp: 450, streakDays: 3, badges: [] };
+
+      leaders = [
+        { rank: 1, name: "Advocate Ananya Deshmukh", role: "instructor", xp_points: 1250, streak_days: 14, badges: ["POSH Master", "Top Instructor"] },
+        { rank: 2, name: "Dr. Sarah Chen", role: "instructor", xp_points: 980, streak_days: 10, badges: ["AI Architect", "Rigor Pioneer"] },
+        { rank: 3, name: (window.appState && window.appState.user && window.appState.user.name) || "Sachin Chauhan", role: "student", xp_points: studentStats.xp || 450, streak_days: studentStats.streakDays || 3, badges: studentStats.badges || ["POSH Compliant", "Proctor Verified"] },
+        { rank: 4, name: "Ramesh Sharma", role: "student", xp_points: 380, streak_days: 4, badges: ["Quick Learner"] },
+        { rank: 5, name: "Pooja Iyer", role: "student", xp_points: 320, streak_days: 2, badges: ["Ethical Leader"] }
+      ];
+    }
+
+    container.innerHTML = leaders.map((ldr, idx) => {
+      const rank = ldr.rank || (idx + 1);
+      const isTop3 = rank <= 3;
+      const rankBadge = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+      const badges = Array.isArray(ldr.badges) ? ldr.badges : [];
+
+      return `
+        <div class="p-3.5 rounded-2xl bg-slate-950 border ${isTop3 ? 'border-amber-500/40 bg-gradient-to-r from-amber-500/5 to-transparent' : 'border-slate-800'} flex items-center justify-between gap-4">
+          <div class="flex items-center space-x-3">
+            <span class="w-8 text-center text-base font-black ${rank === 1 ? 'text-amber-400' : rank === 2 ? 'text-slate-300' : rank === 3 ? 'text-amber-600' : 'text-slate-500'}">
+              ${rankBadge}
+            </span>
+            <img 
+              src="${ldr.avatar_url || 'https://images.unsplash.com/photo-1535713875002?w=100'}" 
+              class="w-9 h-9 rounded-full object-cover border border-slate-700" 
+              alt="Avatar"
+            />
+            <div>
+              <div class="flex items-center space-x-1.5">
+                <span class="text-xs font-extrabold text-white">${ldr.name}</span>
+                <span class="px-1.5 py-0.2 rounded text-[9px] font-black uppercase ${ldr.role === 'admin' ? 'bg-purple-500/20 text-purple-300' : ldr.role === 'instructor' ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'}">
+                  ${ldr.role}
+                </span>
+              </div>
+              <div class="flex flex-wrap items-center gap-1 mt-1">
+                ${badges.map(b => `<span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-slate-900 border border-slate-800 text-slate-300">${b}</span>`).join("")}
+              </div>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-xs font-black text-amber-400 flex items-center justify-end space-x-1">
+              <span>⚡</span>
+              <span>${ldr.xp_points || ldr.xp || 0} XP</span>
+            </div>
+            <div class="text-[10px] text-rose-400 font-bold mt-0.5 flex items-center justify-end space-x-1">
+              <span>🔥</span>
+              <span>${ldr.streak_days || ldr.streakDays || 1}d Streak</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
   }
 
   switchModule(moduleId) {

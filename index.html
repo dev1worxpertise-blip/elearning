@@ -200,6 +200,30 @@
             <span class="text-[10px] text-slate-400 font-medium">Standalone Mode</span>
           </div>
 
+          <!-- Verify Credential Button -->
+          <button 
+            id="btnOpenVerifyModal" 
+            type="button"
+            onclick="window.certificateStudio.openVerificationModal()"
+            class="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 text-xs font-semibold transition cursor-pointer"
+            title="Public Verification Portal: Verify credential authenticity"
+          >
+            <span class="text-emerald-400">🛡️</span>
+            <span>Verify Credential</span>
+          </button>
+
+          <!-- Gamification XP & Streak Pill -->
+          <div 
+            id="headerGamificationPill" 
+            onclick="window.app.openLeaderboardModal()"
+            class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-purple-500/10 border border-amber-500/30 text-xs font-bold cursor-pointer hover:border-amber-400 transition"
+            title="Click to view Top Learners Leaderboard"
+          >
+            <span class="flex items-center text-amber-400">⚡ <span id="headerXp" class="ml-1 text-white">0</span><span class="text-[10px] text-amber-300 ml-0.5">XP</span></span>
+            <span class="text-slate-600">•</span>
+            <span class="flex items-center text-rose-400">🔥 <span id="headerStreak" class="ml-1 text-white">1</span><span class="text-[10px] text-rose-300 ml-0.5">d</span></span>
+          </div>
+
           <!-- Sign In / Register Button -->
           <button 
             id="btnOpenAuthModal" 
@@ -406,26 +430,170 @@
           <!-- Injected dynamically -->
         </div>
 
-        <!-- Lesson Details & Tabs -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-          <div>
-            <h3 class="text-lg font-bold text-white">About This Lesson</h3>
-            <p id="lessonDescription" class="text-sm text-slate-300 mt-2 leading-relaxed">
-              <!-- Injected dynamically -->
-            </p>
+        <!-- Interactive Classroom Workspace Tabs -->
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+          <!-- Workspace Tab Bar -->
+          <div class="flex items-center justify-between border-b border-slate-800 bg-slate-950/70 px-4 sm:px-6 py-2.5 overflow-x-auto">
+            <div class="flex items-center space-x-2">
+              <button 
+                id="tabBtnOverview" 
+                type="button"
+                onclick="window.app.setClassroomTab('overview')"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-[#dd1f36] text-white flex items-center space-x-1.5 cursor-pointer"
+              >
+                <span>📖</span>
+                <span>Overview</span>
+              </button>
+              <button 
+                id="tabBtnNotes" 
+                type="button"
+                onclick="window.app.setClassroomTab('notes')"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5 cursor-pointer"
+              >
+                <span>📝</span>
+                <span>Personal Notes</span>
+                <span id="classroomNotesCountBadge" class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-300">0</span>
+              </button>
+              <button 
+                id="tabBtnTranscript" 
+                type="button"
+                onclick="window.app.setClassroomTab('transcript')"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5 cursor-pointer"
+              >
+                <span>📄</span>
+                <span>Transcript & Search</span>
+              </button>
+              <button 
+                id="tabBtnDiscussion" 
+                type="button"
+                onclick="window.app.setClassroomTab('discussion')"
+                class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5 cursor-pointer"
+              >
+                <span>💬</span>
+                <span>Discussion & Q&A</span>
+                <span id="classroomDiscussionCountBadge" class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-purple-500/20 text-purple-300">0</span>
+              </button>
+            </div>
           </div>
 
-          <div>
-            <h4 class="text-xs uppercase font-bold text-[#dd1f36] tracking-wider">Key Learning Takeaways</h4>
-            <ul id="lessonTakeaways" class="mt-3 space-y-2">
-              <!-- Injected dynamically -->
-            </ul>
+          <!-- TAB 1: OVERVIEW -->
+          <div id="tabContentOverview" class="p-6 space-y-6">
+            <div>
+              <h3 class="text-lg font-bold text-white">About This Lesson</h3>
+              <p id="lessonDescription" class="text-sm text-slate-300 mt-2 leading-relaxed"></p>
+            </div>
+            <div>
+              <h4 class="text-xs uppercase font-bold text-[#dd1f36] tracking-wider">Key Learning Takeaways</h4>
+              <ul id="lessonTakeaways" class="mt-3 space-y-2"></ul>
+            </div>
+            <div>
+              <h4 class="text-xs uppercase font-bold text-slate-400 tracking-wider">Downloadable Lesson Resources</h4>
+              <div id="lessonResources" class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+            </div>
           </div>
 
-          <div>
-            <h4 class="text-xs uppercase font-bold text-slate-400 tracking-wider">Downloadable Lesson Resources</h4>
-            <div id="lessonResources" class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <!-- Injected dynamically -->
+          <!-- TAB 2: PERSONAL VIDEO NOTES -->
+          <div id="tabContentNotes" class="hidden p-6 space-y-6">
+            <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white flex items-center space-x-1.5">
+                  <span>⏱️</span>
+                  <span>Capture Note at Current Playback Second</span>
+                </span>
+                <button 
+                  type="button" 
+                  onclick="window.app.captureCurrentPlayhead()" 
+                  class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 transition cursor-pointer"
+                >
+                  📍 Grab Playhead: <span id="currentNoteTimestamp" class="text-amber-400 font-mono">00:00</span>
+                </button>
+              </div>
+              <textarea 
+                id="newNoteText" 
+                rows="2" 
+                placeholder="Type your personal lesson note or timestamp reference (e.g. POSH IC Composition guidelines)..."
+                class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#dd1f36] transition"
+              ></textarea>
+              <div class="flex justify-end">
+                <button 
+                  type="button" 
+                  onclick="window.app.saveVideoNote()" 
+                  class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#dd1f36] to-[#b81427] hover:from-[#b81427] text-white font-bold text-xs shadow-md transition flex items-center space-x-1.5 cursor-pointer"
+                >
+                  <span>📌 Save Note</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Notes List -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Your Timestamped Notes</h4>
+                <span class="text-[11px] text-slate-500">Click any timestamp badge to jump video directly</span>
+              </div>
+              <div id="videoNotesList" class="space-y-2">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: TRANSCRIPT & SEARCH -->
+          <div id="tabContentTranscript" class="hidden p-6 space-y-5">
+            <div class="flex items-center justify-between gap-4">
+              <div class="relative flex-1">
+                <svg class="w-4 h-4 absolute left-3.5 top-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input 
+                  type="text" 
+                  id="transcriptSearchInput" 
+                  oninput="window.app.filterTranscript(this.value)" 
+                  placeholder="Search keywords in lecture transcript (e.g. 'workplace', 'committee', 'ethics')..." 
+                  class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#dd1f36] transition"
+                />
+              </div>
+              <div class="text-xs text-slate-400 shrink-0">
+                <span class="text-emerald-400 font-bold">1-Click Jump:</span> Click line to seek
+              </div>
+            </div>
+
+            <div id="transcriptLinesContainer" class="max-h-96 overflow-y-auto space-y-2 pr-1">
+              <!-- Dynamically rendered -->
+            </div>
+          </div>
+
+          <!-- TAB 4: DISCUSSION & Q&A -->
+          <div id="tabContentDiscussion" class="hidden p-6 space-y-6">
+            <!-- Ask Question Card -->
+            <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+              <div class="flex items-center space-x-2 text-xs font-bold text-white">
+                <span class="text-purple-400">💬</span>
+                <span>Ask a Question to the Faculty & Community</span>
+              </div>
+              <textarea 
+                id="newDiscussionQuestion" 
+                rows="2" 
+                placeholder="Have a doubt about this lesson topic? Post your question here..."
+                class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
+              ></textarea>
+              <div class="flex justify-end">
+                <button 
+                  type="button" 
+                  onclick="window.app.postDiscussionMessage()" 
+                  class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs shadow-md transition flex items-center space-x-1.5 cursor-pointer"
+                >
+                  <span>Post Question</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Discussion Thread List -->
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Module Q&A Thread</h4>
+                <span class="text-[11px] text-slate-500">Instructor Verified Answers</span>
+              </div>
+              <div id="moduleDiscussionList" class="space-y-3">
+                <!-- Dynamically rendered -->
+              </div>
             </div>
           </div>
         </div>
@@ -719,6 +887,20 @@
           class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white"
         >
           ⏱️ Video Anti-Skip Audit
+        </button>
+        <button 
+          data-report-tab="audit" 
+          onclick="window.reportsManager.setReportTab('audit')" 
+          class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white"
+        >
+          🛡️ Audit & Activity Trail
+        </button>
+        <button 
+          data-report-tab="emails" 
+          onclick="window.reportsManager.setReportTab('emails')" 
+          class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-white"
+        >
+          📧 Email Dispatches
         </button>
       </div>
 
@@ -1514,6 +1696,230 @@
               </div>
             </div>
             <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Role: Student</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL 1: PUBLIC CERTIFICATE VERIFICATION PORTAL
+       ====================================================================== -->
+  <div id="verificationPortalModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/90 backdrop-blur-lg p-4 sm:p-6 md:p-8">
+    <div class="min-h-full flex items-center justify-center py-4 sm:py-8">
+      <div class="relative bg-slate-900 border border-emerald-500/40 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6">
+        <button 
+          onclick="window.certificateStudio.closeVerificationModal()"
+          class="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <div class="text-center space-y-1">
+          <div class="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-black uppercase tracking-wider">
+            <span>🛡️ Public Verification Portal</span>
+          </div>
+          <h2 class="text-2xl font-black text-white">Instant Credential Authenticity Check</h2>
+          <p class="text-xs text-slate-400 max-w-md mx-auto">
+            Third-party corporate verifiers and HR audit teams can verify the genuine authenticity and academic integrity of any issued certificate.
+          </p>
+        </div>
+
+        <!-- Verification Search Form -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div class="relative flex-1">
+            <svg class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input 
+              type="text" 
+              id="verifyCredentialInput" 
+              placeholder="Enter Credential ID (e.g. CERT-LP-POSH-2026-9481)..."
+              class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono transition"
+            />
+          </div>
+          <button 
+            type="button" 
+            onclick="window.certificateStudio.verifyCredential(document.getElementById('verifyCredentialInput').value)"
+            class="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-900/30 transition flex items-center justify-center space-x-1.5 cursor-pointer"
+          >
+            <span>Verify Credential</span>
+          </button>
+        </div>
+
+        <!-- Verification Result Container -->
+        <div id="verificationResultBox" class="hidden">
+          <!-- Dynamically injected -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL 2: TOP LEARNERS LEADERBOARD & GAMIFICATION ENGINE
+       ====================================================================== -->
+  <div id="leaderboardModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/90 backdrop-blur-lg p-4 sm:p-6 md:p-8">
+    <div class="min-h-full flex items-center justify-center py-4 sm:py-8">
+      <div class="relative bg-slate-900 border border-amber-500/40 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6">
+        <button 
+          onclick="window.app.closeLeaderboardModal()"
+          class="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <div class="text-center space-y-1">
+          <div class="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-black uppercase tracking-wider">
+            <span>🏆 Gamification & Honor Roll</span>
+          </div>
+          <h2 class="text-2xl font-black text-white">Top Learners Enterprise Leaderboard</h2>
+          <p class="text-xs text-slate-400 max-w-md mx-auto">
+            Earn XP points and streak multipliers by completing video lectures, passing anti-cheat proctored exams, and scoring honors marks.
+          </p>
+        </div>
+
+        <!-- Gamification Breakdown Badges -->
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div class="p-3 rounded-2xl bg-slate-950 border border-amber-500/20">
+            <span class="text-amber-400 text-lg">⚡ +50 XP</span>
+            <div class="text-[10px] text-slate-400 mt-1">Lesson Finished</div>
+          </div>
+          <div class="p-3 rounded-2xl bg-slate-950 border border-emerald-500/20">
+            <span class="text-emerald-400 text-lg">🎯 +100 XP</span>
+            <div class="text-[10px] text-slate-400 mt-1">Exam Passed</div>
+          </div>
+          <div class="p-3 rounded-2xl bg-slate-950 border border-purple-500/20">
+            <span class="text-purple-400 text-lg">🌟 +50 XP</span>
+            <div class="text-[10px] text-slate-400 mt-1">Mastery Score (≥95%)</div>
+          </div>
+        </div>
+
+        <!-- Leaderboard Table Container -->
+        <div id="leaderboardListContainer" class="max-h-96 overflow-y-auto space-y-2 pr-1">
+          <!-- Dynamically injected via app.renderLeaderboard() -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL 3: BULK USER IMPORT VIA CSV
+       ====================================================================== -->
+  <div id="bulkImportModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/90 backdrop-blur-lg p-4 sm:p-6 md:p-8">
+    <div class="min-h-full flex items-center justify-center py-4 sm:py-8">
+      <div class="relative bg-slate-900 border border-blue-500/40 rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl space-y-6">
+        <button 
+          onclick="window.userManager.closeBulkImportModal()"
+          class="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <div class="space-y-1">
+          <div class="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[11px] font-black uppercase tracking-wider">
+            <span>📁 Corporate Onboarding</span>
+          </div>
+          <h2 class="text-2xl font-black text-white">Bulk User Import & Mandatory Auto-Enrollment</h2>
+          <p class="text-xs text-slate-400">
+            Upload an employee roster CSV to onboard hundreds of team members in 1-click and automatically enroll them in compliance curricula.
+          </p>
+        </div>
+
+        <!-- Mandatory Course Selector & Template Download -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">Mandatory Auto-Enrollment Program</label>
+            <select 
+              id="bulkImportCourseSelect"
+              class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500 transition"
+            >
+              <!-- Injected dynamically -->
+            </select>
+            <span class="text-[10px] text-slate-500 mt-1 block">New employees will be automatically enrolled immediately</span>
+          </div>
+          <div class="flex flex-col justify-between">
+            <span class="text-xs font-bold text-slate-300">Roster Format Standard</span>
+            <button 
+              type="button" 
+              onclick="window.userManager.downloadCSVTemplate()"
+              class="mt-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center justify-center space-x-1.5 cursor-pointer"
+            >
+              <span>📥 Download Sample CSV Template</span>
+            </button>
+            <span class="text-[10px] text-slate-500 mt-1">Columns: Name, Email, Role, Department</span>
+          </div>
+        </div>
+
+        <!-- File Upload & CSV Input -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-slate-300">Upload CSV File or Paste Raw Text</label>
+            <span id="bulkImportCountBadge" class="hidden px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+              0 Users Parsed
+            </span>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input 
+              type="file" 
+              id="bulkImportFileInput" 
+              accept=".csv"
+              onchange="
+                const file = this.files[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (e) => {
+                    const text = e.target.result;
+                    document.getElementById('bulkImportTextInput').value = text;
+                    window.userManager.pendingImportUsers = window.userManager.parseCSV(text);
+                    const count = window.userManager.pendingImportUsers.length;
+                    const badge = document.getElementById('bulkImportCountBadge');
+                    if (badge) {
+                      badge.textContent = `${count} Employees Detected`;
+                      badge.classList.remove('hidden');
+                    }
+                  };
+                  reader.readAsText(file);
+                }
+              "
+              class="w-full sm:w-1/2 text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 file:cursor-pointer"
+            />
+          </div>
+
+          <textarea 
+            id="bulkImportTextInput" 
+            rows="4" 
+            placeholder="Name,Email,Role,Department&#10;Ramesh Sharma,ramesh.sharma@worxpertise.com,student,Technology&#10;Pooja Iyer,pooja.iyer@worxpertise.com,student,HR"
+            oninput="
+              window.userManager.pendingImportUsers = window.userManager.parseCSV(this.value);
+              const count = window.userManager.pendingImportUsers.length;
+              const badge = document.getElementById('bulkImportCountBadge');
+              if (badge) {
+                badge.textContent = `${count} Employees Detected`;
+                badge.classList.remove('hidden');
+              }
+            "
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs font-mono text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition"
+          ></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
+          <button 
+            type="button" 
+            onclick="window.userManager.closeBulkImportModal()"
+            class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            onclick="
+              const courseId = document.getElementById('bulkImportCourseSelect').value;
+              const users = window.userManager.pendingImportUsers || [];
+              window.userManager.executeBulkImport(users, courseId);
+            "
+            class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-900/40 transition flex items-center space-x-1.5 cursor-pointer"
+          >
+            <span>🚀 Confirm Import & Auto-Enroll</span>
           </button>
         </div>
       </div>

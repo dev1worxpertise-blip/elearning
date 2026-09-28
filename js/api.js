@@ -312,6 +312,117 @@ class ApiService {
     });
     return res.json();
   }
+
+  // --- Enterprise Audit & Activity Trail ---
+  async getAuditLogs(action = 'all', limit = 100) {
+    const res = await fetch(`${API_BASE_URL}/enterprise/audit-logs?action=${encodeURIComponent(action)}&limit=${limit}`, {
+      headers: this.getHeaders(),
+    });
+    return res.json();
+  }
+
+  async logAudit(action, target, details, severity = 'INFO') {
+    const res = await fetch(`${API_BASE_URL}/enterprise/audit-logs`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ action, target, details, severity }),
+    });
+    return res.json();
+  }
+
+  // --- Community Q&A & Module Discussions ---
+  async getDiscussions(moduleId) {
+    const res = await fetch(`${API_BASE_URL}/enterprise/discussions/${moduleId}`, {
+      headers: this.getHeaders(),
+    });
+    return res.json();
+  }
+
+  async postDiscussion(moduleId, content) {
+    const res = await fetch(`${API_BASE_URL}/enterprise/discussions/${moduleId}`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ content }),
+    });
+    return res.json();
+  }
+
+  async likeDiscussion(postId) {
+    const res = await fetch(`${API_BASE_URL}/enterprise/discussions/like/${postId}`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+    });
+    return res.json();
+  }
+
+  // --- Learner Video Notes ---
+  async getVideoNotes(moduleId) {
+    const res = await fetch(`${API_BASE_URL}/enterprise/notes/${moduleId}`, {
+      headers: this.getHeaders(),
+    });
+    return res.json();
+  }
+
+  async saveVideoNote(moduleId, timestamp, text) {
+    const res = await fetch(`${API_BASE_URL}/enterprise/notes/${moduleId}`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ timestamp, text }),
+    });
+    return res.json();
+  }
+
+  async deleteVideoNote(noteId) {
+    const res = await fetch(`${API_BASE_URL}/enterprise/notes/${noteId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    return res.json();
+  }
+
+  // --- Bulk CSV User Import ---
+  async bulkImportUsers(users, mandatoryProgramId = null) {
+    const res = await fetch(`${API_BASE_URL}/enterprise/bulk-import`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ users, mandatoryProgramId }),
+    });
+    return res.json();
+  }
+
+  // --- Gamification & Leaderboard ---
+  async getLeaderboard() {
+    const res = await fetch(`${API_BASE_URL}/enterprise/leaderboard`, {
+      headers: this.getHeaders(),
+    });
+    return res.json();
+  }
+
+  async awardXP(xp, reason, streakIncrement = false) {
+    const res = await fetch(`${API_BASE_URL}/enterprise/award-xp`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ xp, reason, streakIncrement }),
+    });
+    return res.json();
+  }
+
+  // --- Email & Notification Dispatches ---
+  async getEmailDispatches() {
+    const res = await fetch(`${API_BASE_URL}/enterprise/email-dispatches`, {
+      headers: this.getHeaders(),
+    });
+    return res.json();
+  }
+
+  async dispatchEmail(recipient, subject, emailType, details) {
+    const res = await fetch(`${API_BASE_URL}/enterprise/email-dispatches`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ recipient, subject, emailType, details }),
+    });
+    return res.json();
+  }
 }
 
 window.apiService = new ApiService();

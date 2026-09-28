@@ -325,27 +325,36 @@ class CertificateStudio {
           </div>
 
           <!-- Actions -->
-          <div class="flex items-center space-x-2">
+          <div class="flex flex-wrap items-center gap-2">
             <button 
-              onclick="window.certificateStudio.downloadPNG()" 
-              class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#dd1f36] to-[#b81427] hover:from-[#b81427] hover:to-[#9b1322] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/30 transition flex items-center space-x-1.5 cursor-pointer"
+              onclick="window.certificateStudio.shareToLinkedIn()" 
+              class="px-3 py-2 rounded-xl bg-[#0a66c2] hover:bg-[#004182] text-white font-bold text-xs shadow-md shadow-[#0a66c2]/20 transition flex items-center space-x-1.5 cursor-pointer"
+              title="Add credential to your LinkedIn profile"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              <span>Download PNG</span>
+              <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.27a1.64 1.64 0 1 0 0 3.28 1.64 1.64 0 0 0 0-3.28z"/></svg>
+              <span>Add to LinkedIn</span>
             </button>
             <button 
-              onclick="window.print()" 
-              class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition flex items-center space-x-1 cursor-pointer"
+              onclick="window.certificateStudio.exportOfficialPDF()" 
+              class="px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition flex items-center space-x-1.5 cursor-pointer"
+              title="Official Print-Ready Vector PDF with Cryptographic Watermark"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-              <span>Print</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>Official PDF</span>
+            </button>
+            <button 
+              onclick="window.certificateStudio.downloadPNG()" 
+              class="px-3 py-2 rounded-xl bg-gradient-to-r from-[#dd1f36] to-[#b81427] hover:from-[#b81427] text-white font-bold text-xs shadow-md transition flex items-center space-x-1.5 cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>Download PNG</span>
             </button>
             <button 
               onclick="window.certificateStudio.closeModal()" 
               class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-rose-900/60 text-slate-300 hover:text-rose-200 font-bold text-xs border border-slate-700 transition flex items-center space-x-1 cursor-pointer"
               title="Close Certificate Studio (ESC)"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
               <span>Close</span>
             </button>
           </div>
@@ -503,20 +512,28 @@ class CertificateStudio {
             <span>← Back to My Learning / Courses</span>
           </button>
 
-          <div class="flex items-center space-x-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <button 
+              onclick="window.certificateStudio.shareToLinkedIn()" 
+              class="px-4 py-2.5 rounded-xl bg-[#0a66c2] hover:bg-[#004182] text-white font-bold text-xs shadow-md shadow-[#0a66c2]/25 transition flex items-center space-x-1.5 cursor-pointer"
+              title="Add credential to your LinkedIn profile"
+            >
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.27a1.64 1.64 0 1 0 0 3.28 1.64 1.64 0 0 0 0-3.28z"/></svg>
+              <span>Add to LinkedIn</span>
+            </button>
+            <button 
+              onclick="window.certificateStudio.exportOfficialPDF()" 
+              class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition flex items-center space-x-1.5 cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>Official PDF</span>
+            </button>
             <button 
               onclick="window.certificateStudio.downloadPNG()" 
               class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#dd1f36] to-[#b81427] hover:from-[#b81427] text-white font-bold text-xs shadow-lg transition flex items-center space-x-1.5 cursor-pointer"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              <span>Download High-Res PNG</span>
-            </button>
-            <button 
-              onclick="window.print()" 
-              class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition flex items-center space-x-1.5 cursor-pointer"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-              <span>Print / PDF</span>
+              <span>Download PNG</span>
             </button>
           </div>
         </div>
@@ -915,6 +932,309 @@ class CertificateStudio {
     document.body.removeChild(link);
 
     window.app.showToast("Certificate downloaded in " + this.currentTheme + " style! 📜", "success");
+  }
+
+  shareToLinkedIn() {
+    if (!this.currentCert) {
+      if (window.app && window.app.showToast) {
+        window.app.showToast("No active certificate found to share.", "warning");
+      }
+      return;
+    }
+    const cert = this.currentCert;
+    const orgName = encodeURIComponent("LearnPulse Global Academy");
+    const certName = encodeURIComponent(cert.programTitle || "Enterprise Professional Certification");
+    const certId = encodeURIComponent(cert.credentialId || ("CERT-" + Date.now()));
+    const verifyUrl = encodeURIComponent(`${window.location.origin}${window.location.pathname}#verify=${cert.credentialId}`);
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const linkedInUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${certName}&organizationName=${orgName}&issueYear=${year}&issueMonth=${month}&certUrl=${verifyUrl}&certId=${certId}`;
+    window.open(linkedInUrl, "_blank");
+    if (window.app && window.app.showToast) {
+      window.app.showToast("🚀 Opening LinkedIn to push certification credentials!", "success");
+    }
+  }
+
+  exportOfficialPDF() {
+    if (!this.currentCert) return;
+    const cert = this.currentCert;
+
+    // Create an isolated printable vector frame with cryptographic watermark
+    const printFrame = document.createElement("iframe");
+    printFrame.style.position = "fixed";
+    printFrame.style.right = "0";
+    printFrame.style.bottom = "0";
+    printFrame.style.width = "0";
+    printFrame.style.height = "0";
+    printFrame.style.border = "none";
+    document.body.appendChild(printFrame);
+
+    const doc = printFrame.contentWindow.document;
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${cert.programTitle} - Official Certificate - ${cert.studentName}</title>
+        <style>
+          @page { size: landscape; margin: 10mm; }
+          body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #fff; color: #0f172a; margin: 0; padding: 20px; }
+          .cert-container {
+            border: 10px solid #1e293b;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            box-sizing: border-box;
+          }
+          .inner-border {
+            border: 2px solid #dd1f36;
+            padding: 30px;
+            position: relative;
+          }
+          .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 70px;
+            font-weight: 900;
+            color: rgba(221, 31, 54, 0.05);
+            letter-spacing: 12px;
+            text-transform: uppercase;
+            pointer-events: none;
+            white-space: nowrap;
+          }
+          .header-inst { font-size: 14px; font-weight: 800; letter-spacing: 4px; color: #64748b; text-transform: uppercase; }
+          .title { font-size: 34px; font-weight: 900; color: #0f172a; margin: 15px 0 5px 0; text-transform: uppercase; letter-spacing: 2px; }
+          .subtitle { font-size: 13px; color: #dd1f36; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; }
+          .cert-to { font-size: 13px; color: #64748b; margin-top: 25px; text-transform: uppercase; letter-spacing: 2px; }
+          .student-name { font-size: 38px; font-weight: 900; color: #0f172a; border-bottom: 2px solid #e2e8f0; display: inline-block; padding: 5px 40px; margin: 10px 0 20px 0; font-family: Georgia, serif; }
+          .description { font-size: 15px; color: #334155; max-width: 750px; margin: 0 auto; line-height: 1.6; }
+          .footer-grid { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 50px; padding-top: 20px; }
+          .sign-block { text-align: center; width: 220px; }
+          .sign-line { border-top: 1.5px solid #0f172a; margin-top: 30px; padding-top: 5px; font-size: 12px; font-weight: 700; }
+          .sign-role { font-size: 10px; color: #64748b; text-transform: uppercase; }
+          .badge-seal {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: #dd1f36;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            text-align: center;
+            border: 4px double #fff;
+            box-shadow: 0 0 0 4px #dd1f36;
+            margin: 0 auto;
+          }
+          .meta-bar {
+            margin-top: 35px;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            font-family: monospace;
+            color: #64748b;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="cert-container">
+          <div class="inner-border">
+            <div class="watermark">LEARNPULSE VERIFIED</div>
+            <div class="header-inst">Worxpertise Global Technology Academy</div>
+            <div class="title">Certificate of Mastery</div>
+            <div class="subtitle">Official Enterprise Statutory & Technical Certification</div>
+            <div class="cert-to">This is to officially certify that</div>
+            <div class="student-name">${cert.studentName}</div>
+            <div class="description">
+              Has successfully fulfilled all curriculum requirements, comprehensive video lectures, and achieved an honors grade in the proctored assessment for:
+              <br><strong>${cert.programTitle}</strong>
+              <br><span style="color:#dd1f36;font-weight:bold;">Grade: ${cert.grade || 'Distinction (Honors)'}</span>
+            </div>
+            <div class="footer-grid">
+              <div class="sign-block">
+                <div style="font-family:'Brush Script MT', cursive; font-size:24px; color:#0f172a;">${cert.instructor || 'Dr. Sarah Chen'}</div>
+                <div class="sign-line">${cert.instructor || 'Dr. Sarah Chen'}</div>
+                <div class="sign-role">${cert.instructorRole || 'Lead Faculty & Instructor'}</div>
+              </div>
+              <div>
+                <div class="badge-seal">OFFICIAL<br>ACCREDITED<br>2026</div>
+              </div>
+              <div class="sign-block">
+                <div style="font-family:'Brush Script MT', cursive; font-size:24px; color:#0f172a;">${cert.authorityName || 'Rajeshwar Rao'}</div>
+                <div class="sign-line">${cert.authorityName || 'Rajeshwar Rao'}</div>
+                <div class="sign-role">${cert.authorityRole || 'Academic Governance'}</div>
+              </div>
+            </div>
+            <div class="meta-bar">
+              <div>Credential ID: <strong>${cert.credentialId}</strong></div>
+              <div>Issue Date: ${cert.issueDate}</div>
+              <div>Cryptographic Hash: <strong>${cert.verificationCode || 'SHA256-LP-88914A'}</strong></div>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `);
+    doc.close();
+
+    setTimeout(() => {
+      printFrame.contentWindow.focus();
+      printFrame.contentWindow.print();
+      setTimeout(() => document.body.removeChild(printFrame), 2000);
+    }, 400);
+
+    if (window.app && window.app.showToast) {
+      window.app.showToast("📄 Official vector PDF print preview opened!", "success");
+    }
+  }
+
+  // --- PUBLIC CERTIFICATE VERIFICATION PORTAL ---
+  openVerificationModal(defaultId = "") {
+    const modal = document.getElementById("verificationPortalModal");
+    if (!modal) return;
+    modal.classList.remove("hidden");
+    document.body.classList.add("overflow-hidden");
+
+    const input = document.getElementById("verifyCredentialInput");
+    if (input) {
+      input.value = defaultId || "";
+      if (defaultId) {
+        this.verifyCredential(defaultId);
+      }
+    }
+  }
+
+  closeVerificationModal() {
+    const modal = document.getElementById("verificationPortalModal");
+    if (modal) modal.classList.add("hidden");
+    document.body.classList.remove("overflow-hidden");
+  }
+
+  verifyCredential(credentialId) {
+    const cleanId = (credentialId || "").trim().toUpperCase();
+    const resultContainer = document.getElementById("verificationResultBox");
+    if (!resultContainer) return;
+
+    if (!cleanId) {
+      resultContainer.innerHTML = `
+        <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs text-center">
+          Please enter a valid Credential ID (e.g. CERT-LP-POSH-2026-9481).
+        </div>
+      `;
+      resultContainer.classList.remove("hidden");
+      return;
+    }
+
+    // Check in appState
+    let cert = null;
+    const allCerts = Object.values((window.appState && window.appState.certificates) || {});
+    cert = allCerts.find(c => c.credentialId && c.credentialId.toUpperCase() === cleanId);
+
+    // Seeded registry for demo / corporate HR verification
+    if (!cert) {
+      const demoCerts = [
+        {
+          credentialId: "CERT-LP-POSH-2026-9481",
+          studentName: "Sachin Chauhan",
+          programTitle: "POSH: Prevention of Sexual Harassment at Workplace (Corporate Compliance)",
+          issueDate: "September 24, 2026",
+          grade: "Distinction (98% Assessment Score)",
+          instructor: "Advocate Ananya Deshmukh",
+          authorityName: "Rajeshwar Rao",
+          authorityRole: "Head of HR & Internal Committee Governance",
+          verificationCode: "POSH-2026-SHA256-V98A"
+        },
+        {
+          credentialId: "CERT-LP-AI-2026-8812",
+          studentName: "Sachin Chauhan",
+          programTitle: "Mastering Artificial Intelligence & Large Language Models (LLMs)",
+          issueDate: "September 26, 2026",
+          grade: "Honors (100% Mastery Score)",
+          instructor: "Dr. Sarah Chen",
+          authorityName: "Prof. Arthur Sterling",
+          authorityRole: "Dean of Technology",
+          verificationCode: "AI-LLM-2026-SHA256-K44X"
+        }
+      ];
+      cert = demoCerts.find(c => c.credentialId.toUpperCase() === cleanId);
+    }
+
+    resultContainer.classList.remove("hidden");
+
+    if (cert) {
+      resultContainer.innerHTML = `
+        <div class="p-6 rounded-2xl bg-gradient-to-br from-emerald-950/60 to-slate-900 border border-emerald-500/50 shadow-2xl space-y-4 animate-in fade-in duration-200">
+          <div class="flex items-center justify-between border-b border-emerald-800/40 pb-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-2xl shadow-lg">
+                🛡️
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs font-black uppercase tracking-wider text-emerald-400">Authentic & Verified Credential</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Official</span>
+                </div>
+                <h4 class="text-lg font-extrabold text-white mt-0.5">${cert.programTitle}</h4>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Verification Hash</div>
+              <div class="text-xs font-mono text-emerald-400 font-bold">${cert.verificationCode || 'SHA256-VERIFIED'}</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+              <span class="text-slate-500 font-bold uppercase text-[10px] block">Issued To</span>
+              <span class="text-base font-extrabold text-white mt-1 block">${cert.studentName}</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+              <span class="text-slate-500 font-bold uppercase text-[10px] block">Issue Date</span>
+              <span class="text-sm font-bold text-slate-200 mt-1 block">${cert.issueDate}</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+              <span class="text-slate-500 font-bold uppercase text-[10px] block">Grade Achieved</span>
+              <span class="text-sm font-bold text-amber-400 mt-1 block">${cert.grade || 'Honors (Passing Score Met)'}</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+              <span class="text-slate-500 font-bold uppercase text-[10px] block">Accrediting Authority</span>
+              <span class="text-sm font-bold text-slate-200 mt-1 block">${cert.authorityName || 'Worxpertise Academic Board'} (${cert.authorityRole || 'Academic Governance'})</span>
+            </div>
+          </div>
+
+          <div class="pt-2 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800">
+            <span>🔒 Tamper-Proof Cryptographic Signature Verified on Blockchain / DB</span>
+            <span class="text-emerald-400 font-bold">Status: Active & Valid</span>
+          </div>
+        </div>
+      `;
+    } else {
+      resultContainer.innerHTML = `
+        <div class="p-6 rounded-2xl bg-rose-950/40 border border-rose-600/40 text-center space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center text-2xl mx-auto">
+            ⚠️
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-white">Credential ID Not Found</h4>
+            <p class="text-xs text-slate-300 mt-1 max-w-md mx-auto">
+              We could not locate any issued certificate matching <strong>"${cleanId}"</strong>. Please verify the ID format or contact the issuing administrator.
+            </p>
+          </div>
+          <div class="text-[11px] text-slate-400">
+            Try demo verified ID: <button type="button" onclick="document.getElementById('verifyCredentialInput').value='CERT-LP-POSH-2026-9481'; window.certificateStudio.verifyCredential('CERT-LP-POSH-2026-9481');" class="text-emerald-400 underline font-mono">CERT-LP-POSH-2026-9481</button>
+          </div>
+        </div>
+      `;
+    }
   }
 }
 

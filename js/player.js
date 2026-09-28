@@ -438,6 +438,16 @@ class VideoPlayerController {
         if (watchedRangeBar) {
           watchedRangeBar.style.width = "0%";
         }
+
+        // Playback Resume Memory: resume from saved position if exists
+        const savedPos = window.appState ? window.appState.getVideoPosition(this.currentModule.id) : 0;
+        if (savedPos > 3 && (!duration || savedPos < duration - 2)) {
+          this.videoElement.currentTime = savedPos;
+          this.maxWatchedTime = Math.max(this.maxWatchedTime, savedPos);
+          if (window.app && window.app.showToast) {
+            window.app.showToast(`⏯ Resumed video from ${formatTime(savedPos)}`, "info");
+          }
+        }
       });
 
       // Handle HTML5 video errors gracefully
@@ -465,6 +475,11 @@ class VideoPlayerController {
         const current = this.videoElement.currentTime;
         const duration = this.videoElement.duration || 1;
         const isFinished = window.appState.isVideoFinished(this.currentModule.id);
+
+        // Save position for playback resume memory
+        if (window.appState && typeof window.appState.saveVideoPosition === "function") {
+          window.appState.saveVideoPosition(this.currentModule.id, current);
+        }
 
         // Only advance maxWatchedTime during legitimate natural forward playback
         if (!this.videoElement.paused) {
@@ -735,6 +750,16 @@ class VideoPlayerController {
           events: {
             onReady: (event) => {
               this.ytReady = true;
+              const savedPos = window.appState ? window.appState.getVideoPosition(this.currentModule.id) : 0;
+              if (savedPos > 3) {
+                try {
+                  event.target.seekTo(savedPos, true);
+                  this.maxWatchedTime = Math.max(this.maxWatchedTime, savedPos);
+                  if (window.app && window.app.showToast) {
+                    window.app.showToast(`⏯ Resumed video from ${this.formatTime(savedPos)}`, "info");
+                  }
+                } catch (e) {}
+              }
               event.target.playVideo();
               this.startYouTubeSync();
             },
@@ -816,6 +841,11 @@ class VideoPlayerController {
       const state = typeof this.ytPlayer.getPlayerState === "function" ? this.ytPlayer.getPlayerState() : -1;
 
       if (!duration || duration <= 0) return;
+
+      // Save position for playback resume memory
+      if (window.appState && typeof window.appState.saveVideoPosition === "function") {
+        window.appState.saveVideoPosition(this.currentModule.id, current);
+      }
 
       // Anti-skip enforcement for YouTube:
       // While playing naturally (state === 1)
@@ -935,6 +965,42 @@ class VideoPlayerController {
     // Trigger toast
     if (window.app && window.app.showToast) {
       window.app.showToast("🎉 Video finished! Post-video assessment is now unlocked.", "success");
+    }
+  }
+
+  getCurrentTime() {
+    if (this.activeMode === "html5" && this.videoElement) {
+      return Math.floor(this.videoElement.currentTime || 0);
+    } else if (this.activeMode === "youtube" && this.ytPlayer && typeof this.ytPlayer.getCurrentTime === "function") {
+      return Math.floor(this.ytPlayer.getCurrentTime() || 0);
+    }
+    return 0;
+  }
+
+  seekTo(targetSeconds) {
+    const target = Math.max(0, parseFloat(targetSeconds) || 0);
+    const isCompleted = window.appState ? window.appState.isVideoFinished(this.currentModule?.id) : false;
+
+    // If module already watched or seeking within watched zone, permit jump
+    if (isCompleted || target <= this.maxWatchedTime + 2) {
+      if (this.activeMode === "html5" && this.videoElement) {
+        this.videoElement.currentTime = target;
+        this.videoElement.play().catch(() => {});
+      } else if (this.activeMode === "youtube" && this.ytPlayer && typeof this.ytPlayer.seekTo === "function") {
+        this.ytPlayer.seekTo(target, true);
+        this.ytPlayer.playVideo();
+      }
+      if (window.app && window.app.showToast) {
+        window.app.showToast(`Jumped to ${this.formatTime(target)}`, "info");
+      }
+    } else {
+      // Clamped seek if anti-skip is active and student hasn't watched that far
+      if (this.activeMode === "html5" && this.videoElement) {
+        this.videoElement.currentTime = this.maxWatchedTime;
+      } else if (this.activeMode === "youtube" && this.ytPlayer && typeof this.ytPlayer.seekTo === "function") {
+        this.ytPlayer.seekTo(this.maxWatchedTime, true);
+      }
+      this.showSkipRestrictedNotice();
     }
   }
 }
