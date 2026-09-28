@@ -67,6 +67,44 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Fullscreen Mode Optimization */
+.video-wrapper:fullscreen,
+.video-wrapper:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  border-radius: 0 !important;
+  border: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  background: #000 !important;
+  box-shadow: none !important;
+}
+
+.video-wrapper:fullscreen .aspect-video,
+.video-wrapper:-webkit-full-screen .aspect-video {
+  flex: 1 1 auto !important;
+  height: calc(100vh - 84px) !important;
+  max-height: calc(100vh - 84px) !important;
+  aspect-ratio: auto !important;
+}
+
+.video-wrapper:fullscreen video,
+.video-wrapper:-webkit-full-screen video {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+}
+
+.video-wrapper:fullscreen #youtubeVideoContainer,
+.video-wrapper:-webkit-full-screen #youtubeVideoContainer {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 .video-container video {
   width: 100%;
   max-height: 520px;

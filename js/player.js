@@ -47,6 +47,20 @@ class VideoPlayerController {
     const container = document.getElementById(this.containerId) || document.getElementById("videoPlayerMount");
     if (!container) return;
 
+    if (this.boundVideoVisibilityHandler) {
+      document.removeEventListener("visibilitychange", this.boundVideoVisibilityHandler);
+    }
+    if (this.boundVideoBlurHandler) {
+      window.removeEventListener("blur", this.boundVideoBlurHandler);
+    }
+    if (this.boundKeydownHandler) {
+      document.removeEventListener("keydown", this.boundKeydownHandler);
+    }
+    if (this.boundFsChangeHandler) {
+      document.removeEventListener("fullscreenchange", this.boundFsChangeHandler);
+      document.removeEventListener("webkitfullscreenchange", this.boundFsChangeHandler);
+    }
+
     if (this.ytSyncInterval) {
       clearInterval(this.ytSyncInterval);
       this.ytSyncInterval = null;
@@ -214,6 +228,32 @@ class VideoPlayerController {
               </div>
             `}
           </div>
+
+          <!-- 3. Active Screen Presence / Focus Lost Integrity Overlay -->
+          <div id="videoFocusLostOverlay" class="hidden absolute inset-0 bg-slate-950/95 backdrop-blur-md z-30 flex flex-col items-center justify-center p-6 text-center space-y-4 animate-in fade-in duration-200">
+            <div class="w-16 h-16 rounded-3xl bg-rose-500/20 text-rose-400 border border-rose-500/40 flex items-center justify-center text-3xl animate-bounce">
+              ⚠️
+            </div>
+            <div class="space-y-1.5">
+              <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-black uppercase tracking-wider">
+                <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                <span>Active Presence Required</span>
+              </div>
+              <h4 class="text-lg font-black text-white">Playback Paused: Tab Switch Detected</h4>
+              <p class="text-xs text-slate-300 max-w-md leading-relaxed">
+                Corporate training compliance & Anti-Skip integrity requires continuous on-screen focus. 
+                Video playback paused automatically because you switched tabs or minimized the browser window.
+              </p>
+            </div>
+            <button 
+              id="btnResumeFocusVideo" 
+              type="button" 
+              class="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-[#dd1f36] to-[#b81427] hover:from-[#c5172d] hover:to-[#9c1020] text-white text-xs font-bold transition shadow-lg shadow-rose-900/40 flex items-center space-x-2 cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              <span>Resume Lesson Playback</span>
+            </button>
+          </div>
         </div>
 
         <!-- Custom Player Control Bar -->
@@ -377,6 +417,17 @@ class VideoPlayerController {
 
     // Safe toggle play across both HTML5 and YouTube streams
     const togglePlay = () => {
+      // Dismiss focus lost overlay if user clicks play/pause directly
+      const focusOverlay = document.getElementById("videoFocusLostOverlay");
+      if (focusOverlay && !focusOverlay.classList.contains("hidden")) {
+        focusOverlay.classList.add("hidden");
+        const antiSkipBadge = document.getElementById("antiSkipBadge");
+        if (antiSkipBadge) {
+          antiSkipBadge.className = "hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-rose-950/40 text-rose-300 border border-rose-800/40";
+          antiSkipBadge.innerHTML = "<span>🔒</span><span>Anti-Skip Locked</span>";
+        }
+      }
+
       if (this.activeMode === "youtube") {
         if (this.ytPlayer && typeof this.ytPlayer.getPlayerState === "function") {
           const state = this.ytPlayer.getPlayerState();
@@ -557,16 +608,93 @@ class VideoPlayerController {
       }
     });
 
-    // Fullscreen
-    fullscreenBtn?.addEventListener("click", () => {
+    // Fullscreen implementation (Cross-browser with ESC/F shortcuts and visual icon sync)
+    const toggleFullscreen = () => {
       const wrapper = document.querySelector(".video-wrapper") || this.videoElement;
-      if (!document.fullscreenElement) {
-        wrapper.requestFullscreen().catch(err => {
-          this.videoElement.requestFullscreen().catch(() => {});
-        });
+      if (!wrapper) return;
+
+      const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+      if (!isFs) {
+        if (wrapper.requestFullscreen) {
+          wrapper.requestFullscreen().catch(err => {
+            console.warn("Fullscreen request error:", err);
+            if (this.videoElement && this.videoElement.requestFullscreen) {
+              this.videoElement.requestFullscreen().catch(() => {});
+            }
+          });
+        } else if (wrapper.webkitRequestFullscreen) {
+          wrapper.webkitRequestFullscreen();
+        } else if (wrapper.mozRequestFullScreen) {
+          wrapper.mozRequestFullScreen();
+        } else if (wrapper.msRequestFullscreen) {
+          wrapper.msRequestFullscreen();
+        }
       } else {
-        document.exitFullscreen().catch(() => {});
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(err => console.warn(err));
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
       }
+    };
+
+    fullscreenBtn?.addEventListener("click", toggleFullscreen);
+
+    // Fullscreen change listener to sync button icon
+    this.boundFsChangeHandler = () => {
+      const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+      if (fullscreenBtn) {
+        if (isFs) {
+          fullscreenBtn.title = "Exit Fullscreen (Esc or F)";
+          fullscreenBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`;
+        } else {
+          fullscreenBtn.title = "Fullscreen (F)";
+          fullscreenBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>`;
+        }
+      }
+    };
+    document.addEventListener("fullscreenchange", this.boundFsChangeHandler);
+    document.addEventListener("webkitfullscreenchange", this.boundFsChangeHandler);
+
+    // Double-click on video wrapper to toggle fullscreen
+    const videoDisplayArea = document.querySelector(".video-wrapper");
+    videoDisplayArea?.addEventListener("dblclick", (e) => {
+      if (e.target.closest("button") || e.target.closest("select") || e.target.closest("#videoProgressBarContainer")) return;
+      toggleFullscreen();
+    });
+
+    // Keyboard shortcut handler (F: fullscreen)
+    this.boundKeydownHandler = (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+    document.addEventListener("keydown", this.boundKeydownHandler);
+
+    // =========================================================================
+    // Active Screen Presence & Anti-Skip Tab-Switch / Blur Enforcement
+    // =========================================================================
+    this.boundVideoVisibilityHandler = () => {
+      this.handleVideoFocusChange("Tab Switched or Browser Minimized");
+    };
+    this.boundVideoBlurHandler = () => {
+      this.handleVideoFocusChange("Window Focus Lost");
+    };
+
+    document.addEventListener("visibilitychange", this.boundVideoVisibilityHandler);
+    window.addEventListener("blur", this.boundVideoBlurHandler);
+
+    // Resume button from Focus Lost Overlay
+    const btnResumeFocus = document.getElementById("btnResumeFocusVideo");
+    btnResumeFocus?.addEventListener("click", () => {
+      this.resumeFromFocusLost();
     });
 
     // Seek via progress container click (Gated: only allow seeking backwards or within watched range for both MP4 and YouTube)
@@ -1070,6 +1198,100 @@ class VideoPlayerController {
     if (timeDisplay && this.currentModule) {
       timeDisplay.textContent = `00:00 / ${this.currentModule.duration || '--:--'}`;
     }
+  }
+
+  handleVideoFocusChange(reason) {
+    const isCompleted = window.appState ? window.appState.isVideoFinished(this.currentModule?.id) : false;
+    // Anti-skip tab-switch enforcement is active for uncompleted video lessons
+    if (isCompleted) return;
+
+    // Check if video is currently playing
+    let isPlaying = false;
+    if (this.activeMode === "html5" && this.videoElement) {
+      isPlaying = !this.videoElement.paused;
+    } else if (this.activeMode === "youtube" && this.ytPlayer && typeof this.ytPlayer.getPlayerState === "function") {
+      const st = this.ytPlayer.getPlayerState();
+      isPlaying = (st === 1 || st === 3); // 1: playing, 3: buffering
+    }
+
+    if (document.hidden || !document.hasFocus()) {
+      if (isPlaying || this.isVideoCurrentlyPlaying) {
+        this.isVideoCurrentlyPlaying = true;
+
+        // 1. Immediately pause the video
+        if (this.activeMode === "html5" && this.videoElement) {
+          try { this.videoElement.pause(); } catch (e) {}
+        } else if (this.activeMode === "youtube" && this.ytPlayer && typeof this.ytPlayer.pauseVideo === "function") {
+          try { this.ytPlayer.pauseVideo(); } catch (e) {}
+        }
+
+        // 2. Stop sync timer while inactive
+        this.stopYouTubeSync();
+
+        // 3. Display Focus Lost Overlay
+        const focusOverlay = document.getElementById("videoFocusLostOverlay");
+        if (focusOverlay) {
+          focusOverlay.classList.remove("hidden");
+        }
+
+        // 4. Update Play / Pause icons
+        const playIcon = document.getElementById("playIcon");
+        const pauseIcon = document.getElementById("pauseIcon");
+        if (playIcon) playIcon.classList.remove("hidden");
+        if (pauseIcon) pauseIcon.classList.add("hidden");
+
+        // 5. Update Anti-Skip badge to highlight violation
+        const antiSkipBadge = document.getElementById("antiSkipBadge");
+        if (antiSkipBadge) {
+          antiSkipBadge.className = "flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-950 text-rose-300 border border-rose-500 animate-pulse";
+          antiSkipBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span><span>⚠️ Focus Lost (Video Paused)</span>`;
+        }
+
+        // 6. Log audit trail
+        if (window.appState && typeof window.appState.logAuditTrail === "function") {
+          window.appState.logAuditTrail(
+            "ANTI_SKIP_INFRACTION",
+            this.currentModule ? this.currentModule.title : "Lesson Video",
+            `Tab switch / minimize detected: ${reason}. Video automatically paused to enforce active presence.`,
+            "WARNING"
+          );
+        }
+
+        // 7. Show high-priority toast
+        if (window.app && window.app.showToast) {
+          window.app.showToast(`🚨 Active Focus Alert: Video paused! Tab switch detected. Active presence is required.`, "warning");
+        }
+      }
+    }
+  }
+
+  resumeFromFocusLost() {
+    const focusOverlay = document.getElementById("videoFocusLostOverlay");
+    if (focusOverlay) focusOverlay.classList.add("hidden");
+
+    // Restore Anti-Skip badge
+    const antiSkipBadge = document.getElementById("antiSkipBadge");
+    if (antiSkipBadge) {
+      antiSkipBadge.className = "hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-rose-950/40 text-rose-300 border border-rose-800/40";
+      antiSkipBadge.innerHTML = "<span>🔒</span><span>Anti-Skip Locked</span>";
+    }
+
+    // Update Play / Pause icons
+    const playIcon = document.getElementById("playIcon");
+    const pauseIcon = document.getElementById("pauseIcon");
+    if (playIcon) playIcon.classList.add("hidden");
+    if (pauseIcon) pauseIcon.classList.remove("hidden");
+
+    // Resume video
+    if (this.activeMode === "html5" && this.videoElement) {
+      this.videoElement.play().catch(() => {});
+    } else if (this.activeMode === "youtube" && this.ytPlayer && typeof this.ytPlayer.playVideo === "function") {
+      try {
+        this.ytPlayer.playVideo();
+        this.startYouTubeSync();
+      } catch (e) {}
+    }
+    this.isVideoCurrentlyPlaying = false;
   }
 }
 

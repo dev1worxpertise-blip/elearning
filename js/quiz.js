@@ -113,7 +113,9 @@ class QuizController {
     // Attach listeners
     document.addEventListener("visibilitychange", this.boundVisibilityHandler);
     window.addEventListener("blur", this.boundBlurHandler);
-    document.addEventListener("fullscreenchange", this.boundFullscreenHandler);
+    ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+      document.addEventListener(evt, this.boundFullscreenHandler);
+    });
 
     // Start live countdown timer
     this.startCountdownTimer();
@@ -127,26 +129,40 @@ class QuizController {
     }
     document.removeEventListener("visibilitychange", this.boundVisibilityHandler);
     window.removeEventListener("blur", this.boundBlurHandler);
-    document.removeEventListener("fullscreenchange", this.boundFullscreenHandler);
+    ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+      document.removeEventListener(evt, this.boundFullscreenHandler);
+    });
 
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {});
+    const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+    if (isFs) {
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
     }
   }
 
   requestFullscreen() {
     try {
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(() => {
+      const el = document.documentElement;
+      if (el.requestFullscreen) {
+        el.requestFullscreen().catch(() => {
           // Fullscreen request may be blocked by browser without direct user gesture; handled gracefully
         });
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      } else if (el.mozRequestFullScreen) {
+        el.mozRequestFullScreen();
+      } else if (el.msRequestFullscreen) {
+        el.msRequestFullscreen();
       }
     } catch (e) {}
   }
 
   handleFullscreenChange() {
     if (!this.isProctoringActive || this.isSubmitted) return;
-    if (!document.fullscreenElement) {
+    const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+    if (!isFs) {
       this.recordStrike("Fullscreen Mode Exited");
     }
   }
