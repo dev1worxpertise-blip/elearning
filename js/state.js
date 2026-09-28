@@ -390,17 +390,23 @@ class AppState {
 
   addVideoNote(moduleId, timestamp, text) {
     if (!this.videoNotes[moduleId]) this.videoNotes[moduleId] = [];
+    const sec = Math.round(parseFloat(timestamp) || 0);
+    const cleanText = (typeof text === 'string' ? text : (text?.text || text?.content || '')).trim();
+
     const newNote = {
       id: 'note_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-      timestamp: Math.round(timestamp),
-      text: text.trim(),
-      createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      timestamp: sec,
+      timestamp_seconds: sec,
+      time: sec,
+      text: cleanText,
+      content: cleanText,
+      note: cleanText,
+      note_text: cleanText,
+      createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      created_at: new Date().toISOString()
     };
     this.videoNotes[moduleId].unshift(newNote);
     this.save();
-    if (window.apiService && window.apiService.saveVideoNote) {
-      window.apiService.saveVideoNote(moduleId, timestamp, text).catch(() => {});
-    }
     return newNote;
   }
 
@@ -408,9 +414,6 @@ class AppState {
     if (!this.videoNotes[moduleId]) return;
     this.videoNotes[moduleId] = this.videoNotes[moduleId].filter(n => n.id !== noteId);
     this.save();
-    if (window.apiService && window.apiService.deleteVideoNote) {
-      window.apiService.deleteVideoNote(noteId).catch(() => {});
-    }
   }
 
   // --- Module Discussions & Q&A ---

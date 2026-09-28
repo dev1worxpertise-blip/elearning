@@ -369,11 +369,19 @@ class ApiService {
     return res.json();
   }
 
-  async saveVideoNote(moduleId, timestamp, text) {
-    const res = await fetch(`${API_BASE_URL}/enterprise/notes/${moduleId}`, {
+  async saveVideoNote(moduleIdOrObj, timestamp, text) {
+    let modId = moduleIdOrObj;
+    let ts = timestamp;
+    let noteText = text;
+    if (moduleIdOrObj && typeof moduleIdOrObj === 'object') {
+      modId = moduleIdOrObj.moduleId || moduleIdOrObj.module_id;
+      ts = moduleIdOrObj.timestamp !== undefined ? moduleIdOrObj.timestamp : (moduleIdOrObj.timestamp_seconds || 0);
+      noteText = moduleIdOrObj.text || moduleIdOrObj.content || moduleIdOrObj.note;
+    }
+    const res = await fetch(`${API_BASE_URL}/enterprise/notes/${modId}`, {
       method: 'POST',
       headers: this.getHeaders(),
-      body: JSON.stringify({ timestamp, text }),
+      body: JSON.stringify({ timestamp: ts, text: noteText }),
     });
     return res.json();
   }

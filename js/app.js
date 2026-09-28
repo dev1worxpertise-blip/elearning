@@ -985,7 +985,25 @@ class App {
       }
     });
 
-    if (tabName === "notes") this.renderNotesList();
+    if (tabName === "notes") {
+      this.captureCurrentPlayhead(false);
+      this.renderNotesList();
+      const noteInput = document.getElementById("newNoteText");
+      if (noteInput && !noteInput.dataset.boundKey) {
+        noteInput.dataset.boundKey = "true";
+        noteInput.addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+            e.preventDefault();
+            this.saveVideoNote();
+          }
+        });
+        noteInput.addEventListener("focus", () => {
+          if (this.capturedNoteTime === null || this.capturedNoteTime === undefined) {
+            this.captureCurrentPlayhead(false);
+          }
+        });
+      }
+    }
     if (tabName === "transcript") this.renderTranscriptView();
     if (tabName === "discussion") {
       this.renderDiscussionView();
@@ -1009,21 +1027,35 @@ class App {
     this.updateDiscussionBadge();
   }
 
-  captureCurrentPlayhead() {
-    const curSec = (window.videoPlayer && typeof window.videoPlayer.getCurrentTime === "function") 
-      ? window.videoPlayer.getCurrentTime() 
-      : 0;
+  captureCurrentPlayhead(showToast = true) {
+    let curSec = 0;
+    if (window.videoPlayer && typeof window.videoPlayer.getCurrentTime === "function") {
+      curSec = window.videoPlayer.getCurrentTime();
+    }
+    const mod = this.activeModule || (window.appState && window.appState.activeModule);
+    if (curSec === 0 && mod && window.appState && typeof window.appState.getVideoPosition === "function") {
+      curSec = window.appState.getVideoPosition(mod.id) || 0;
+    }
+    curSec = Math.max(0, Math.floor(curSec));
+
     const formatted = (window.videoPlayer && typeof window.videoPlayer.formatTime === "function") 
       ? window.videoPlayer.formatTime(curSec) 
       : "00:00";
     const tsEl = document.getElementById("currentNoteTimestamp");
     if (tsEl) tsEl.textContent = formatted;
     this.capturedNoteTime = curSec;
-    this.showToast(`📍 Captured playhead at ${formatted}`, "info");
+    if (showToast) {
+      this.showToast(`📍 Captured playhead at ${formatted}`, "info");
+    }
+    return curSec;
   }
 
   async saveVideoNote() {
-    if (!this.activeModule) return;
+    const mod = this.activeModule || (window.appState && window.appState.activeModule);
+    if (!mod) {
+      this.showToast("Please select a module to save your note.", "warning");
+      return;
+    }
     const textEl = document.getElementById("newNoteText");
     const text = textEl ? textEl.value.trim() : "";
     if (!text) {
@@ -1031,61 +1063,86 @@ class App {
       return;
     }
 
-    const curSec = (typeof this.capturedNoteTime === "number") 
-      ? this.capturedNoteTime 
-      : ((window.videoPlayer && typeof window.videoPlayer.getCurrentTime === "function") ? window.videoPlayer.getCurrentTime() : 0);
+    // Determine target seconds:
+    // If explicitly captured, use it. Otherwise, query current live player time.
+    let curSec = 0;
+    if (typeof this.capturedNoteTime === "number" && this.capturedNoteTime > 0) {
+      curSec = this.capturedNoteTime;
+    } else if (window.videoPlayer && typeof window.videoPlayer.getCurrentTime === "function") {
+      curSec = window.videoPlayer.getCurrentTime();
+    }
+    if (curSec === 0 && window.appState && typeof window.appState.getVideoPosition === "function") {
+      curSec = window.appState.getVideoPosition(mod.id) || 0;
+    }
+    curSec = Math.max(0, Math.floor(curSec));
 
-    const noteObj = {
-      moduleId: this.activeModule.id,
-      timestamp_seconds: curSec,
-      content: text
-    };
+    // 1. Immediately store in local state
+    if (window.appState && typeof window.appState.addVideoNote === "function") {
+      window.appState.addVideoNote(mod.id, curSec, text);
+    }
 
+    // 2. Sync to Backend REST API
     if (window.apiService && window.apiService.saveVideoNote) {
       try {
-        await window.apiService.saveVideoNote(noteObj);
+        await window.apiService.saveVideoNote(mod.id, curSec, text);
       } catch (err) {
-        console.warn("Backend note save fallback:", err);
+        console.warn("Backend note save notice:", err);
       }
     }
 
-    if (window.appState && typeof window.appState.addVideoNote === "function") {
-      window.appState.addVideoNote(this.activeModule.id, curSec, text);
-    }
-
+    // 3. Reset input field & reset playhead capture
     if (textEl) textEl.value = "";
     this.capturedNoteTime = null;
     const tsEl = document.getElementById("currentNoteTimestamp");
-    if (tsEl) tsEl.textContent = "00:00";
+    if (tsEl) {
+      const liveSec = (window.videoPlayer && typeof window.videoPlayer.getCurrentTime === "function") ? window.videoPlayer.getCurrentTime() : 0;
+      tsEl.textContent = (window.videoPlayer && typeof window.videoPlayer.formatTime === "function") ? window.videoPlayer.formatTime(liveSec) : "00:00";
+    }
 
-    this.showToast("📌 Note saved with clickable timestamp jump!", "success");
-    this.renderNotesList();
+    const fmt = (window.videoPlayer && typeof window.videoPlayer.formatTime === "function") ? window.videoPlayer.formatTime(curSec) : "00:00";
+    this.showToast(`📌 Note saved at ${fmt} with clickable timestamp jump!`, "success");
+    await this.renderNotesList();
     this.updateNotesBadge();
   }
 
   async deleteVideoNote(noteId) {
-    if (!this.activeModule) return;
+    const mod = this.activeModule || (window.appState && window.appState.activeModule);
+    if (!mod) return;
+    if (window.appState && typeof window.appState.deleteVideoNote === "function") {
+      window.appState.deleteVideoNote(mod.id, noteId);
+    }
     if (window.apiService && window.apiService.deleteVideoNote) {
       try {
         await window.apiService.deleteVideoNote(noteId);
       } catch (e) {}
     }
-    if (window.appState && typeof window.appState.deleteVideoNote === "function") {
-      window.appState.deleteVideoNote(this.activeModule.id, noteId);
-    }
-    this.renderNotesList();
+    await this.renderNotesList();
     this.updateNotesBadge();
     this.showToast("Note deleted.", "info");
   }
 
-  renderNotesList() {
-    if (!this.activeModule) return;
+  async renderNotesList() {
+    const mod = this.activeModule || (window.appState && window.appState.activeModule);
+    if (!mod) return;
     const container = document.getElementById("videoNotesList");
     if (!container) return;
 
-    const notes = (window.appState && typeof window.appState.getVideoNotes === "function")
-      ? window.appState.getVideoNotes(this.activeModule.id)
+    let notes = (window.appState && typeof window.appState.getVideoNotes === "function")
+      ? window.appState.getVideoNotes(mod.id)
       : [];
+
+    if (window.apiService && window.apiService.getVideoNotes) {
+      try {
+        const res = await window.apiService.getVideoNotes(mod.id);
+        if (res && res.success && Array.isArray(res.notes) && res.notes.length > 0) {
+          const dbIds = new Set(res.notes.map(n => n.id));
+          const localOnly = notes.filter(n => !dbIds.has(n.id));
+          notes = [...localOnly, ...res.notes];
+        }
+      } catch (err) {}
+    }
+
+    this.updateNotesBadge(notes.length);
 
     if (notes.length === 0) {
       container.innerHTML = `
@@ -1098,11 +1155,18 @@ class App {
       return;
     }
 
-    const sorted = [...notes].sort((a, b) => (a.timestamp_seconds || 0) - (b.timestamp_seconds || 0));
+    const getSec = (n) => (n.timestamp_seconds !== undefined ? n.timestamp_seconds : (n.timestamp !== undefined ? n.timestamp : (n.time || 0)));
+    const getText = (n) => (n.content || n.text || n.note || n.note_text || '');
+    const getDate = (n) => (n.createdAt || (n.created_at ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''));
+
+    const sorted = [...notes].sort((a, b) => (getSec(a) || 0) - (getSec(b) || 0));
 
     container.innerHTML = sorted.map(note => {
+      const sec = getSec(note) || 0;
+      const noteText = getText(note);
+      const dateFmt = getDate(note);
       const timeFmt = (window.videoPlayer && typeof window.videoPlayer.formatTime === "function")
-        ? window.videoPlayer.formatTime(note.timestamp_seconds || 0)
+        ? window.videoPlayer.formatTime(sec)
         : "00:00";
 
       return `
@@ -1110,22 +1174,22 @@ class App {
           <div class="flex items-start space-x-3">
             <button 
               type="button" 
-              onclick="window.videoPlayer.seekTo(${note.timestamp_seconds || 0})"
+              onclick="window.videoPlayer.seekTo(${sec})"
               class="px-2.5 py-1 rounded-lg bg-[#dd1f36]/20 hover:bg-[#dd1f36] text-[#dd1f36] hover:text-white border border-[#dd1f36]/40 text-xs font-mono font-bold transition flex items-center space-x-1 shrink-0 cursor-pointer"
-              title="Click to jump video to ${timeFmt}"
+              title="Click to jump video directly to ${timeFmt}"
             >
               <span>▶</span>
               <span>${timeFmt}</span>
             </button>
             <div>
-              <p class="text-xs text-slate-200 leading-relaxed">${note.content || note.note || ''}</p>
-              <span class="text-[10px] text-slate-500 mt-1 block">${new Date(note.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <p class="text-xs text-slate-200 leading-relaxed font-normal">${noteText || '<span class="text-slate-500 italic">Lesson bookmark</span>'}</p>
+              ${dateFmt ? `<span class="text-[10px] text-slate-500 mt-1 block">${dateFmt}</span>` : ''}
             </div>
           </div>
           <button 
             type="button" 
             onclick="window.app.deleteVideoNote('${note.id}')"
-            class="text-slate-500 hover:text-rose-400 p-1 rounded-lg hover:bg-slate-900 transition opacity-0 group-hover:opacity-100 cursor-pointer"
+            class="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-900 transition opacity-70 hover:opacity-100 cursor-pointer shrink-0"
             title="Delete note"
           >
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -1135,14 +1199,13 @@ class App {
     }).join("");
   }
 
-  updateNotesBadge() {
-    if (!this.activeModule) return;
+  updateNotesBadge(count = null) {
+    const mod = this.activeModule || (window.appState && window.appState.activeModule);
+    if (!mod) return;
     const badge = document.getElementById("classroomNotesCountBadge");
     if (!badge) return;
-    const notes = (window.appState && typeof window.appState.getVideoNotes === "function")
-      ? window.appState.getVideoNotes(this.activeModule.id)
-      : [];
-    badge.textContent = notes.length;
+    const notes = (count !== null) ? count : ((window.appState && typeof window.appState.getVideoNotes === "function") ? window.appState.getVideoNotes(mod.id).length : 0);
+    badge.textContent = notes;
   }
 
   // --- TRANSCRIPT & LIVE SEARCH CONTROLLER ---

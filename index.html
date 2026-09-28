@@ -504,8 +504,9 @@
                 </span>
                 <button 
                   type="button" 
-                  onclick="window.app.captureCurrentPlayhead()" 
-                  class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 transition cursor-pointer"
+                  onclick="window.app.captureCurrentPlayhead(true)" 
+                  class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 text-xs font-bold border border-slate-700 transition cursor-pointer"
+                  title="Click to capture current video time"
                 >
                   📍 Grab Playhead: <span id="currentNoteTimestamp" class="text-amber-400 font-mono">00:00</span>
                 </button>
@@ -516,11 +517,13 @@
                 placeholder="Type your personal lesson note or timestamp reference (e.g. POSH IC Composition guidelines)..."
                 class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#dd1f36] transition"
               ></textarea>
-              <div class="flex justify-end">
+              <div class="flex items-center justify-between pt-1">
+                <span class="text-[10px] text-slate-500">Press <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[9px] text-slate-400">Ctrl + Enter</kbd> to save</span>
                 <button 
+                  id="btnSaveVideoNote"
                   type="button" 
                   onclick="window.app.saveVideoNote()" 
-                  class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#dd1f36] to-[#b81427] hover:from-[#b81427] text-white font-bold text-xs shadow-md transition flex items-center space-x-1.5 cursor-pointer"
+                  class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#dd1f36] to-[#b81427] hover:from-[#b81427] active:scale-95 text-white font-bold text-xs shadow-md transition flex items-center space-x-1.5 cursor-pointer"
                 >
                   <span>📌 Save Note</span>
                 </button>
