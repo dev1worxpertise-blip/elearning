@@ -43,4 +43,9 @@ router.get('/telemetry', optionalAuth, enterpriseController.getSystemTelemetry);
 router.post('/telemetry/heartbeat', optionalAuth, enterpriseController.recordHeartbeat);
 router.post('/telemetry/action', optionalAuth, enterpriseController.executeTelemetryAction);
 
+// --- Annual Recertification, Validity Expiry & Auto-Reassignment ---
+router.get('/recertification/status', optionalAuth, enterpriseController.getRecertificationStatus);
+router.post('/recertification/sweep', optionalAuth, enterpriseController.processRecertificationSweep);
+router.post('/recertification/simulate-expiry', optionalAuth, enterpriseController.simulateCertificateExpiry);
+
 module.exports = router;

@@ -332,6 +332,11 @@ class AppState {
       programTitle: program.title,
       studentName: this.user.name,
       issueDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      validity_days: 365,
+      cycle_number: 1,
+      is_expired: false,
+      auto_reassigned: false,
       instructor: program.instructor.name,
       instructorRole: program.instructor.role,
       authorityName: (program.authority && program.authority.name) || "Prof. Arthur Sterling",
@@ -350,6 +355,9 @@ class AppState {
 
   getCertificate(programId) {
     if (this.isStudent() && !this.isProgramCompleted(programId)) {
+      // If trainee has an expired certificate from past cycle, allow viewing for historical/renewal audit
+      const pastCert = (this.certificates || []).find(c => c.programId === programId && (c.is_expired || c.isExpired || c.auto_reassigned));
+      if (pastCert) return pastCert;
       return null;
     }
     return (this.certificates || []).find(c => c.programId === programId) || null;

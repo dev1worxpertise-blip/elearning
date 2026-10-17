@@ -1280,3 +1280,269 @@ exports.executeTelemetryAction = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// --- 8. ANNUAL RECERTIFICATION & AUTOMATIC COURSE RE-ASSIGNMENT ENGINE ---
+
+/**
+ * Sweeps all expired certificates and auto-reassigns users to their courses for renewal cycle
+ */
+async function runAutoRecertificationSweep() {
+  const sweepResults = [];
+  try {
+    // 1. Find all expired certificates that have NOT yet been auto-reassigned
+    const expiredQuery = `
+      SELECT c.id as cert_id, c.credential_id, c.user_id, c.program_id, c.student_name,
+             c.cycle_number, c.expires_at,
+             u.email as user_email, u.name as user_name,
+             p.title as program_title, p.auto_recertify
+      FROM certificates c
+      JOIN users u ON c.user_id = u.id
+      JOIN programs p ON c.program_id = p.id
+      WHERE c.expires_at <= CURRENT_TIMESTAMP 
+        AND c.auto_reassigned = FALSE
+        AND COALESCE(p.auto_recertify, TRUE) = TRUE
+    `;
+    const expiredRes = await db.query(expiredQuery);
+    const expiredCerts = expiredRes.rows;
+
+    for (const cert of expiredCerts) {
+      const nextCycle = (cert.cycle_number || 1) + 1;
+
+      // A. Re-enroll user: Reset course progress & mark active for new recertification cycle
+      await db.query(`
+        UPDATE enrollments
+        SET is_completed = FALSE,
+            completed_at = NULL,
+            cycle_number = $1,
+            recertified_at = CURRENT_TIMESTAMP
+        WHERE user_id = $2 AND program_id = $3
+      `, [nextCycle, cert.user_id, cert.program_id]);
+
+      // B. Mark certificate as expired and auto_reassigned
+      await db.query(`
+        UPDATE certificates
+        SET is_expired = TRUE,
+            auto_reassigned = TRUE
+        WHERE id = $1
+      `, [cert.cert_id]);
+
+      // C. Record in tamper-proof audit logs
+      const auditId = 'audit_recert_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+      await db.query(`
+        INSERT INTO audit_logs (id, user_id, user_name, action, target, details, severity, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+      `, [
+        auditId,
+        cert.user_id,
+        cert.user_name,
+        'RECERTIFICATION_AUTO_ASSIGNED',
+        cert.program_title,
+        `Annual statutory certification expired on ${new Date(cert.expires_at).toLocaleDateString()}. Trainee auto-reassigned to course for Recertification Cycle ${nextCycle}.`,
+        'INFO'
+      ]);
+
+      // D. Dispatch automated notification email
+      sendNotificationEmail(
+        cert.user_email,
+        `⚡ Annual Recertification Required: "${cert.program_title}"`,
+        'RECERTIFICATION_ASSIGNED',
+        {
+          userName: cert.user_name,
+          programTitle: cert.program_title,
+          cycleNumber: nextCycle,
+          message: `Your annual compliance certification for "${cert.program_title}" has expired. You have been automatically re-enrolled for your renewal cycle. Please log in and complete the required refresher lessons to maintain corporate compliance.`
+        }
+      );
+
+      sweepResults.push({
+        userId: cert.user_id,
+        userName: cert.user_name,
+        userEmail: cert.user_email,
+        programTitle: cert.program_title,
+        previousCycle: cert.cycle_number || 1,
+        newCycle: nextCycle,
+        reassignedAt: new Date().toISOString()
+      });
+    }
+
+    if (sweepResults.length > 0) {
+      console.log(`[Recertification Sweep] Auto-reassigned ${sweepResults.length} trainees for annual compliance renewals.`);
+    }
+  } catch (err) {
+    console.error('[Recertification Sweep Error]:', err.message);
+  }
+  return sweepResults;
+}
+
+// Scheduled hourly background recertification sweep
+setInterval(runAutoRecertificationSweep, 60 * 60 * 1000);
+// Initial run 10 seconds after boot
+setTimeout(runAutoRecertificationSweep, 10000);
+
+/**
+ * Controller: Trigger manual or on-demand recertification sweep
+ */
+exports.processRecertificationSweep = async (req, res) => {
+  try {
+    const results = await runAutoRecertificationSweep();
+    res.json({
+      success: true,
+      message: `Recertification sweep completed. ${results.length} expired certificate(s) auto-reassigned.`,
+      reassignedCount: results.length,
+      details: results,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('processRecertificationSweep error:', err);
+    res.status(500).json({ success: false, message: 'Failed to process recertification sweep.' });
+  }
+};
+
+/**
+ * Controller: Get comprehensive Recertification & Expiry Overview
+ */
+exports.getRecertificationStatus = async (req, res) => {
+  try {
+    // 1. Aggregations
+    const statsQuery = `
+      SELECT 
+        count(*) as total_certs,
+        count(*) FILTER (WHERE expires_at > CURRENT_TIMESTAMP) as active_certs,
+        count(*) FILTER (WHERE expires_at > CURRENT_TIMESTAMP AND expires_at <= CURRENT_TIMESTAMP + INTERVAL '30 DAYS') as expiring_soon_30d,
+        count(*) FILTER (WHERE expires_at <= CURRENT_TIMESTAMP) as expired_certs,
+        count(*) FILTER (WHERE auto_reassigned = TRUE) as auto_reassigned_count
+      FROM certificates
+    `;
+    const statsRes = await db.query(statsQuery);
+    const s = statsRes.rows[0];
+
+    // 2. Certificates detailed list
+    const listQuery = `
+      SELECT c.id, c.credential_id, c.user_id, c.student_name, c.program_title,
+             c.issue_date, c.expires_at, c.validity_days, c.is_expired, c.auto_reassigned,
+             c.cycle_number, c.grade, c.verification_code,
+             u.email as user_email,
+             ROUND(EXTRACT(EPOCH FROM (c.expires_at - CURRENT_TIMESTAMP)) / 86400) as days_remaining
+      FROM certificates c
+      LEFT JOIN users u ON c.user_id = u.id
+      ORDER BY c.expires_at ASC
+      LIMIT 100
+    `;
+    const listRes = await db.query(listQuery);
+
+    const formattedList = listRes.rows.map(row => {
+      const days = parseInt(row.days_remaining, 10);
+      let status = 'ACTIVE';
+      if (days < 0) status = 'EXPIRED';
+      else if (days <= 30) status = 'EXPIRING_SOON';
+
+      return {
+        ...row,
+        daysRemaining: days,
+        complianceStatus: status,
+        isExpired: days < 0 || row.is_expired
+      };
+    });
+
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      metrics: {
+        totalCertificates: parseInt(s.total_certs, 10) || 0,
+        activeCertificates: parseInt(s.active_certs, 10) || 0,
+        expiringSoon30Days: parseInt(s.expiring_soon_30d, 10) || 0,
+        expiredCertificates: parseInt(s.expired_certs, 10) || 0,
+        autoReassignedCount: parseInt(s.auto_reassigned_count, 10) || 0,
+      },
+      certificates: formattedList
+    });
+  } catch (err) {
+    console.error('getRecertificationStatus error:', err);
+    res.status(500).json({ success: false, message: 'Failed to retrieve recertification status.' });
+  }
+};
+
+/**
+ * Controller: Simulate Certificate Expiration & Auto-Reassignment (For Pilot Testing)
+ */
+exports.simulateCertificateExpiry = async (req, res) => {
+  try {
+    const { credentialId, userEmail, programId } = req.body || {};
+
+    let targetQuery = 'SELECT id, credential_id, user_id, program_id, student_name, program_title FROM certificates';
+    const params = [];
+
+    if (credentialId) {
+      targetQuery += ' WHERE credential_id = $1';
+      params.push(credentialId.trim().toUpperCase());
+    } else if (userEmail) {
+      targetQuery += ' WHERE user_id = (SELECT id FROM users WHERE email = $1 LIMIT 1)';
+      params.push(userEmail.trim());
+    } else {
+      targetQuery += ' ORDER BY created_at DESC LIMIT 1';
+    }
+
+    const targetRes = await db.query(targetQuery, params);
+
+    // If no certificate exists yet in the database, create one for demonstration
+    let targetCert = targetRes.rows[0];
+    if (!targetCert) {
+      // Find a user and a program to issue a seed expired certificate
+      const uRes = await db.query("SELECT id, name, email FROM users WHERE role = 'student' LIMIT 1");
+      const pRes = await db.query("SELECT id, title FROM programs WHERE id = 'prog-posh-compliance' LIMIT 1");
+      const u = uRes.rows[0] || { id: 'usr_student_sachin', name: 'Sachin Chauhan', email: 'sachin@learnpulse.dev' };
+      const p = pRes.rows[0] || { id: 'prog-posh-compliance', title: 'POSH: Prevention of Sexual Harassment at Workplace' };
+
+      const certId = 'cert_sim_' + Date.now();
+      const credId = 'CERT-LP-SIM-' + Math.floor(100000 + Math.random() * 900000);
+      
+      // Ensure enrollment exists
+      await db.query(`
+        INSERT INTO enrollments (id, user_id, program_id, is_completed, completed_at, cycle_number)
+        VALUES ($1, $2, $3, TRUE, CURRENT_TIMESTAMP, 1)
+        ON CONFLICT (user_id, program_id) DO UPDATE SET is_completed = TRUE
+      `, ['enr_sim_' + Date.now(), u.id, p.id]);
+
+      // Insert certificate already set to expired 1 day ago
+      const newCert = await db.query(`
+        INSERT INTO certificates (
+          id, credential_id, user_id, program_id, student_name, program_title,
+          issue_date, instructor_name, instructor_role, authority_name, authority_role,
+          grade, verification_code, validity_days, expires_at, is_expired, auto_reassigned, cycle_number
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6,
+          'October 16, 2025', 'Advocate Ananya Deshmukh', 'Lead POSH Legal Counsel',
+          'Rajeshwar Rao', 'Head of HR & Governance',
+          'Distinction', 'LP-SIM-EXPIRED', 365,
+          CURRENT_TIMESTAMP - INTERVAL '1 DAY', TRUE, FALSE, 1
+        ) RETURNING *
+      `, [certId, credId, u.id, p.id, u.name, p.title]);
+
+      targetCert = newCert.rows[0];
+    } else {
+      // Set existing certificate to expired yesterday and auto_reassigned = FALSE
+      await db.query(`
+        UPDATE certificates
+        SET expires_at = CURRENT_TIMESTAMP - INTERVAL '1 DAY',
+            is_expired = TRUE,
+            auto_reassigned = FALSE
+        WHERE id = $1
+      `, [targetCert.id]);
+    }
+
+    // Trigger immediate auto-recertification sweep
+    const sweepResults = await runAutoRecertificationSweep();
+
+    res.json({
+      success: true,
+      message: `Simulated 1-year expiration for "${targetCert.student_name}" in "${targetCert.program_title}". Trainee automatically re-enrolled for Cycle 2!`,
+      targetCertificate: targetCert,
+      sweepResults,
+      autoReassigned: true
+    });
+  } catch (err) {
+    console.error('simulateCertificateExpiry error:', err);
+    res.status(500).json({ success: false, message: 'Failed to simulate certificate expiration: ' + err.message });
+  }
+};
+

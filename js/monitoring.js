@@ -12,7 +12,7 @@
 
 class MonitoringManager {
   constructor() {
-    this.activeTab = "radar"; // "radar" | "system" | "compliance" | "stream"
+    this.activeTab = "radar"; // "radar" | "system" | "compliance" | "recertification" | "stream"
     this.pollIntervalSeconds = 5;
     this.timerId = null;
     this.countdownSeconds = 5;
@@ -20,6 +20,9 @@ class MonitoringManager {
     this.isLoading = false;
     this.searchQuery = "";
     this.roleFilter = "all";
+    this.recertFilter = "all";
+    this.isSweeping = false;
+    this.recertData = null;
     this.lastData = null;
 
     // Default Fallback Telemetry (ensures instantaneous rendering even if offline)
@@ -239,11 +242,20 @@ class MonitoringManager {
   async fetchTelemetry() {
     this.isLoading = true;
     try {
-      const resp = await fetch("/api/enterprise/telemetry", { cache: "no-store" });
-      if (resp.ok) {
+      const [resp, recertResp] = await Promise.all([
+        fetch("/api/enterprise/telemetry", { cache: "no-store" }).catch(e => null),
+        fetch("/api/enterprise/recertification/status", { cache: "no-store" }).catch(e => null)
+      ]);
+      if (resp && resp.ok) {
         const json = await resp.json();
         if (json.success) {
           this.lastData = json;
+        }
+      }
+      if (recertResp && recertResp.ok) {
+        const rJson = await recertResp.json();
+        if (rJson.success) {
+          this.recertData = rJson;
         }
       }
     } catch (e) {
@@ -261,13 +273,27 @@ class MonitoringManager {
    */
   async fetchTelemetrySilently() {
     try {
-      const resp = await fetch("/api/enterprise/telemetry", { cache: "no-store" });
-      if (resp.ok) {
+      const [resp, recertResp] = await Promise.all([
+        fetch("/api/enterprise/telemetry", { cache: "no-store" }).catch(e => null),
+        fetch("/api/enterprise/recertification/status", { cache: "no-store" }).catch(e => null)
+      ]);
+      let updated = false;
+      if (resp && resp.ok) {
         const json = await resp.json();
         if (json.success) {
           this.lastData = json;
-          this.render();
+          updated = true;
         }
+      }
+      if (recertResp && recertResp.ok) {
+        const rJson = await recertResp.json();
+        if (rJson.success) {
+          this.recertData = rJson;
+          updated = true;
+        }
+      }
+      if (updated) {
+        this.render();
       }
     } catch (e) {
       // Ignore background fetch error
@@ -497,7 +523,7 @@ class MonitoringManager {
         </div>
       </div>
 
-      <!-- Navigation Tabs for 4 Deep-Dive Views -->
+      <!-- Navigation Tabs for 5 Deep-Dive Views -->
       <div class="flex items-center space-x-2 border-b border-slate-800 pb-2 overflow-x-auto">
         <button 
           onclick="window.monitoringManager.setTab('radar')"
@@ -536,6 +562,18 @@ class MonitoringManager {
         </button>
 
         <button 
+          onclick="window.monitoringManager.setTab('recertification')"
+          class="px-4 py-2.5 rounded-xl font-bold text-xs transition flex items-center space-x-2 ${
+            this.activeTab === 'recertification' 
+              ? 'bg-[#dd1f36] text-white shadow-lg' 
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+          }"
+        >
+          <span>📅</span>
+          <span>Annual Recertification Hub (${(this.recertData && this.recertData.metrics && this.recertData.metrics.totalCertificates) || 0})</span>
+        </button>
+
+        <button 
           onclick="window.monitoringManager.setTab('stream')"
           class="px-4 py-2.5 rounded-xl font-bold text-xs transition flex items-center space-x-2 ${
             this.activeTab === 'stream' 
@@ -570,6 +608,8 @@ class MonitoringManager {
       return this.renderSystemMetrics(d);
     } else if (this.activeTab === "compliance") {
       return this.renderComplianceMatrix(d);
+    } else if (this.activeTab === "recertification") {
+      return this.renderRecertificationHub(d);
     } else if (this.activeTab === "stream") {
       return this.renderEventStream(d);
     }
@@ -973,6 +1013,423 @@ class MonitoringManager {
         </div>
       </div>
     `;
+  }
+
+  /**
+   * TAB 5: Annual Recertification & Expiry Hub
+   */
+  renderRecertificationHub(d) {
+    const recert = this.recertData || {
+      metrics: {
+        totalCertificates: 1,
+        activeCertificates: 0,
+        expiringSoon30Days: 0,
+        expiredCertificates: 1,
+        autoReassignedCount: 1
+      },
+      certificates: [
+        {
+          credential_id: "CERT-LP-SIM-526207",
+          student_name: "Sachin Chauhan",
+          user_email: "sachin@learnpulse.dev",
+          program_id: "prog-posh-compliance",
+          program_title: "POSH: Prevention of Sexual Harassment at Workplace (Corporate Compliance)",
+          issue_date: "October 16, 2025",
+          expires_at: "2026-10-16T11:35:57.326Z",
+          validity_days: 365,
+          is_expired: true,
+          auto_reassigned: true,
+          cycle_number: 1,
+          daysRemaining: -1,
+          complianceStatus: "EXPIRED",
+          isExpired: true
+        }
+      ]
+    };
+
+    const metrics = recert.metrics || {};
+    let certsList = recert.certificates || [];
+
+    // Filter by tab pill
+    if (this.recertFilter === "active") {
+      certsList = certsList.filter(c => !c.isExpired && (c.daysRemaining > 30 || c.daysRemaining === undefined));
+    } else if (this.recertFilter === "expiring") {
+      certsList = certsList.filter(c => !c.isExpired && c.daysRemaining <= 30 && c.daysRemaining >= 0);
+    } else if (this.recertFilter === "expired") {
+      certsList = certsList.filter(c => c.isExpired || c.is_expired || c.auto_reassigned);
+    }
+
+    // Filter by search query
+    if (this.searchQuery) {
+      const q = this.searchQuery.toLowerCase();
+      certsList = certsList.filter(c => 
+        (c.student_name && c.student_name.toLowerCase().includes(q)) ||
+        (c.user_email && c.user_email.toLowerCase().includes(q)) ||
+        (c.credential_id && c.credential_id.toLowerCase().includes(q)) ||
+        (c.program_title && c.program_title.toLowerCase().includes(q))
+      );
+    }
+
+    return `
+      <div class="space-y-6">
+        <!-- Statutory Annual Recertification Header Notice -->
+        <div class="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-[#181124] to-[#121622] border border-indigo-500/30 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-2xl relative overflow-hidden">
+          <div class="flex items-start sm:items-center space-x-4 z-10">
+            <div class="w-14 h-14 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-3xl shadow-inner shrink-0">
+              📅
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs uppercase font-extrabold tracking-wider text-indigo-400">Statutory Compliance Lifecycle</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  AUTOMATED ENGINE ACTIVE
+                </span>
+              </div>
+              <h3 class="text-xl font-black text-white mt-0.5">
+                Annual Recertification & Expiry Engine
+              </h3>
+              <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                Mandatory compliance standards (POSH Act 2013, GDPR/DPDP, OSHA Workplace Safety) mandate annual 365-day renewal.
+                When a certificate expires, LearnPulse automatically archives the old certificate, resets course completion, increments the trainee's <strong class="text-white">Renewal Cycle (Cycle 2+)</strong>, and sends an automated re-enrollment notification.
+              </p>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div class="flex flex-wrap items-center gap-3 z-10 shrink-0">
+            <button 
+              onclick="window.monitoringManager.runRecertificationSweep()"
+              ${this.isSweeping ? 'disabled' : ''}
+              class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 border border-emerald-500/30 transition flex items-center space-x-2 cursor-pointer disabled:opacity-50"
+              title="Force immediate scan and auto-reassign all expired certificates across database"
+            >
+              <span>${this.isSweeping ? '⏳' : '⚡'}</span>
+              <span>${this.isSweeping ? 'Sweeping Database...' : 'Run Auto-Renewal Sweep'}</span>
+            </button>
+
+            <button 
+              onclick="window.monitoringManager.simulateExpiry()"
+              class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold text-xs shadow-lg shadow-rose-950/40 border border-rose-500/30 transition flex items-center space-x-2 cursor-pointer"
+              title="Instantly simulates 365-day expiry and auto-enrolls Sachin Chauhan into POSH Cycle 2"
+            >
+              <span>🧪</span>
+              <span>Simulate 1-Year Expiry & Auto-Reassign</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Recertification KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Total Issued -->
+          <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <span>Total Conferred</span>
+              <span class="text-indigo-400">📜 All Time</span>
+            </div>
+            <div class="mt-3 flex items-baseline space-x-2">
+              <span class="text-3xl font-black text-white">${metrics.totalCertificates || 0}</span>
+              <span class="text-xs text-slate-400">certificates</span>
+            </div>
+            <div class="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400">
+              Validity period: <strong class="text-white">365 Days (1 Year)</strong>
+            </div>
+          </div>
+
+          <!-- Active & Valid -->
+          <div class="p-5 rounded-2xl bg-slate-900 border border-emerald-500/30 shadow-xl">
+            <div class="flex items-center justify-between text-xs font-bold text-emerald-400 uppercase tracking-wider">
+              <span>Active & Compliant</span>
+              <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300">VALID</span>
+            </div>
+            <div class="mt-3 flex items-baseline space-x-2">
+              <span class="text-3xl font-black text-white">${metrics.activeCertificates || 0}</span>
+              <span class="text-xs text-slate-400">within 365 days</span>
+            </div>
+            <div class="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400">
+              Statutory audit proof: <strong class="text-emerald-400">100% Valid</strong>
+            </div>
+          </div>
+
+          <!-- Expiring in < 30 Days -->
+          <div class="p-5 rounded-2xl bg-slate-900 border border-amber-500/30 shadow-xl">
+            <div class="flex items-center justify-between text-xs font-bold text-amber-400 uppercase tracking-wider">
+              <span>Expiring &lt; 30 Days</span>
+              <span class="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300">WARNING</span>
+            </div>
+            <div class="mt-3 flex items-baseline space-x-2">
+              <span class="text-3xl font-black text-white">${metrics.expiringSoon30Days || 0}</span>
+              <span class="text-xs text-slate-400">trainees</span>
+            </div>
+            <div class="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400">
+              Automated renewal reminder: <strong class="text-amber-300">Active</strong>
+            </div>
+          </div>
+
+          <!-- Expired & Auto-Reassigned -->
+          <div class="p-5 rounded-2xl bg-slate-900 border border-rose-500/30 shadow-xl">
+            <div class="flex items-center justify-between text-xs font-bold text-rose-400 uppercase tracking-wider">
+              <span>Expired & Auto-Reassigned</span>
+              <span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300">CYCLE 2+</span>
+            </div>
+            <div class="mt-3 flex items-baseline space-x-2">
+              <span class="text-3xl font-black text-white">${metrics.autoReassignedCount || metrics.expiredCertificates || 0}</span>
+              <span class="text-xs text-slate-400">re-enrolled</span>
+            </div>
+            <div class="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400">
+              Course reset: <strong class="text-rose-400">Refresher Cycle Active</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Controls Bar -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-2xl bg-slate-900 border border-slate-800">
+          <div class="flex items-center space-x-2 w-full sm:w-auto">
+            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider pl-1">Status:</span>
+            <div class="flex items-center space-x-1 p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+              ${[
+                { id: "all", label: "All Records" },
+                { id: "active", label: "Active Valid" },
+                { id: "expiring", label: "Expiring < 30d" },
+                { id: "expired", label: "Expired & Auto-Reassigned" }
+              ].map(f => `
+                <button 
+                  onclick="window.monitoringManager.recertFilter = '${f.id}'; window.monitoringManager.render();"
+                  class="px-2.5 py-1 rounded-lg transition text-xs ${
+                    this.recertFilter === f.id ? 'bg-[#dd1f36] text-white font-bold' : 'text-slate-400 hover:text-white'
+                  }"
+                >${f.label}</button>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="w-full sm:w-72 relative">
+            <input 
+              type="text" 
+              placeholder="Search by trainee, credential ID..." 
+              value="${this.searchQuery || ''}"
+              oninput="window.monitoringManager.searchQuery = this.value; window.monitoringManager.render();"
+              class="w-full px-3.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#dd1f36]"
+            />
+          </div>
+        </div>
+
+        <!-- Roster Table of Certificates -->
+        <div class="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden shadow-xl">
+          <div class="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300">
+            <span class="font-bold text-white flex items-center space-x-2">
+              <span>📜 Annual Recertification & Renewal Ledger</span>
+            </span>
+            <span class="text-slate-400 font-mono text-[11px]">${certsList.length} Certificates Found</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 divide-y divide-slate-800">
+              <thead class="bg-slate-950/70 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th class="px-5 py-3.5">Trainee / Recipient</th>
+                  <th class="px-5 py-3.5">Statutory Program</th>
+                  <th class="px-5 py-3.5">Credential ID & Cycle</th>
+                  <th class="px-5 py-3.5">Issue Date (Validity)</th>
+                  <th class="px-5 py-3.5">Expiry Date & Countdown</th>
+                  <th class="px-5 py-3.5">Compliance Status</th>
+                  <th class="px-5 py-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/60 font-medium">
+                ${certsList.length === 0 ? `
+                  <tr>
+                    <td colspan="7" class="px-5 py-8 text-center text-slate-500 italic">
+                      No certificates match the selected filter. Click "Simulate 1-Year Expiry & Auto-Reassign" to generate a test record.
+                    </td>
+                  </tr>
+                ` : certsList.map(c => {
+                  const days = typeof c.daysRemaining === 'number' ? c.daysRemaining : (c.days_remaining ? parseInt(c.days_remaining, 10) : 365);
+                  const isExp = c.isExpired || c.is_expired || days <= 0;
+                  const expiryDateStr = c.expires_at ? new Date(c.expires_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '1 Year Post-Issue';
+
+                  return `
+                    <tr class="hover:bg-slate-800/40 transition">
+                      <!-- Trainee Info -->
+                      <td class="px-5 py-3.5">
+                        <div class="font-bold text-white flex items-center space-x-2.5">
+                          <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-slate-200 shrink-0">
+                            ${(c.student_name || 'U').charAt(0)}
+                          </div>
+                          <div>
+                            <div>${c.student_name}</div>
+                            <div class="text-[10px] text-slate-400 font-normal">${c.user_email || 'sachin@learnpulse.dev'}</div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <!-- Program Title -->
+                      <td class="px-5 py-3.5">
+                        <div class="font-bold text-white max-w-xs truncate" title="${c.program_title}">
+                          ${c.program_title}
+                        </div>
+                        <div class="text-[10px] text-slate-500 font-mono">${c.program_id || 'prog-posh-compliance'}</div>
+                      </td>
+
+                      <!-- Credential ID & Cycle -->
+                      <td class="px-5 py-3.5">
+                        <div class="font-mono text-xs font-bold text-indigo-300">${c.credential_id}</div>
+                        <div class="text-[10px] mt-0.5">
+                          <span class="px-1.5 py-0.5 rounded font-mono font-bold ${
+                            c.cycle_number > 1 ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-slate-800 text-slate-400'
+                          }">
+                            Cycle ${c.cycle_number || 1}
+                          </span>
+                        </div>
+                      </td>
+
+                      <!-- Issue Date -->
+                      <td class="px-5 py-3.5">
+                        <div class="text-white">${c.issue_date || 'October 16, 2025'}</div>
+                        <div class="text-[10px] text-slate-500">Validity: ${c.validity_days || 365} Days</div>
+                      </td>
+
+                      <!-- Expiry Date & Countdown -->
+                      <td class="px-5 py-3.5">
+                        <div class="font-semibold ${isExp ? 'text-rose-400' : 'text-slate-200'}">
+                          ${expiryDateStr}
+                        </div>
+                        <div class="mt-1">
+                          ${isExp ? `
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                              Expired (${Math.abs(days)}d ago)
+                            </span>
+                          ` : days <= 30 ? `
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
+                              Expiring in ${days}d
+                            </span>
+                          ` : `
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                              ${days}d remaining
+                            </span>
+                          `}
+                        </div>
+                      </td>
+
+                      <!-- Compliance Status Pill -->
+                      <td class="px-5 py-3.5">
+                        ${isExp ? `
+                          <div class="space-y-1">
+                            <span class="px-2 py-1 rounded-lg text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40 inline-block">
+                              🔴 EXPIRED (CYCLE 2 ASSIGNED)
+                            </span>
+                            <div class="text-[10px] text-amber-300 flex items-center space-x-1">
+                              <span>⚡ Auto-Reenrolled</span>
+                            </div>
+                          </div>
+                        ` : `
+                          <span class="px-2 py-1 rounded-lg text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 inline-block">
+                            🟢 ACTIVE VALID
+                          </span>
+                        `}
+                      </td>
+
+                      <!-- Actions -->
+                      <td class="px-5 py-3.5 text-right">
+                        <div class="flex items-center justify-end space-x-2">
+                          ${!isExp ? `
+                            <button 
+                              onclick="window.monitoringManager.simulateExpiry('${c.credential_id}')"
+                              class="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-[10px] font-bold border border-rose-500/30 transition cursor-pointer"
+                              title="Simulate 1-year expiry and test auto-renewal for this record"
+                            >
+                              🧪 Test Expiry
+                            </button>
+                          ` : ''}
+
+                          <button 
+                            onclick="window.certificateStudio.openVerificationModal('${c.credential_id}')"
+                            class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold border border-slate-700 transition cursor-pointer"
+                            title="Verify credential status in public registry"
+                          >
+                            🔍 Verify
+                          </button>
+
+                          <button 
+                            onclick="window.certificateStudio.openCertificateModal('${c.program_id || 'prog-posh-compliance'}')"
+                            class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold transition cursor-pointer"
+                            title="Open certificate in studio"
+                          >
+                            🎓 Studio
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Action: Run Auto-Recertification Background Sweep
+   */
+  async runRecertificationSweep() {
+    this.isSweeping = true;
+    this.render();
+    if (window.app && typeof window.app.showToast === "function") {
+      window.app.showToast("⚡ Scanning all active certificates for 365-day expiry...", "info");
+    }
+    try {
+      const resp = await fetch("/api/enterprise/recertification/sweep", { method: "POST" });
+      const data = await resp.json();
+      if (data.success) {
+        if (window.app && typeof window.app.showToast === "function") {
+          window.app.showToast(`✓ Recertification sweep completed: ${data.stats.processed} scanned, ${data.stats.newlyExpired} newly expired, ${data.stats.autoReassigned} auto-reassigned.`, "success");
+        }
+      } else {
+        if (window.app && typeof window.app.showToast === "function") {
+          window.app.showToast(data.message || "Sweep completed with warning", "warning");
+        }
+      }
+    } catch (e) {
+      if (window.app && typeof window.app.showToast === "function") {
+        window.app.showToast(`Sweep error: ${e.message}`, "error");
+      }
+    } finally {
+      this.isSweeping = false;
+      await this.fetchTelemetrySilently();
+    }
+  }
+
+  /**
+   * Action: Simulate 1-Year Expiry & Auto-Reassign
+   */
+  async simulateExpiry(credentialId = null) {
+    if (window.app && typeof window.app.showToast === "function") {
+      window.app.showToast("🧪 Simulating 1-year certificate expiration...", "info");
+    }
+    try {
+      const resp = await fetch("/api/enterprise/recertification/simulate-expiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credentialId })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        if (window.app && typeof window.app.showToast === "function") {
+          window.app.showToast(`✓ Simulated: ${data.certificate.student_name}'s certificate expired. Auto-enrolled into Cycle ${data.enrollment.cycle_number}!`, "success");
+        }
+      } else {
+        if (window.app && typeof window.app.showToast === "function") {
+          window.app.showToast(data.message || "Simulation failed", "warning");
+        }
+      }
+    } catch (e) {
+      if (window.app && typeof window.app.showToast === "function") {
+        window.app.showToast(`Simulation error: ${e.message}`, "error");
+      }
+    } finally {
+      await this.fetchTelemetrySilently();
+    }
   }
 }
 

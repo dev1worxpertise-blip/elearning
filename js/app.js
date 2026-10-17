@@ -583,12 +583,14 @@ class App {
     } else if (this.currentView === "mylearning") {
       if (myLearningView) myLearningView.classList.remove("hidden");
       this.renderMyLearning();
+      this.syncCertificatesWithBackend().then(() => this.renderMyLearning());
     } else if (this.currentView === "reports") {
       if (reportsView) reportsView.classList.remove("hidden");
       if (window.reportsManager) window.reportsManager.render();
     } else if (this.currentView === "certificates") {
       if (certificatesView) certificatesView.classList.remove("hidden");
       this.renderCertificatesView();
+      this.syncCertificatesWithBackend().then(() => this.renderCertificatesView());
     } else if (this.currentView === "instructor") {
       if (instructorView) instructorView.classList.remove("hidden");
       if (window.instructorStudio) window.instructorStudio.switchTab(window.instructorStudio.activeTab || "programs");
@@ -601,6 +603,44 @@ class App {
     } else if (this.currentView === "monitoring") {
       if (monitoringView) monitoringView.classList.remove("hidden");
       if (window.monitoringManager) window.monitoringManager.render();
+    }
+  }
+
+  async syncCertificatesWithBackend() {
+    if (!window.apiService) return;
+    try {
+      const resp = await window.apiService.getUserCertificates();
+      if (resp && resp.success && Array.isArray(resp.certificates)) {
+        resp.certificates.forEach(bc => {
+          const mapped = {
+            id: bc.id,
+            credentialId: bc.credential_id,
+            programId: bc.program_id,
+            programTitle: bc.program_title,
+            studentName: bc.student_name,
+            issueDate: bc.issue_date,
+            expires_at: bc.expires_at,
+            validity_days: bc.validity_days || 365,
+            is_expired: bc.is_expired,
+            isExpired: bc.is_expired,
+            auto_reassigned: bc.auto_reassigned,
+            cycle_number: bc.cycle_number || 1,
+            grade: bc.grade,
+            instructor: bc.instructor_name,
+            instructorRole: bc.instructor_role,
+            verificationCode: bc.verification_code
+          };
+          const existingIdx = (window.appState.certificates || []).findIndex(c => c.programId === bc.program_id || c.credentialId === bc.credential_id);
+          if (existingIdx >= 0) {
+            window.appState.certificates[existingIdx] = { ...window.appState.certificates[existingIdx], ...mapped };
+          } else {
+            window.appState.certificates.push(mapped);
+          }
+        });
+        window.appState.save();
+      }
+    } catch (e) {
+      // Offline fallback
     }
   }
 
@@ -2738,46 +2778,79 @@ class App {
 
     listContainer.innerHTML = courses.map(program => {
       const progress = window.appState.getProgramProgress(program.id);
-      const hasCert = !!window.appState.getCertificate(program.id);
+      const allUserCerts = (window.appState && window.appState.certificates) || [];
+      const userCert = allUserCerts.find(c => c.programId === program.id);
+      const hasCert = !!userCert;
+      const isPast = userCert && userCert.expires_at ? new Date(userCert.expires_at) <= new Date() : false;
+      const isCertExpired = userCert && (userCert.is_expired || userCert.isExpired || userCert.auto_reassigned || isPast);
+      const cycleNumber = userCert ? (userCert.cycle_number || 1) : 1;
+      const nextCycle = isCertExpired ? (cycleNumber + 1) : cycleNumber;
 
       return `
-        <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div class="p-6 rounded-2xl bg-slate-900 border ${isCertExpired ? 'border-rose-500/40 bg-gradient-to-r from-[#1f1017] via-slate-900 to-slate-900' : 'border-slate-800 hover:border-slate-700'} transition flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div class="flex items-start space-x-4">
             <img src="${program.thumbnail}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800&auto=format&fit=crop&q=80';" class="w-20 h-20 rounded-xl object-cover border border-slate-800 shrink-0" />
             <div>
-              <div class="flex items-center space-x-2">
+              <div class="flex flex-wrap items-center gap-1.5">
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#dd1f36]/20 text-[#dd1f36]">${program.category}</span>
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300">🎯 Pass: ${program.passingScore || program.passing_score || 80}%</span>
-                ${hasCert && progress.isComplete ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">🎓 Certified</span>' : ''}
+                
+                ${isCertExpired ? `
+                  <span class="text-[10px] font-black px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center space-x-1">
+                    <span>⚡</span>
+                    <span>Annual Recertification Cycle ${nextCycle} Active</span>
+                  </span>
+                  <span class="text-[10px] font-black px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                    🔴 Past Credential Expired
+                  </span>
+                ` : (hasCert && progress.isComplete ? `
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">🎓 Certified (Cycle ${cycleNumber})</span>
+                ` : '')}
               </div>
+
               <h4 class="text-lg font-bold text-white mt-1">${program.title}</h4>
-              <p class="text-xs text-slate-400 mt-0.5">${progress.completed} of ${progress.total} modules passed • Score: <span class="font-bold ${progress.averageScore >= (program.passingScore || program.passing_score || 80) ? 'text-emerald-400' : 'text-amber-400'}">${progress.averageScore}%</span></p>
+              
+              ${isCertExpired ? `
+                <p class="text-xs text-rose-300 font-semibold mt-0.5">
+                  ⚡ 365-day statutory validity expired on ${userCert.expires_at ? new Date(userCert.expires_at).toLocaleDateString() : 'Annual Renewal'}. You have been automatically re-assigned to Cycle ${nextCycle} refresher training.
+                </p>
+              ` : `
+                <p class="text-xs text-slate-400 mt-0.5">${progress.completed} of ${progress.total} modules passed • Score: <span class="font-bold ${progress.averageScore >= (program.passingScore || program.passing_score || 80) ? 'text-emerald-400' : 'text-amber-400'}">${progress.averageScore}%</span></p>
+              `}
             </div>
           </div>
 
           <div class="w-full md:w-64 space-y-2">
             <div class="flex justify-between text-xs font-semibold">
-              <span class="text-slate-400">Curriculum Progress</span>
-              <span class="text-[#dd1f36] font-bold">${progress.percentage}%</span>
+              <span class="text-slate-400">${isCertExpired ? `Cycle ${nextCycle} Progress` : 'Curriculum Progress'}</span>
+              <span class="${isCertExpired ? 'text-purple-400' : 'text-[#dd1f36]'} font-bold">${progress.percentage}%</span>
             </div>
             <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div class="bg-[#dd1f36] h-full rounded-full transition-all" style="width: ${progress.percentage}%"></div>
+              <div class="${isCertExpired ? 'bg-gradient-to-r from-purple-500 to-indigo-500' : 'bg-[#dd1f36]'} h-full rounded-full transition-all" style="width: ${progress.percentage}%"></div>
             </div>
           </div>
 
           <div class="flex items-center space-x-3 shrink-0">
             <button 
               onclick="window.app.startProgram('${program.id}')"
-              class="px-5 py-2.5 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/20 transition cursor-pointer"
+              class="px-5 py-2.5 rounded-xl ${
+                isCertExpired 
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-950/40' 
+                  : 'bg-[#dd1f36] hover:bg-[#b81427] text-white shadow-lg shadow-[#dd1f36]/20'
+              } font-bold text-xs transition cursor-pointer"
             >
-              ${progress.percentage === 100 ? 'Review Course' : 'Resume Learning'}
+              ${isCertExpired ? `⚡ Resume Refresher (Cycle ${nextCycle})` : (progress.percentage === 100 ? 'Review Course' : 'Resume Learning')}
             </button>
-            ${hasCert && progress.isComplete ? `
+            ${hasCert ? `
               <button 
                 onclick="window.certificateStudio.openCertificateModal('${program.id}')"
-                class="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs border border-amber-500/40 transition cursor-pointer"
+                class="px-4 py-2.5 rounded-xl ${
+                  isCertExpired 
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700' 
+                    : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40'
+                } font-bold text-xs transition cursor-pointer"
               >
-                View Certificate
+                ${isCertExpired ? 'Archived Cert' : 'View Certificate'}
               </button>
             ` : ''}
           </div>
@@ -2813,33 +2886,58 @@ class App {
     }
 
     container.innerHTML = certs.map(cert => {
+      const isPast = cert.expires_at ? new Date(cert.expires_at) <= new Date() : false;
+      const isExpired = cert.is_expired || cert.isExpired || cert.auto_reassigned || isPast;
+      const expiryStr = cert.expires_at ? new Date(cert.expires_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '365 Days From Conferred';
+
       return `
-        <div class="bg-slate-900 border border-amber-500/30 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between">
-          <div class="absolute -right-6 -bottom-6 text-7xl text-amber-500/5 font-serif select-none pointer-events-none">★</div>
+        <div class="bg-slate-900 border ${isExpired ? 'border-rose-500/40' : 'border-amber-500/30'} rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between">
+          <div class="absolute -right-6 -bottom-6 text-7xl ${isExpired ? 'text-rose-500/5' : 'text-amber-500/5'} font-serif select-none pointer-events-none">★</div>
           
           <div>
             <div class="flex items-center justify-between">
-              <span class="text-xs px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
-                Official Credential
+              <span class="text-xs px-2.5 py-1 rounded-full font-bold ${
+                isExpired 
+                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' 
+                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+              }">
+                ${isExpired ? '● Expired (Renewal Required)' : 'Official Credential'}
               </span>
               <span class="text-xs font-mono text-slate-500">${cert.credentialId}</span>
             </div>
 
             <h3 class="text-xl font-bold text-white mt-4 leading-snug">${cert.programTitle}</h3>
             
-            <div class="mt-4 pt-4 border-t border-slate-800 text-xs space-y-1 text-slate-400">
+            <div class="mt-4 pt-4 border-t border-slate-800 text-xs space-y-1.5 text-slate-400">
               <div>Recipient: <span class="text-white font-semibold">${cert.studentName}</span></div>
-              <div>Issue Date: <span class="text-slate-300">${cert.issueDate}</span></div>
+              <div>Issue Date: <span class="text-slate-300">${cert.issueDate || cert.issue_date}</span></div>
+              <div class="flex items-center justify-between">
+                <span>Valid Thru: <strong class="${isExpired ? 'text-rose-400' : 'text-slate-200'}">${expiryStr}</strong></span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                  cert.cycle_number > 1 ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-slate-800 text-slate-300'
+                }">Cycle ${cert.cycle_number || 1}</span>
+              </div>
               <div>Honors: <span class="text-amber-400 font-semibold">${cert.grade}</span></div>
             </div>
           </div>
 
-          <div class="mt-6 pt-4 border-t border-slate-800 flex items-center space-x-3">
+          <div class="mt-6 pt-4 border-t border-slate-800 flex items-center space-x-2">
             <button 
               onclick="window.certificateStudio.openCertificateModal('${cert.programId}')" 
-              class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-slate-950 font-bold text-xs shadow-md transition flex items-center justify-center space-x-1"
+              class="flex-1 py-2.5 rounded-xl ${
+                isExpired 
+                  ? 'bg-slate-800 hover:bg-slate-700 text-white' 
+                  : 'bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-slate-950'
+              } font-bold text-xs shadow-md transition flex items-center justify-center space-x-1 cursor-pointer"
             >
-              <span>View & Download</span>
+              <span>View Credential</span>
+            </button>
+            <button 
+              onclick="window.certificateStudio.openVerificationModal('${cert.credentialId}')" 
+              class="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs border border-slate-700 transition cursor-pointer"
+              title="Verify credential online"
+            >
+              🔍 Verify
             </button>
           </div>
         </div>

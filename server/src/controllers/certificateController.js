@@ -27,6 +27,7 @@ exports.verifyCertificate = async (req, res) => {
     const query = `
       SELECT c.credential_id, c.student_name, c.program_title, c.issue_date,
              c.instructor_name, c.instructor_role, c.grade, c.verification_code,
+             c.expires_at, c.validity_days, c.is_expired, c.auto_reassigned, c.cycle_number,
              p.thumbnail_url, p.skills
       FROM certificates c
       JOIN programs p ON c.program_id = p.id
@@ -42,10 +43,20 @@ exports.verifyCertificate = async (req, res) => {
       });
     }
 
+    const cert = result.rows[0];
+    const isPastExpiry = cert.expires_at ? new Date(cert.expires_at) <= new Date() : false;
+    const isExpired = cert.is_expired || isPastExpiry;
+
     res.json({
       success: true,
-      valid: true,
-      certificate: result.rows[0],
+      valid: !isExpired,
+      isExpired,
+      status: isExpired ? 'EXPIRED' : 'ACTIVE_VALID',
+      certificate: {
+        ...cert,
+        isExpired,
+        complianceStatus: isExpired ? 'EXPIRED (Recertification Required)' : 'ACTIVE (Statutory Valid)'
+      },
     });
   } catch (err) {
     console.error('verifyCertificate error:', err);

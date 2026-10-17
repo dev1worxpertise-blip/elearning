@@ -159,11 +159,15 @@ exports.submitQuiz = async (req, res) => {
           const issueDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
           const verCode = 'LP-' + Math.random().toString(36).substring(2, 9).toUpperCase();
 
+          const validityDays = parseInt(prog.validity_days || 365, 10);
+          const expiresAt = new Date(Date.now() + validityDays * 24 * 60 * 60 * 1000);
+
           const insertCertQuery = `
             INSERT INTO certificates (
               id, credential_id, user_id, program_id, student_name, program_title,
-              issue_date, instructor_name, instructor_role, grade, verification_code
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+              issue_date, instructor_name, instructor_role, grade, verification_code,
+              validity_days, expires_at, is_expired, auto_reassigned, cycle_number
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, FALSE, FALSE, 1)
             RETURNING *
           `;
           const certResult = await db.query(insertCertQuery, [
@@ -178,6 +182,8 @@ exports.submitQuiz = async (req, res) => {
             prog.instructor_role,
             'Distinction (Honors)',
             verCode,
+            validityDays,
+            expiresAt
           ]);
           certificate = certResult.rows[0];
         }
