@@ -416,12 +416,27 @@ class ApiService {
     return res.json();
   }
 
-  // --- Bulk CSV User Import ---
-  async bulkImportUsers(users, mandatoryProgramId = null) {
+  // --- Bulk CSV User Import & Course Assignment ---
+  async bulkImportUsers(usersOrPayload, mandatoryProgramId = null) {
+    let users = usersOrPayload;
+    let progId = mandatoryProgramId;
+    if (usersOrPayload && !Array.isArray(usersOrPayload) && typeof usersOrPayload === 'object') {
+      users = usersOrPayload.users || [];
+      progId = usersOrPayload.mandatoryProgramId || usersOrPayload.mandatoryCourseId || mandatoryProgramId;
+    }
     const res = await fetch(`${API_BASE_URL}/enterprise/bulk-import`, {
       method: 'POST',
       headers: this.getHeaders(),
-      body: JSON.stringify({ users, mandatoryProgramId }),
+      body: JSON.stringify({ users, mandatoryProgramId: progId }),
+    });
+    return res.json();
+  }
+
+  async bulkEnrollUsers(payload) {
+    const res = await fetch(`${API_BASE_URL}/enterprise/bulk-enroll`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(payload),
     });
     return res.json();
   }

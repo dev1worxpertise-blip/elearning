@@ -23,8 +23,9 @@ router.get('/notes/:moduleId', optionalAuth, enterpriseController.getVideoNotes)
 router.post('/notes/:moduleId', optionalAuth, enterpriseController.saveVideoNote);
 router.delete('/notes/:noteId', optionalAuth, enterpriseController.deleteVideoNote);
 
-// --- Bulk CSV User Import (Admin only) ---
+// --- Bulk CSV User Import & Bulk Course Assignment (Admin only) ---
 router.post('/bulk-import', verifyToken, requireRole('admin'), enterpriseController.bulkImportUsers);
+router.post('/bulk-enroll', verifyToken, requireRole('admin'), enterpriseController.bulkEnrollUsers);
 
 // --- Gamification & Leaderboard ---
 router.get('/leaderboard', optionalAuth, enterpriseController.getLeaderboard);

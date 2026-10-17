@@ -6,14 +6,27 @@
 const bcrypt = require('bcryptjs');
 const db = require('../db');
 
-// Get all registered users
+// Get all registered users with their enrolled and completed courses
 exports.getAllUsers = async (req, res) => {
   try {
     const query = `
-      SELECT id, name, email, role, avatar_url, headline, is_blocked, 
-             failed_login_attempts, blocked_at, created_at, updated_at
-      FROM users
-      ORDER BY created_at ASC
+      SELECT u.id, u.name, u.email, u.role, u.avatar_url, u.headline, u.is_blocked, 
+             u.failed_login_attempts, u.blocked_at, u.created_at, u.updated_at,
+             COALESCE(
+               (SELECT json_agg(json_build_object(
+                 'program_id', e.program_id,
+                 'program_title', COALESCE(p.title, e.program_id),
+                 'is_completed', COALESCE(e.is_completed, false),
+                 'enrolled_at', e.enrolled_at,
+                 'completed_at', e.completed_at
+               ) ORDER BY e.enrolled_at ASC)
+                FROM enrollments e
+                LEFT JOIN programs p ON e.program_id = p.id
+                WHERE e.user_id = u.id),
+               '[]'::json
+             ) AS enrollments
+      FROM users u
+      ORDER BY u.created_at ASC
     `;
     const result = await db.query(query);
     res.json({

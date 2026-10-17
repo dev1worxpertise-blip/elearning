@@ -13,7 +13,13 @@ class UserManager {
   constructor() {
     this.users = [];
     this.activeFilter = "all"; // "all" | "student" | "instructor" | "admin" | "locked"
+    this.courseFilter = "all"; // "all" | "completed_any" | "completed:<progId>" | "enrolled_any" | "enrolled:<progId>" | "not_enrolled:<progId>" | "no_courses"
     this.searchQuery = "";
+    this.selectedUserIds = new Set();
+    this.assignModalTargetUserIds = [];
+    this.bulkMode = "new"; // "new" | "existing"
+    this.pendingImportUsers = [];
+    this.pendingEmails = [];
     this.isLoading = false;
 
     // Seeded fallback users if standalone offline
@@ -26,7 +32,10 @@ class UserManager {
         avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
         is_blocked: false,
         failed_login_attempts: 0,
-        created_at: "2026-09-22T10:00:00.000Z"
+        created_at: "2026-09-22T10:00:00.000Z",
+        enrollments: [
+          { program_id: "prog-posh-compliance", program_title: "POSH: Prevention of Sexual Harassment", is_completed: true }
+        ]
       },
       {
         id: "usr_instructor_1",
@@ -36,7 +45,8 @@ class UserManager {
         avatar_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80",
         is_blocked: false,
         failed_login_attempts: 0,
-        created_at: "2026-09-22T14:58:44.294Z"
+        created_at: "2026-09-22T14:58:44.294Z",
+        enrollments: []
       },
       {
         id: "usr_instructor_2",
@@ -46,7 +56,8 @@ class UserManager {
         avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
         is_blocked: false,
         failed_login_attempts: 0,
-        created_at: "2026-09-22T14:58:44.294Z"
+        created_at: "2026-09-22T14:58:44.294Z",
+        enrollments: []
       },
       {
         id: "usr_instructor_3",
@@ -56,7 +67,8 @@ class UserManager {
         avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80",
         is_blocked: false,
         failed_login_attempts: 0,
-        created_at: "2026-09-22T14:58:44.294Z"
+        created_at: "2026-09-22T14:58:44.294Z",
+        enrollments: []
       },
       {
         id: "usr_instructor_4",
@@ -66,7 +78,8 @@ class UserManager {
         avatar_url: "https://images.unsplash.com/photo-1573496799652-408c2ac9fe98?w=200&auto=format&fit=crop&q=80",
         is_blocked: false,
         failed_login_attempts: 0,
-        created_at: "2026-09-23T16:18:28.466Z"
+        created_at: "2026-09-23T16:18:28.466Z",
+        enrollments: []
       },
       {
         id: "usr_student_sachin",
@@ -76,7 +89,10 @@ class UserManager {
         avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
         is_blocked: false,
         failed_login_attempts: 0,
-        created_at: "2026-09-22T14:58:44.294Z"
+        created_at: "2026-09-22T14:58:44.294Z",
+        enrollments: [
+          { program_id: "prog-posh-compliance", program_title: "POSH: Prevention of Sexual Harassment", is_completed: true }
+        ]
       }
     ];
   }
@@ -91,7 +107,25 @@ class UserManager {
       if (window.apiService && window.apiService.getUsers) {
         const res = await window.apiService.getUsers();
         if (res && res.success && Array.isArray(res.users)) {
-          this.users = res.users;
+          this.users = res.users.map(u => {
+            const enrollments = Array.isArray(u.enrollments) ? u.enrollments : [];
+            // Merge with local state if this user is active
+            if (window.appState && (u.id === window.appState.user.id || u.email === window.appState.user.email)) {
+              (window.appState.enrolledPrograms || []).forEach(pId => {
+                if (!enrollments.some(e => e.program_id === pId)) {
+                  const progObj = (window.COURSES_DATA || []).find(c => c.id === pId);
+                  const isCompleted = (window.appState.certificates || []).some(c => (c.programId || c.program_id) === pId);
+                  enrollments.push({
+                    program_id: pId,
+                    program_title: progObj ? progObj.title : pId,
+                    is_completed: isCompleted,
+                    enrolled_at: new Date().toISOString()
+                  });
+                }
+              });
+            }
+            return { ...u, enrollments };
+          });
           // Store in localStorage for offline availability
           localStorage.setItem('worxpertise_cached_users', JSON.stringify(this.users));
           this.isLoading = false;
@@ -128,12 +162,32 @@ class UserManager {
     const adminCount = this.users.filter(u => u.role === "admin").length;
     const lockedCount = this.users.filter(u => u.is_blocked || u.failed_login_attempts >= 3).length;
 
-    // Filter users according to tab and search query
+    // Filter users according to role tab
     let filtered = [...this.users];
     if (this.activeFilter === "student") filtered = filtered.filter(u => u.role === "student");
     else if (this.activeFilter === "instructor") filtered = filtered.filter(u => u.role === "instructor");
     else if (this.activeFilter === "admin") filtered = filtered.filter(u => u.role === "admin");
     else if (this.activeFilter === "locked") filtered = filtered.filter(u => u.is_blocked || u.failed_login_attempts >= 3);
+
+    // Filter by Course & Completion Status (Case 1)
+    if (this.courseFilter && this.courseFilter !== "all") {
+      if (this.courseFilter === "completed_any") {
+        filtered = filtered.filter(u => (u.enrollments || []).some(e => e.is_completed));
+      } else if (this.courseFilter.startsWith("completed:")) {
+        const progId = this.courseFilter.replace("completed:", "");
+        filtered = filtered.filter(u => (u.enrollments || []).some(e => e.program_id === progId && e.is_completed));
+      } else if (this.courseFilter === "enrolled_any") {
+        filtered = filtered.filter(u => (u.enrollments || []).length > 0);
+      } else if (this.courseFilter === "no_courses") {
+        filtered = filtered.filter(u => !u.enrollments || u.enrollments.length === 0);
+      } else if (this.courseFilter.startsWith("enrolled:")) {
+        const progId = this.courseFilter.replace("enrolled:", "");
+        filtered = filtered.filter(u => (u.enrollments || []).some(e => e.program_id === progId));
+      } else if (this.courseFilter.startsWith("not_enrolled:")) {
+        const progId = this.courseFilter.replace("not_enrolled:", "");
+        filtered = filtered.filter(u => !(u.enrollments || []).some(e => e.program_id === progId));
+      }
+    }
 
     if (this.searchQuery) {
       const q = this.searchQuery.toLowerCase();
@@ -143,6 +197,8 @@ class UserManager {
         (u.id && u.id.toLowerCase().includes(q))
       );
     }
+
+    const allFilteredSelected = filtered.length > 0 && filtered.every(u => this.selectedUserIds.has(u.id));
 
     container.innerHTML = `
       <!-- Header Banner -->
@@ -158,14 +214,23 @@ class UserManager {
               </span>
             </div>
             <h1 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
-              Enterprise User Directory & Role Assignment
+              Enterprise User Directory & Course Assignment
             </h1>
             <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
-              Manage platform members, assign & toggle system roles on the fly (<span class="text-purple-300 font-bold">Admin</span>, <span class="text-rose-300 font-bold">Instructor</span>, <span class="text-emerald-300 font-bold">Student</span>), unlock accounts blocked by 3 failed password attempts, and export audit rosters.
+              Manage platform members, assign single or bulk courses (<span class="text-purple-300 font-bold">Case 1: Assign Second Course to Existing Completers</span>), toggle system roles, unlock accounts blocked by 3 failed attempts, and export audit rosters.
             </p>
           </div>
 
           <div class="flex flex-wrap items-center gap-3">
+            <button 
+              id="btnOpenAssignCourseModal"
+              onclick="window.userManager.openAssignCourseModal()"
+              class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-900/40 transition flex items-center space-x-2 cursor-pointer"
+              title="Assign a course to selected users or filter"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              <span>📚 Assign Course to Users</span>
+            </button>
             <button 
               id="btnOpenBulkImportModal"
               onclick="window.userManager.openBulkImportModal()"
@@ -177,7 +242,7 @@ class UserManager {
             </button>
             <button 
               id="btnOpenAddUserModal"
-              class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg shadow-purple-900/40 transition flex items-center space-x-2 cursor-pointer"
+              class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition flex items-center space-x-2 cursor-pointer"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
               <span>+ Add User</span>
@@ -237,52 +302,91 @@ class UserManager {
       </div>
 
       <!-- Action & Filter Toolbar -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
+      <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
         <!-- Filter Tabs -->
-        <div class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+        <div class="flex flex-wrap items-center gap-1.5">
           <button 
             data-user-filter="all" 
-            class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${this.activeFilter === 'all' ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'}"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition ${this.activeFilter === 'all' ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'}"
           >
-            All Users (${totalCount})
+            All (${totalCount})
           </button>
           <button 
             data-user-filter="student" 
-            class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${this.activeFilter === 'student' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'}"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition ${this.activeFilter === 'student' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'}"
           >
             Students (${studentCount})
           </button>
           <button 
             data-user-filter="instructor" 
-            class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${this.activeFilter === 'instructor' ? 'bg-[#dd1f36] text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'}"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition ${this.activeFilter === 'instructor' ? 'bg-[#dd1f36] text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'}"
           >
             Instructors (${instructorCount})
           </button>
           <button 
             data-user-filter="admin" 
-            class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${this.activeFilter === 'admin' ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'}"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition ${this.activeFilter === 'admin' ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'}"
           >
             Admins (${adminCount})
           </button>
           <button 
             data-user-filter="locked" 
-            class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${this.activeFilter === 'locked' ? 'bg-amber-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'} flex items-center space-x-1"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition ${this.activeFilter === 'locked' ? 'bg-amber-600 text-white shadow-md' : 'bg-slate-800 text-slate-400 hover:text-white'} flex items-center space-x-1"
           >
-            <span>🔒 Locked / Blocked</span>
+            <span>🔒 Locked</span>
             ${lockedCount > 0 ? `<span class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-400 text-slate-950">${lockedCount}</span>` : ''}
           </button>
         </div>
 
-        <!-- Search Bar -->
-        <div class="relative w-full sm:w-72">
-          <svg class="w-4 h-4 absolute left-3.5 top-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input 
-            type="text" 
-            id="userSearchInput" 
-            value="${this.searchQuery}"
-            placeholder="Search by name, email, id..." 
-            class="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
-          />
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <!-- Course & Completion Filter Dropdown (Case 1) -->
+          <div class="relative">
+            <select 
+              id="userCourseFilterSelect"
+              class="w-full sm:w-auto appearance-none pl-3 pr-8 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs font-bold text-white focus:outline-none focus:border-purple-500 transition cursor-pointer"
+            >
+              <option value="all" ${this.courseFilter === 'all' ? 'selected' : ''}>🌐 All Courses & Statuses</option>
+              <optgroup label="✓ Filter by Completed Course (Case 1)">
+                <option value="completed_any" ${this.courseFilter === 'completed_any' ? 'selected' : ''}>✓ Completed Any Course</option>
+                ${(window.COURSES_DATA || []).map(c => `
+                  <option value="completed:${c.id}" ${this.courseFilter === `completed:${c.id}` ? 'selected' : ''}>
+                    ✓ Completed: ${c.title.split('(')[0].replace(/^(POSH|GDPR):\s*/, '').trim()}
+                  </option>
+                `).join('')}
+              </optgroup>
+              <optgroup label="📚 Filter by Enrolled Course">
+                <option value="enrolled_any" ${this.courseFilter === 'enrolled_any' ? 'selected' : ''}>📚 Enrolled in Any Course</option>
+                <option value="no_courses" ${this.courseFilter === 'no_courses' ? 'selected' : ''}>❌ No Courses Enrolled</option>
+                ${(window.COURSES_DATA || []).map(c => `
+                  <option value="enrolled:${c.id}" ${this.courseFilter === `enrolled:${c.id}` ? 'selected' : ''}>
+                    📚 Enrolled: ${c.title.split('(')[0].replace(/^(POSH|GDPR):\s*/, '').trim()}
+                  </option>
+                `).join('')}
+              </optgroup>
+              <optgroup label="🔍 Needs Course (Not Enrolled)">
+                ${(window.COURSES_DATA || []).map(c => `
+                  <option value="not_enrolled:${c.id}" ${this.courseFilter === `not_enrolled:${c.id}` ? 'selected' : ''}>
+                    Needs: ${c.title.split('(')[0].replace(/^(POSH|GDPR):\s*/, '').trim()}
+                  </option>
+                `).join('')}
+              </optgroup>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="relative w-full sm:w-64">
+            <svg class="w-4 h-4 absolute left-3.5 top-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input 
+              type="text" 
+              id="userSearchInput" 
+              value="${this.searchQuery}"
+              placeholder="Search user, email, id..." 
+              class="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition"
+            />
+          </div>
         </div>
       </div>
 
@@ -291,53 +395,74 @@ class UserManager {
         <table class="w-full text-left text-xs text-slate-300">
           <thead class="bg-slate-950/80 text-[11px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-800">
             <tr>
-              <th class="px-5 py-4">User / Identity</th>
+              <th class="px-3 py-4 w-10 text-center">
+                <input 
+                  type="checkbox" 
+                  id="userSelectAllHeader" 
+                  ${allFilteredSelected ? 'checked' : ''}
+                  class="w-4 h-4 rounded text-purple-600 bg-slate-950 border-slate-700 cursor-pointer"
+                  title="Select / Deselect all visible users"
+                />
+              </th>
+              <th class="px-4 py-4">User / Identity</th>
               <th class="px-4 py-4">Assigned Role</th>
-              <th class="px-4 py-4">Security / Lockout Status</th>
-              <th class="px-4 py-4">Account Created</th>
+              <th class="px-4 py-4">Enrolled Curricula & Badges</th>
+              <th class="px-4 py-4">Security / Status</th>
+              <th class="px-4 py-4">Created</th>
               <th class="px-5 py-4 text-right">Admin Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-800/60">
             ${filtered.length === 0 ? `
               <tr>
-                <td colspan="5" class="px-6 py-12 text-center text-slate-500">
+                <td colspan="7" class="px-6 py-12 text-center text-slate-500">
                   <div class="text-3xl mb-2">🔍</div>
                   <div class="font-bold text-sm text-slate-400">No users found matching current filter</div>
-                  <div class="text-xs text-slate-500 mt-1">Try switching tabs or clearing your search query.</div>
+                  <div class="text-xs text-slate-500 mt-1">Try switching tabs, clearing search query, or resetting the course filter.</div>
                 </td>
               </tr>
             ` : filtered.map(user => {
               const isLocked = user.is_blocked || (user.failed_login_attempts >= 3);
+              const isSelected = this.selectedUserIds.has(user.id);
               const roleColor = user.role === 'admin' 
                 ? 'bg-purple-500/20 text-purple-300 border-purple-500/40' 
                 : (user.role === 'instructor' 
                   ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' 
                   : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40');
-              
-              const roleIcon = user.role === 'admin' ? '👑' : (user.role === 'instructor' ? '👨‍🏫' : '🎓');
 
               const createdFormatted = user.created_at ? new Date(user.created_at).toLocaleDateString("en-US", {
                 year: 'numeric', month: 'short', day: 'numeric'
               }) : 'N/A';
 
+              const enrollments = Array.isArray(user.enrollments) ? user.enrollments : [];
+
               return `
-                <tr class="hover:bg-slate-800/40 transition">
+                <tr class="hover:bg-slate-800/40 transition ${isSelected ? 'bg-purple-950/20' : ''}">
+                  <!-- Select Checkbox -->
+                  <td class="px-3 py-4 text-center">
+                    <input 
+                      type="checkbox" 
+                      data-user-checkbox="${user.id}"
+                      ${isSelected ? 'checked' : ''}
+                      class="w-4 h-4 rounded text-purple-600 bg-slate-950 border-slate-700 cursor-pointer"
+                    />
+                  </td>
+
                   <!-- User identity -->
-                  <td class="px-5 py-4">
+                  <td class="px-4 py-4">
                     <div class="flex items-center space-x-3">
                       <img 
                         src="${user.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}" 
                         alt="${user.name}" 
-                        class="w-10 h-10 rounded-full border ${isLocked ? 'border-amber-500' : 'border-slate-700'} object-cover"
+                        class="w-9 h-9 rounded-full border ${isLocked ? 'border-amber-500' : 'border-slate-700'} object-cover"
                       />
                       <div>
                         <div class="font-bold text-white text-sm flex items-center space-x-1.5">
                           <span>${user.name}</span>
                           ${user.email === 'admin@learnpulse.dev' ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-purple-900/60 text-purple-300 font-extrabold border border-purple-700">SUPER</span>' : ''}
                         </div>
-                        <div class="text-slate-400 font-medium">${user.email}</div>
-                        <div class="text-[10px] text-slate-500 font-mono mt-0.5">${user.id}</div>
+                        <div class="text-slate-400 font-medium text-[11px]">${user.email}</div>
+                        <div class="text-[9px] text-slate-500 font-mono">${user.id}</div>
                       </div>
                     </div>
                   </td>
@@ -348,62 +473,102 @@ class UserManager {
                       <div class="relative">
                         <select 
                           data-role-selector="${user.id}"
-                          class="appearance-none pl-3 pr-8 py-1.5 rounded-xl text-xs font-extrabold ${roleColor} border bg-slate-950 focus:outline-none focus:ring-2 focus:ring-purple-500 transition cursor-pointer"
+                          class="appearance-none pl-2.5 pr-7 py-1 rounded-xl text-xs font-extrabold ${roleColor} border bg-slate-950 focus:outline-none focus:ring-2 focus:ring-purple-500 transition cursor-pointer"
                         >
-                          <option value="student" ${user.role === 'student' ? 'selected' : ''}>🎓 Student / Learner</option>
-                          <option value="instructor" ${user.role === 'instructor' ? 'selected' : ''}>👨‍🏫 Instructor / Faculty</option>
-                          <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>👑 Administrator</option>
+                          <option value="student" ${user.role === 'student' ? 'selected' : ''}>🎓 Student</option>
+                          <option value="instructor" ${user.role === 'instructor' ? 'selected' : ''}>👨‍🏫 Faculty</option>
+                          <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>👑 Admin</option>
                         </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-slate-400">
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </div>
                       </div>
+                    </div>
+                  </td>
+
+                  <!-- Enrolled Curricula & Badges -->
+                  <td class="px-4 py-4">
+                    <div class="space-y-1.5">
+                      ${enrollments.length > 0 ? `
+                        <div class="flex flex-wrap gap-1 max-w-xs">
+                          ${enrollments.map(e => {
+                            const isDone = !!e.is_completed;
+                            const shortTitle = (e.program_title || e.program_id).split('(')[0].replace(/^(POSH|GDPR):\s*/, '').trim();
+                            return isDone ? `
+                              <span title="${e.program_title} (Completed - Certificate Issued)" class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                <span>✓</span>
+                                <span class="truncate max-w-[120px]">${shortTitle}</span>
+                              </span>
+                            ` : `
+                              <span title="${e.program_title} (Active - In Progress)" class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                <span>⏳</span>
+                                <span class="truncate max-w-[120px]">${shortTitle}</span>
+                              </span>
+                            `;
+                          }).join('')}
+                        </div>
+                      ` : `
+                        <div class="text-[10px] text-slate-500 italic">No courses enrolled</div>
+                      `}
+                      <button 
+                        data-btn-assign-row="${user.id}"
+                        class="text-[10px] font-bold text-purple-400 hover:text-purple-300 flex items-center space-x-1 cursor-pointer"
+                        title="Assign a course to this user"
+                      >
+                        <span>+ Assign Course</span>
+                      </button>
                     </div>
                   </td>
 
                   <!-- Security / Lockout Status -->
                   <td class="px-4 py-4">
                     ${isLocked ? `
-                      <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[11px] font-black">
+                      <div class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-black">
                         <span>🔒 LOCKED</span>
-                        <span class="text-[9px] px-1.5 py-0.2 rounded bg-rose-950 text-rose-200">3 Failed Attempts</span>
                       </div>
-                      <div class="text-[10px] text-rose-400 mt-1 font-medium">Blocked from login</div>
+                      <div class="text-[9px] text-rose-400 mt-0.5 font-medium">3 Failed Attempts</div>
                     ` : `
-                      <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <div class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                         <span>Active</span>
                       </div>
                       ${user.failed_login_attempts > 0 ? `
-                        <div class="text-[10px] text-amber-400 mt-1 font-medium">${user.failed_login_attempts} failed attempt(s)</div>
+                        <div class="text-[9px] text-amber-400 mt-0.5 font-medium">${user.failed_login_attempts} failed</div>
                       ` : `
-                        <div class="text-[10px] text-slate-500 mt-1">Full platform access</div>
+                        <div class="text-[9px] text-slate-500 mt-0.5">Platform access</div>
                       `}
                     `}
                   </td>
 
                   <!-- Created Date -->
-                  <td class="px-4 py-4 text-slate-400 font-medium">
+                  <td class="px-4 py-4 text-slate-400 font-medium text-[11px]">
                     ${createdFormatted}
                   </td>
 
                   <!-- Admin Actions -->
                   <td class="px-5 py-4 text-right">
-                    <div class="flex items-center justify-end space-x-2">
+                    <div class="flex items-center justify-end space-x-1.5">
+                      <button 
+                        data-btn-assign-row="${user.id}"
+                        title="Assign another course to this user"
+                        class="px-2 py-1 rounded-lg bg-purple-950/60 hover:bg-purple-900 text-purple-300 font-bold text-[11px] border border-purple-700/60 transition flex items-center space-x-1 cursor-pointer"
+                      >
+                        <span>📚 Assign</span>
+                      </button>
+
                       ${isLocked ? `
                         <button 
                           data-btn-unlock="${user.id}"
                           title="Unblock account and reset failed password attempts"
-                          class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md transition flex items-center space-x-1"
+                          class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] shadow-md transition flex items-center space-x-1 cursor-pointer"
                         >
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
-                          <span>🔓 Unlock Account</span>
+                          <span>🔓 Unlock</span>
                         </button>
                       ` : `
                         <button 
                           data-btn-lock="${user.id}"
                           title="Manually lock/suspend this user account"
-                          class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-amber-900/60 text-slate-300 hover:text-amber-300 font-semibold text-xs border border-slate-700 transition"
+                          class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-amber-900/60 text-slate-300 hover:text-amber-300 font-semibold text-[11px] border border-slate-700 transition cursor-pointer"
                         >
                           <span>🔒 Lock</span>
                         </button>
@@ -412,16 +577,16 @@ class UserManager {
                       <button 
                         data-btn-reset-pw="${user.id}"
                         title="Set a new password for this user"
-                        class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-purple-900/60 text-slate-300 hover:text-purple-300 font-semibold text-xs border border-slate-700 transition"
+                        class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-purple-900/60 text-slate-300 hover:text-purple-300 font-semibold text-[11px] border border-slate-700 transition cursor-pointer"
                       >
-                        <span>🔑 Reset PW</span>
+                        <span>🔑 PW</span>
                       </button>
 
                       ${user.email !== 'admin@learnpulse.dev' ? `
                         <button 
                           data-btn-delete="${user.id}"
                           title="Remove user account"
-                          class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/60 text-slate-400 hover:text-rose-300 border border-slate-700 transition"
+                          class="p-1 rounded-lg bg-slate-800 hover:bg-rose-900/60 text-slate-400 hover:text-rose-300 border border-slate-700 transition cursor-pointer"
                         >
                           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                         </button>
@@ -434,12 +599,41 @@ class UserManager {
           </tbody>
         </table>
       </div>
+
+      <!-- Floating Bulk Action Toolbar (When 1+ users selected) -->
+      ${this.selectedUserIds.size > 0 ? `
+        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 border-2 border-purple-500/80 rounded-2xl px-5 py-3 shadow-2xl backdrop-blur-xl flex items-center space-x-3.5 animate-bounce-short">
+          <div class="flex items-center space-x-2 border-r border-slate-700 pr-3.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse"></span>
+            <span class="text-xs font-black text-white whitespace-nowrap"><span id="bulkSelectedCount">${this.selectedUserIds.size}</span> Users Selected</span>
+          </div>
+          <button 
+            id="btnFloatingBulkAssign"
+            onclick="window.userManager.openAssignCourseModal()"
+            class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs flex items-center space-x-1.5 shadow-lg shadow-purple-900/40 cursor-pointer whitespace-nowrap"
+          >
+            <span>📚 Assign Course to Selected (${this.selectedUserIds.size})</span>
+          </button>
+          <button 
+            onclick="window.userManager.exportSelectedUsersExcel()"
+            class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer whitespace-nowrap"
+          >
+            <span>Export Selected</span>
+          </button>
+          <button 
+            onclick="window.userManager.deselectAllUsers()"
+            class="px-2.5 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold cursor-pointer whitespace-nowrap"
+          >
+            <span>✕ Clear</span>
+          </button>
+        </div>
+      ` : ''}
     `;
 
-    this.bindEvents();
+    this.bindEvents(filtered);
   }
 
-  bindEvents() {
+  bindEvents(filteredList = []) {
     const container = document.getElementById("viewUsers");
     if (!container) return;
 
@@ -451,6 +645,15 @@ class UserManager {
       });
     });
 
+    // Course Filter Dropdown Change
+    const courseFilterSelect = container.querySelector("#userCourseFilterSelect");
+    if (courseFilterSelect) {
+      courseFilterSelect.addEventListener("change", (e) => {
+        this.courseFilter = e.target.value;
+        this.render();
+      });
+    }
+
     // Search Input
     const searchInput = container.querySelector("#userSearchInput");
     if (searchInput) {
@@ -459,6 +662,41 @@ class UserManager {
         this.render();
       });
     }
+
+    // Header Select All Checkbox
+    const headerCheck = container.querySelector("#userSelectAllHeader");
+    if (headerCheck) {
+      headerCheck.addEventListener("change", (e) => {
+        const checked = e.target.checked;
+        if (checked) {
+          filteredList.forEach(u => this.selectedUserIds.add(u.id));
+        } else {
+          filteredList.forEach(u => this.selectedUserIds.delete(u.id));
+        }
+        this.render();
+      });
+    }
+
+    // Row Checkboxes
+    container.querySelectorAll("[data-user-checkbox]").forEach(cb => {
+      cb.addEventListener("change", (e) => {
+        const uid = cb.getAttribute("data-user-checkbox");
+        if (e.target.checked) {
+          this.selectedUserIds.add(uid);
+        } else {
+          this.selectedUserIds.delete(uid);
+        }
+        this.render();
+      });
+    });
+
+    // Assign Course Row Button
+    container.querySelectorAll("[data-btn-assign-row]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const uid = btn.getAttribute("data-btn-assign-row");
+        this.openAssignCourseModal([uid]);
+      });
+    });
 
     // Role Dropdown Change
     container.querySelectorAll("[data-role-selector]").forEach(select => {
@@ -814,7 +1052,210 @@ class UserManager {
     }
   }
 
-  // --- BULK USER IMPORT VIA CSV ---
+  // --- SELECTION & BULK ACTIONS ---
+  deselectAllUsers() {
+    this.selectedUserIds.clear();
+    this.render();
+  }
+
+  exportSelectedUsersExcel() {
+    if (this.selectedUserIds.size === 0) {
+      if (window.app && window.app.showToast) window.app.showToast("No users selected to export.", "warning");
+      return;
+    }
+    const selected = this.users.filter(u => this.selectedUserIds.has(u.id));
+    this.exportUsersListExcel(selected, "Selected_Users_Export");
+  }
+
+  exportUsersListExcel(userList, filePrefix = "Worxpertise_User_Directory_Roster") {
+    if (typeof XLSX === "undefined") {
+      alert("Excel export library is loading, please try again in a moment.");
+      return;
+    }
+
+    const data = userList.map((u, idx) => {
+      const enrolledStr = (u.enrollments || []).map(e => `${e.program_title || e.program_id} (${e.is_completed ? 'Completed' : 'In Progress'})`).join("; ");
+      return {
+        "S.No": idx + 1,
+        "User ID": u.id,
+        "Full Name": u.name,
+        "Email Address": u.email,
+        "Platform Role": (u.role || "student").toUpperCase(),
+        "Enrolled Curricula": enrolledStr || "None",
+        "Account Security Status": u.is_blocked ? "LOCKED (3 Wrong Password Attempts)" : "ACTIVE",
+        "Failed Password Attempts": u.failed_login_attempts || 0,
+        "Account Created Date": u.created_at ? new Date(u.created_at).toLocaleString() : "N/A"
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Users Directory");
+
+    const dateStr = new Date().toISOString().split("T")[0];
+    XLSX.writeFile(wb, `${filePrefix}_${dateStr}.xlsx`);
+
+    if (window.app && window.app.showToast) {
+      window.app.showToast(`📊 Exported ${userList.length} user record(s) to Excel successfully!`, "success");
+    }
+  }
+
+  // --- MODAL: ASSIGN COURSE TO USERS (SINGLE OR BULK - CASE 1) ---
+  openAssignCourseModal(targetUserIds = null) {
+    if (targetUserIds && Array.isArray(targetUserIds)) {
+      this.assignModalTargetUserIds = targetUserIds;
+    } else if (typeof targetUserIds === "string") {
+      this.assignModalTargetUserIds = [targetUserIds];
+    } else {
+      this.assignModalTargetUserIds = Array.from(this.selectedUserIds);
+    }
+
+    if (this.assignModalTargetUserIds.length === 0) {
+      if (window.app && window.app.showToast) {
+        window.app.showToast("Please select at least 1 user from the list first.", "warning");
+      }
+      return;
+    }
+
+    const modal = document.getElementById("assignCourseModal");
+    if (!modal) return;
+
+    // Populate course selector
+    const select = document.getElementById("assignModalCourseSelect");
+    if (select) {
+      select.innerHTML = (window.COURSES_DATA || []).map(c => `
+        <option value="${c.id}">
+          ${c.title} (${c.category || 'General'})
+        </option>
+      `).join("");
+    }
+
+    // Populate recipient chips
+    const countBadge = document.getElementById("assignModalUserCountBadge");
+    if (countBadge) {
+      countBadge.textContent = `${this.assignModalTargetUserIds.length} User(s) Selected`;
+    }
+
+    const userListBox = document.getElementById("assignModalUserList");
+    if (userListBox) {
+      const selectedUsers = this.users.filter(u => this.assignModalTargetUserIds.includes(u.id));
+      userListBox.innerHTML = selectedUsers.map(u => `
+        <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white">
+          <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+          <span class="font-bold">${u.name}</span>
+          <span class="text-[10px] text-slate-400 font-mono">(${u.email})</span>
+        </span>
+      `).join("");
+    }
+
+    modal.classList.remove("hidden");
+    document.body.classList.add("overflow-hidden");
+  }
+
+  closeAssignCourseModal() {
+    const modal = document.getElementById("assignCourseModal");
+    if (modal) modal.classList.add("hidden");
+    document.body.classList.remove("overflow-hidden");
+    this.assignModalTargetUserIds = [];
+  }
+
+  async executeAssignCourseModal() {
+    const courseSelect = document.getElementById("assignModalCourseSelect");
+    const programId = courseSelect ? courseSelect.value : null;
+    if (!programId) {
+      if (window.app && window.app.showToast) window.app.showToast("Please select a course to assign.", "warning");
+      return;
+    }
+
+    const progObj = (window.COURSES_DATA || []).find(c => c.id === programId);
+    const courseTitle = progObj ? progObj.title : programId;
+
+    const notifyCheck = document.getElementById("assignModalNotifyCheck");
+    const notifyEmail = notifyCheck ? notifyCheck.checked : true;
+
+    const userIds = [...this.assignModalTargetUserIds];
+    if (userIds.length === 0) return;
+
+    const btn = document.getElementById("btnConfirmAssignCourse");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span>⏳ Assigning to ${userIds.length} users...</span>`;
+    }
+
+    try {
+      let enrolledCount = userIds.length;
+      let alreadyEnrolledCount = 0;
+
+      if (window.apiService && window.apiService.bulkEnrollUsers) {
+        try {
+          const res = await window.apiService.bulkEnrollUsers({
+            userIds,
+            programId,
+            notifyEmail
+          });
+          if (res && res.success) {
+            enrolledCount = res.newlyEnrolledCount !== undefined ? res.newlyEnrolledCount : userIds.length;
+            alreadyEnrolledCount = res.alreadyEnrolledCount || 0;
+          }
+        } catch (apiErr) {
+          console.warn("Backend bulk-enroll fallback to client state:", apiErr);
+        }
+      }
+
+      // Update local state and cached users
+      userIds.forEach(uid => {
+        const u = this.users.find(usr => usr.id === uid);
+        if (u) {
+          u.enrollments = u.enrollments || [];
+          if (!u.enrollments.some(e => e.program_id === programId)) {
+            u.enrollments.push({
+              program_id: programId,
+              program_title: courseTitle,
+              is_completed: false,
+              enrolled_at: new Date().toISOString()
+            });
+          }
+        }
+
+        // If this user is the active logged-in user in window.appState, enroll them
+        if (window.appState && window.appState.user && (window.appState.user.id === uid || (u && window.appState.user.email === u.email))) {
+          window.appState.enrollProgram(programId);
+        }
+      });
+
+      localStorage.setItem('worxpertise_cached_users', JSON.stringify(this.users));
+
+      // Record enterprise audit log
+      if (window.appState && typeof window.appState.logAudit === "function") {
+        window.appState.logAudit("BULK_COURSE_ASSIGNED", courseTitle, {
+          courseId: programId,
+          assignedCount: enrolledCount,
+          alreadyEnrolledCount,
+          userIds
+        });
+      }
+
+      this.closeAssignCourseModal();
+      this.selectedUserIds.clear();
+      await this.render();
+
+      if (window.app && window.app.showToast) {
+        window.app.showToast(`🎉 Successfully assigned "${courseTitle}" to ${enrolledCount} user(s)! ${alreadyEnrolledCount > 0 ? `(${alreadyEnrolledCount} already enrolled).` : ''}`, "success");
+      }
+    } catch (err) {
+      console.error("Execute assign course error:", err);
+      if (window.app && window.app.showToast) {
+        window.app.showToast(`Course assignment failed: ${err.message}`, "error");
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<span>🚀 Assign Course Now</span>`;
+      }
+    }
+  }
+
+  // --- DUAL-MODE BULK USER IMPORT VIA CSV / EMAIL LIST ---
   openBulkImportModal() {
     const modal = document.getElementById("bulkImportModal");
     if (!modal) return;
@@ -826,13 +1267,11 @@ class UserManager {
     if (courseSelect) {
       courseSelect.innerHTML = (window.COURSES_DATA || []).map(c => `
         <option value="${c.id}" ${c.category === 'Corporate Compliance' || c.title.includes('POSH') ? 'selected' : ''}>
-          ${c.title} (${c.category})
+          ${c.title} (${c.category || 'Curriculum'})
         </option>
       `).join("");
     }
 
-    const previewArea = document.getElementById("bulkImportPreviewArea");
-    if (previewArea) previewArea.classList.add("hidden");
     const countBadge = document.getElementById("bulkImportCountBadge");
     if (countBadge) countBadge.classList.add("hidden");
     const fileInput = document.getElementById("bulkImportFileInput");
@@ -840,6 +1279,10 @@ class UserManager {
     const textInput = document.getElementById("bulkImportTextInput");
     if (textInput) textInput.value = "";
     this.pendingImportUsers = [];
+    this.pendingEmails = [];
+
+    // Default to 'new' mode or maintain current
+    this.switchBulkImportMode(this.bulkMode || 'new');
   }
 
   closeBulkImportModal() {
@@ -847,6 +1290,162 @@ class UserManager {
     if (modal) modal.classList.add("hidden");
     document.body.classList.remove("overflow-hidden");
     this.pendingImportUsers = [];
+    this.pendingEmails = [];
+  }
+
+  switchBulkImportMode(mode) {
+    this.bulkMode = mode;
+    const tabNew = document.getElementById("tabBulkModeNew");
+    const tabExisting = document.getElementById("tabBulkModeExisting");
+    const heading = document.getElementById("bulkImportModalHeading");
+    const subheading = document.getElementById("bulkImportModalSubheading");
+    const templateBox = document.getElementById("bulkTemplateActionBox");
+    const existingHelpBox = document.getElementById("bulkExistingHelpBox");
+    const inputLabel = document.getElementById("bulkInputLabel");
+    const textInput = document.getElementById("bulkImportTextInput");
+    const btnSubmit = document.getElementById("btnSubmitBulkModalText");
+
+    if (mode === "existing") {
+      if (tabNew) {
+        tabNew.className = "flex-1 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white flex items-center justify-center space-x-1.5 cursor-pointer";
+      }
+      if (tabExisting) {
+        tabExisting.className = "flex-1 py-2 rounded-xl text-xs font-bold transition bg-purple-600 text-white shadow-md flex items-center justify-center space-x-1.5 cursor-pointer";
+      }
+      if (heading) heading.textContent = "Assign Second / Subsequent Course to Existing Users (Case 1)";
+      if (subheading) subheading.textContent = "Target existing users who completed Course 1 and assign Course 2 to them. Accounts, credentials, past scores & certificates remain untouched.";
+      if (templateBox) templateBox.classList.add("hidden");
+      if (existingHelpBox) existingHelpBox.classList.remove("hidden");
+      if (inputLabel) inputLabel.textContent = "Paste Existing User Emails (One per line, comma-separated, or CSV)";
+      if (textInput) textInput.placeholder = "pooja.iyer@worxpertise.com\nramesh.sharma@worxpertise.com\nvikram.m@worxpertise.com\nsachin@learnpulse.dev";
+      if (btnSubmit) btnSubmit.textContent = "🚀 Assign Course to Existing Users";
+    } else {
+      if (tabNew) {
+        tabNew.className = "flex-1 py-2 rounded-xl text-xs font-bold transition bg-blue-600 text-white shadow-md flex items-center justify-center space-x-1.5 cursor-pointer";
+      }
+      if (tabExisting) {
+        tabExisting.className = "flex-1 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white flex items-center justify-center space-x-1.5 cursor-pointer";
+      }
+      if (heading) heading.textContent = "Bulk User Import & Mandatory Auto-Enrollment";
+      if (subheading) subheading.textContent = "Upload an employee roster CSV to onboard hundreds of team members in 1-click and automatically enroll them in compliance curricula.";
+      if (templateBox) templateBox.classList.remove("hidden");
+      if (existingHelpBox) existingHelpBox.classList.add("hidden");
+      if (inputLabel) inputLabel.textContent = "Upload CSV File or Paste Raw Text";
+      if (textInput) textInput.placeholder = "Name,Email,Role,Department\nRamesh Sharma,ramesh.sharma@worxpertise.com,student,Technology\nPooja Iyer,pooja.iyer@worxpertise.com,student,HR";
+      if (btnSubmit) btnSubmit.textContent = "🚀 Confirm Import & Auto-Enroll";
+    }
+
+    if (textInput && textInput.value) {
+      this.handleBulkInputUpdate(textInput.value);
+    }
+  }
+
+  handleBulkInputUpdate(text) {
+    const badge = document.getElementById("bulkImportCountBadge");
+    if (!text || !text.trim()) {
+      if (badge) badge.classList.add("hidden");
+      this.pendingImportUsers = [];
+      this.pendingEmails = [];
+      return;
+    }
+
+    if (this.bulkMode === "existing") {
+      // Extract emails
+      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+      const matched = text.match(emailRegex) || [];
+      const uniqueEmails = Array.from(new Set(matched.map(e => e.toLowerCase().trim())));
+      this.pendingEmails = uniqueEmails;
+
+      // Count how many are in existing users roster
+      const registeredCount = uniqueEmails.filter(e => this.users.some(u => u.email && u.email.toLowerCase() === e)).length;
+
+      if (badge) {
+        badge.textContent = `${uniqueEmails.length} Email(s) (${registeredCount} Registered Matches)`;
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30";
+        badge.classList.remove("hidden");
+      }
+    } else {
+      this.pendingImportUsers = this.parseCSV(text);
+      const count = this.pendingImportUsers.length;
+      if (badge) {
+        badge.textContent = `${count} Employees Detected`;
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30";
+        badge.classList.remove("hidden");
+      }
+    }
+  }
+
+  async executeCurrentBulkModalAction() {
+    const courseSelect = document.getElementById("bulkImportCourseSelect");
+    const courseId = courseSelect ? courseSelect.value : null;
+
+    if (this.bulkMode === "existing") {
+      const textInput = document.getElementById("bulkImportTextInput");
+      const text = textInput ? textInput.value : "";
+      this.handleBulkInputUpdate(text);
+      await this.executeBulkAssignExisting(this.pendingEmails, courseId);
+    } else {
+      const users = (this.pendingImportUsers && this.pendingImportUsers.length > 0) 
+        ? this.pendingImportUsers 
+        : this.parseCSV(document.getElementById("bulkImportTextInput")?.value || "");
+      await this.executeBulkImport(users, courseId);
+    }
+  }
+
+  async executeBulkAssignExisting(emails, courseId) {
+    if (!emails || emails.length === 0) {
+      if (window.app && window.app.showToast) window.app.showToast("No valid emails found to assign course.", "warning");
+      return;
+    }
+
+    const prog = (window.COURSES_DATA || []).find(c => c.id === courseId);
+    const courseTitle = prog ? prog.title : "Assigned Course";
+
+    try {
+      let enrolledCount = 0;
+      let alreadyEnrolledCount = 0;
+
+      if (window.apiService && window.apiService.bulkEnrollUsers) {
+        const res = await window.apiService.bulkEnrollUsers({
+          emails,
+          programId: courseId,
+          notifyEmail: true
+        });
+        if (res && res.success) {
+          enrolledCount = res.newlyEnrolledCount;
+          alreadyEnrolledCount = res.alreadyEnrolledCount;
+        }
+      }
+
+      // Sync local cache
+      const cleanEmails = emails.map(e => e.toLowerCase().trim());
+      this.users.forEach(u => {
+        if (u.email && cleanEmails.includes(u.email.toLowerCase())) {
+          u.enrollments = u.enrollments || [];
+          if (!u.enrollments.some(e => e.program_id === courseId)) {
+            u.enrollments.push({
+              program_id: courseId,
+              program_title: courseTitle,
+              is_completed: false,
+              enrolled_at: new Date().toISOString()
+            });
+          }
+        }
+      });
+      localStorage.setItem('worxpertise_cached_users', JSON.stringify(this.users));
+
+      this.closeBulkImportModal();
+      await this.render();
+
+      if (window.app && window.app.showToast) {
+        window.app.showToast(`🎉 Case 1 Course Assigned: "${courseTitle}" assigned to ${enrolledCount} existing user(s)! ${alreadyEnrolledCount > 0 ? `(${alreadyEnrolledCount} already enrolled).` : ''}`, "success");
+      }
+    } catch (e) {
+      console.error("Bulk assign existing error:", e);
+      if (window.app && window.app.showToast) {
+        window.app.showToast(`Course assignment failed: ${e.message}`, "error");
+      }
+    }
   }
 
   downloadCSVTemplate() {
@@ -902,31 +1501,47 @@ class UserManager {
     const courseTitle = prog ? prog.title : "Mandatory Compliance Training";
 
     try {
+      let createdCount = importList.length;
+      let existingEnrolledCount = 0;
+
       if (window.apiService && window.apiService.bulkImportUsers) {
         try {
-          await window.apiService.bulkImportUsers({ users: importList, mandatoryCourseId });
+          const res = await window.apiService.bulkImportUsers({ users: importList, mandatoryProgramId: mandatoryCourseId });
+          if (res && res.success) {
+            createdCount = res.importedCount !== undefined ? res.importedCount : createdCount;
+            existingEnrolledCount = res.existingEnrolledCount || 0;
+          }
         } catch (err) {
           console.warn("Backend bulk import API fallback:", err);
         }
       }
 
-      // Add to local state/cache
+      // Add to local state/cache (avoiding duplicate emails)
       importList.forEach((nu, idx) => {
-        const id = `usr_imp_${Date.now()}_${idx}`;
-        this.users.push({
-          id,
-          name: nu.name,
-          email: nu.email,
-          role: nu.role || "student",
-          avatar_url: `https://images.unsplash.com/photo-1535713875002?w=150&auto=format&fit=crop&q=80`,
-          is_blocked: false,
-          failed_login_attempts: 0,
-          created_at: new Date().toISOString()
-        });
+        const existing = this.users.find(u => u.email && u.email.toLowerCase() === nu.email.toLowerCase());
+        if (!existing) {
+          const id = `usr_imp_${Date.now()}_${idx}`;
+          this.users.push({
+            id,
+            name: nu.name,
+            email: nu.email,
+            role: nu.role || "student",
+            avatar_url: `https://images.unsplash.com/photo-1535713875002?w=150&auto=format&fit=crop&q=80`,
+            is_blocked: false,
+            failed_login_attempts: 0,
+            created_at: new Date().toISOString(),
+            enrollments: mandatoryCourseId ? [{ program_id: mandatoryCourseId, program_title: courseTitle, is_completed: false }] : []
+          });
+        } else {
+          existing.enrollments = existing.enrollments || [];
+          if (mandatoryCourseId && !existing.enrollments.some(e => e.program_id === mandatoryCourseId)) {
+            existing.enrollments.push({ program_id: mandatoryCourseId, program_title: courseTitle, is_completed: false });
+          }
+        }
 
-        // Auto-enroll into mandatory course
-        if (mandatoryCourseId && window.appState) {
-          window.appState.enrollCourse(mandatoryCourseId);
+        // Auto-enroll active user if matches
+        if (mandatoryCourseId && window.appState && (nu.email === window.appState.user.email)) {
+          window.appState.enrollProgram(mandatoryCourseId);
         }
       });
 
@@ -934,7 +1549,7 @@ class UserManager {
 
       // Log enterprise audit action
       if (window.appState) {
-        window.appState.logAudit("BULK_USER_IMPORT", `${importList.length} Employees Onboarded`, {
+        window.appState.logAudit("BULK_USER_IMPORT", `${importList.length} Roster Processed`, {
           count: importList.length,
           course: courseTitle,
           mandatoryCourseId
@@ -950,10 +1565,13 @@ class UserManager {
       }
 
       this.closeBulkImportModal();
-      this.render();
+      await this.render();
 
       if (window.app && window.app.showToast) {
-        window.app.showToast(`🎉 Successfully onboarded ${importList.length} employees & auto-enrolled in ${courseTitle}!`, "success");
+        const msg = existingEnrolledCount > 0 
+          ? `🎉 Roster Processed: ${createdCount} new accounts created, and ${existingEnrolledCount} existing users enrolled into "${courseTitle}"!`
+          : `🎉 Successfully onboarded ${createdCount} employees & auto-enrolled in "${courseTitle}"!`;
+        window.app.showToast(msg, "success");
       }
     } catch (e) {
       console.error("Bulk import failed:", e);

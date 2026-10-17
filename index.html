@@ -1873,7 +1873,7 @@
   </div>
 
   <!-- ======================================================================
-       MODAL 3: BULK USER IMPORT VIA CSV
+       MODAL 3: BULK USER IMPORT & COURSE ASSIGNMENT VIA CSV / EMAIL LIST
        ====================================================================== -->
   <div id="bulkImportModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/90 backdrop-blur-lg p-4 sm:p-6 md:p-8">
     <div class="min-h-full flex items-center justify-center py-4 sm:py-8">
@@ -1887,45 +1887,70 @@
 
         <div class="space-y-1">
           <div class="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[11px] font-black uppercase tracking-wider">
-            <span>📁 Corporate Onboarding</span>
+            <span>📁 Corporate Onboarding & Course Assignment</span>
           </div>
-          <h2 class="text-2xl font-black text-white">Bulk User Import & Mandatory Auto-Enrollment</h2>
-          <p class="text-xs text-slate-400">
-            Upload an employee roster CSV to onboard hundreds of team members in 1-click and automatically enroll them in compliance curricula.
+          <h2 id="bulkImportModalHeading" class="text-2xl font-black text-white">Bulk User Import & Course Auto-Assignment</h2>
+          <p id="bulkImportModalSubheading" class="text-xs text-slate-400">
+            Onboard new employees or assign subsequent courses to existing platform learners in 1-click.
           </p>
         </div>
 
-        <!-- Mandatory Course Selector & Template Download -->
+        <!-- Mode Toggle Tabs (New Onboarding vs Existing User Re-assignment) -->
+        <div class="flex items-center p-1 bg-slate-950 rounded-2xl border border-slate-800">
+          <button 
+            type="button" 
+            id="tabBulkModeNew"
+            onclick="window.userManager.switchBulkImportMode('new')"
+            class="flex-1 py-2 rounded-xl text-xs font-bold transition bg-blue-600 text-white shadow-md flex items-center justify-center space-x-1.5 cursor-pointer"
+          >
+            <span>👥 Mode 1: New Employee Onboarding</span>
+          </button>
+          <button 
+            type="button" 
+            id="tabBulkModeExisting"
+            onclick="window.userManager.switchBulkImportMode('existing')"
+            class="flex-1 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white flex items-center justify-center space-x-1.5 cursor-pointer"
+          >
+            <span>📚 Mode 2: Assign Course to Existing Users (Case 1)</span>
+          </button>
+        </div>
+
+        <!-- Course Selector & Template Download / Guidance -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950 p-4 rounded-2xl border border-slate-800">
           <div>
-            <label class="block text-xs font-bold text-slate-300 mb-1">Mandatory Auto-Enrollment Program</label>
+            <label id="bulkCourseSelectLabel" class="block text-xs font-bold text-slate-300 mb-1">Target Curriculum / Program *</label>
             <select 
               id="bulkImportCourseSelect"
               class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500 transition"
             >
               <!-- Injected dynamically -->
             </select>
-            <span class="text-[10px] text-slate-500 mt-1 block">New employees will be automatically enrolled immediately</span>
+            <span id="bulkCourseSelectHelp" class="text-[10px] text-slate-500 mt-1 block">Selected users will be enrolled into this curriculum</span>
           </div>
           <div class="flex flex-col justify-between">
-            <span class="text-xs font-bold text-slate-300">Roster Format Standard</span>
-            <button 
-              type="button" 
-              onclick="window.userManager.downloadCSVTemplate()"
-              class="mt-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center justify-center space-x-1.5 cursor-pointer"
-            >
-              <span>📥 Download Sample CSV Template</span>
-            </button>
-            <span class="text-[10px] text-slate-500 mt-1">Columns: Name, Email, Role, Department</span>
+            <span id="bulkTemplateTitle" class="text-xs font-bold text-slate-300">Roster Format Standard</span>
+            <div id="bulkTemplateActionBox">
+              <button 
+                type="button" 
+                onclick="window.userManager.downloadCSVTemplate()"
+                class="mt-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center justify-center space-x-1.5 cursor-pointer"
+              >
+                <span>📥 Download Sample CSV Template</span>
+              </button>
+              <span class="text-[10px] text-slate-500 mt-1 block">Columns: Name, Email, Role, Department</span>
+            </div>
+            <div id="bulkExistingHelpBox" class="hidden text-[11px] text-indigo-300 bg-indigo-950/40 p-2 rounded-xl border border-indigo-900/50">
+              💡 <strong>Case 1 Active:</strong> Paste existing user emails. Existing accounts, passwords, past course completions & certificates are safely preserved!
+            </div>
           </div>
         </div>
 
-        <!-- File Upload & CSV Input -->
+        <!-- File Upload & CSV / Email Input -->
         <div class="space-y-3">
           <div class="flex items-center justify-between">
-            <label class="text-xs font-bold text-slate-300">Upload CSV File or Paste Raw Text</label>
+            <label id="bulkInputLabel" class="text-xs font-bold text-slate-300">Upload CSV File or Paste Roster / Emails</label>
             <span id="bulkImportCountBadge" class="hidden px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-              0 Users Parsed
+              0 Detected
             </span>
           </div>
 
@@ -1933,7 +1958,7 @@
             <input 
               type="file" 
               id="bulkImportFileInput" 
-              accept=".csv"
+              accept=".csv,.txt"
               onchange="
                 const file = this.files[0];
                 if (file) {
@@ -1941,13 +1966,7 @@
                   reader.onload = (e) => {
                     const text = e.target.result;
                     document.getElementById('bulkImportTextInput').value = text;
-                    window.userManager.pendingImportUsers = window.userManager.parseCSV(text);
-                    const count = window.userManager.pendingImportUsers.length;
-                    const badge = document.getElementById('bulkImportCountBadge');
-                    if (badge) {
-                      badge.textContent = `${count} Employees Detected`;
-                      badge.classList.remove('hidden');
-                    }
+                    window.userManager.handleBulkInputUpdate(text);
                   };
                   reader.readAsText(file);
                 }
@@ -1958,17 +1977,9 @@
 
           <textarea 
             id="bulkImportTextInput" 
-            rows="4" 
+            rows="5" 
             placeholder="Name,Email,Role,Department&#10;Ramesh Sharma,ramesh.sharma@worxpertise.com,student,Technology&#10;Pooja Iyer,pooja.iyer@worxpertise.com,student,HR"
-            oninput="
-              window.userManager.pendingImportUsers = window.userManager.parseCSV(this.value);
-              const count = window.userManager.pendingImportUsers.length;
-              const badge = document.getElementById('bulkImportCountBadge');
-              if (badge) {
-                badge.textContent = `${count} Employees Detected`;
-                badge.classList.remove('hidden');
-              }
-            "
+            oninput="window.userManager.handleBulkInputUpdate(this.value)"
             class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs font-mono text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition"
           ></textarea>
         </div>
@@ -1984,14 +1995,95 @@
           </button>
           <button 
             type="button" 
-            onclick="
-              const courseId = document.getElementById('bulkImportCourseSelect').value;
-              const users = window.userManager.pendingImportUsers || [];
-              window.userManager.executeBulkImport(users, courseId);
-            "
+            id="btnSubmitBulkModal"
+            onclick="window.userManager.executeCurrentBulkModalAction()"
             class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-900/40 transition flex items-center space-x-1.5 cursor-pointer"
           >
-            <span>🚀 Confirm Import & Auto-Enroll</span>
+            <span id="btnSubmitBulkModalText">🚀 Confirm Import & Auto-Enroll</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODAL 4: ASSIGN COURSE TO SELECTED USERS (SINGLE OR BULK)
+       ====================================================================== -->
+  <div id="assignCourseModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/90 backdrop-blur-lg p-4 sm:p-6 md:p-8">
+    <div class="min-h-full flex items-center justify-center py-4 sm:py-8">
+      <div class="relative bg-slate-900 border border-purple-500/50 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-6">
+        <button 
+          onclick="window.userManager.closeAssignCourseModal()"
+          class="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <div class="space-y-1">
+          <div class="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[11px] font-black uppercase tracking-wider">
+            <span>📚 Course Assignment Engine</span>
+          </div>
+          <h2 class="text-2xl font-black text-white">Assign Course to Users</h2>
+          <p class="text-xs text-slate-400">
+            Assign a new program or subsequent course to selected learners. Previous completions, quiz scores, and certificates are safely preserved.
+          </p>
+        </div>
+
+        <!-- Target Users Summary -->
+        <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-300">
+            <span>Target Recipients</span>
+            <span id="assignModalUserCountBadge" class="px-2 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-300 font-extrabold border border-purple-500/40">
+              0 Users Selected
+            </span>
+          </div>
+          <div id="assignModalUserList" class="max-h-36 overflow-y-auto flex flex-wrap gap-1.5 p-1">
+            <!-- Dynamically populated with user chips -->
+          </div>
+        </div>
+
+        <!-- Course Picker -->
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1.5">Select Course to Assign *</label>
+          <select 
+            id="assignModalCourseSelect"
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs font-medium text-white focus:outline-none focus:border-purple-500 transition"
+          >
+            <!-- Injected dynamically from window.COURSES_DATA -->
+          </select>
+          <span class="text-[11px] text-slate-500 mt-1 block">
+            Learners will gain instant curriculum access and their progress will track independently.
+          </span>
+        </div>
+
+        <!-- Notification & Safety Options -->
+        <div class="space-y-2 p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 text-xs">
+          <label class="flex items-center space-x-2 text-slate-300 cursor-pointer">
+            <input type="checkbox" id="assignModalNotifyCheck" checked class="w-4 h-4 rounded text-purple-600 cursor-pointer" />
+            <span class="font-medium">Send automated enrollment notification (SMTP Email / Webhook)</span>
+          </label>
+          <label class="flex items-center space-x-2 text-slate-400 cursor-pointer">
+            <input type="checkbox" id="assignModalSkipExistingCheck" checked class="w-4 h-4 rounded text-purple-600 cursor-pointer" />
+            <span class="text-[11px]">Safe-assign: If already enrolled, keep existing progress without resetting</span>
+          </label>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
+          <button 
+            type="button" 
+            onclick="window.userManager.closeAssignCourseModal()"
+            class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            id="btnConfirmAssignCourse"
+            onclick="window.userManager.executeAssignCourseModal()"
+            class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-900/40 transition flex items-center space-x-1.5 cursor-pointer"
+          >
+            <span>🚀 Assign Course Now</span>
           </button>
         </div>
       </div>
