@@ -3,7 +3,9 @@
  * Connects frontend to the PostgreSQL Express backend with automatic fallback.
  */
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = (typeof window !== 'undefined' && window.location && window.location.protocol && window.location.protocol.startsWith('http'))
+  ? `${window.location.origin}/api`
+  : 'http://localhost:5000/api';
 
 class ApiService {
   constructor() {
