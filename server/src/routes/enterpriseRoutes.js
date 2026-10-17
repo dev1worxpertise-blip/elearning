@@ -38,4 +38,9 @@ router.get('/smtp-settings', verifyToken, requireRole('admin'), enterpriseContro
 router.post('/smtp-settings', verifyToken, requireRole('admin'), enterpriseController.saveSmtpSettings);
 router.post('/test-email', verifyToken, requireRole('admin'), enterpriseController.testEmailConnection);
 
+// --- System Telemetry, Health & Live Operational Monitoring ---
+router.get('/telemetry', optionalAuth, enterpriseController.getSystemTelemetry);
+router.post('/telemetry/heartbeat', optionalAuth, enterpriseController.recordHeartbeat);
+router.post('/telemetry/action', optionalAuth, enterpriseController.executeTelemetryAction);
+
 module.exports = router;

@@ -79,6 +79,52 @@ class App {
       if (this.currentView === "reports" && window.reportsManager) window.reportsManager.render();
       if (this.currentView === "mylearning") this.renderMyLearning();
     });
+
+    // Start periodic client telemetry heartbeat
+    this.sendClientHeartbeat();
+    setInterval(() => this.sendClientHeartbeat(), 25000);
+  }
+
+  sendClientHeartbeat() {
+    try {
+      const user = (window.appState && window.appState.user) || { name: 'Sachin Chauhan', role: 'student' };
+      let activity = 'Browsing Catalog';
+      if (this.currentView === 'learning' && this.activeProgram && this.activeModule) {
+        activity = `▶ Watching: ${this.activeProgram.title} (${this.activeModule.title})`;
+      } else if (this.currentView === 'dashboard') {
+        activity = 'Executive Analytics Console';
+      } else if (this.currentView === 'instructor') {
+        activity = 'Instructor & Curriculum Studio';
+      } else if (this.currentView === 'users') {
+        activity = 'User Directory & Access Control';
+      } else if (this.currentView === 'reports') {
+        activity = 'Auditing Compliance & Reports';
+      } else if (this.currentView === 'docs') {
+        activity = 'Inspecting Technical & VAPT Docs';
+      } else if (this.currentView === 'monitoring') {
+        activity = 'Observing Live System Telemetry';
+      } else if (this.currentView === 'mylearning') {
+        activity = 'Reviewing Enrolled Programs';
+      } else if (this.currentView === 'certificates') {
+        activity = 'Validating Accredited Certificates';
+      }
+
+      fetch('/api/enterprise/telemetry/heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id || 'usr_current',
+          userName: user.name || 'Current User',
+          userRole: user.role || 'student',
+          activity,
+          programId: this.activeProgram ? this.activeProgram.id : null,
+          moduleId: this.activeModule ? this.activeModule.id : null,
+          currentUrl: window.location.pathname || '/'
+        })
+      }).catch(() => {});
+    } catch (e) {
+      // Ignore heartbeat errors
+    }
   }
 
   bindGlobalEvents() {
@@ -425,7 +471,7 @@ class App {
     const role = (user.role || 'student').toLowerCase();
 
     // Route guards based on persona role
-    if (role === "student" && ["dashboard", "reports", "instructor", "users", "docs"].includes(viewName)) {
+    if (role === "student" && ["dashboard", "reports", "instructor", "users", "docs", "monitoring"].includes(viewName)) {
       this.showToast("🔒 Restricted: This area requires Instructor or Administrator access.", "warning");
       viewName = "catalog";
     } else if (role === "instructor" && ["users", "dashboard"].includes(viewName)) {
@@ -435,7 +481,7 @@ class App {
 
     this.currentView = viewName;
 
-    const isAdminView = ["dashboard", "reports", "instructor", "users", "docs"].includes(viewName);
+    const isAdminView = ["dashboard", "reports", "instructor", "users", "docs", "monitoring"].includes(viewName);
 
     // Show/hide contextual Admin Sub-Bar (only for admin role)
     const adminSubBar = document.getElementById("adminSubBar");
@@ -509,6 +555,7 @@ class App {
     const instructorView = document.getElementById("viewInstructor");
     const usersView = document.getElementById("viewUsers");
     const docsView = document.getElementById("viewDocs");
+    const monitoringView = document.getElementById("viewMonitoring");
 
     // Hide all
     if (catalogView) catalogView.classList.add("hidden");
@@ -520,6 +567,7 @@ class App {
     if (instructorView) instructorView.classList.add("hidden");
     if (usersView) usersView.classList.add("hidden");
     if (docsView) docsView.classList.add("hidden");
+    if (monitoringView) monitoringView.classList.add("hidden");
 
     this.updateHeaderProfile();
 
@@ -550,6 +598,9 @@ class App {
     } else if (this.currentView === "docs") {
       if (docsView) docsView.classList.remove("hidden");
       if (window.docsManager) window.docsManager.render();
+    } else if (this.currentView === "monitoring") {
+      if (monitoringView) monitoringView.classList.remove("hidden");
+      if (window.monitoringManager) window.monitoringManager.render();
     }
   }
 
@@ -644,7 +695,7 @@ class App {
       if (adminSubBar) adminSubBar.classList.add("hidden");
 
       // Redirect if on any restricted admin or instructor view
-      if (["dashboard", "reports", "instructor", "users", "docs"].includes(this.currentView)) {
+      if (["dashboard", "reports", "instructor", "users", "docs", "monitoring"].includes(this.currentView)) {
         this.navigate("catalog");
       }
     }
@@ -2104,7 +2155,15 @@ class App {
             class="px-3.5 py-2.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 font-bold text-xs border border-indigo-500/40 transition flex items-center space-x-1.5 cursor-pointer"
             title="Open Enterprise Technical Dossier, VAPT Penetration Results & Architecture Docs"
           >
-            <span>📚 Product Docs & VAPT</span>
+            <span>📚 Product Docs</span>
+          </button>
+          <button 
+            onclick="window.app.navigate('monitoring')" 
+            class="px-3.5 py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 font-bold text-xs border border-emerald-500/40 transition flex items-center space-x-1.5 cursor-pointer"
+            title="Open Live Operations Radar, Concurrency & System Load Monitoring"
+          >
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Live Monitoring</span>
           </button>
         </div>
       </div>
