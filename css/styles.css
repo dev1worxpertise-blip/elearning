@@ -234,8 +234,12 @@ body {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
-/* Print Styles for Certificate */
+/* Print Styles for Certificate & Enterprise Documentation */
 @media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
   body * {
     visibility: hidden;
   }
@@ -252,6 +256,26 @@ body {
     margin: 0;
     padding: 0;
     background: transparent;
+  }
+  #viewDocs:not(.hidden), #viewDocs:not(.hidden) * {
+    visibility: visible;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  #viewDocs:not(.hidden) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  #viewDocs article {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: none !important;
   }
   .no-print {
     display: none !important;

@@ -425,7 +425,7 @@ class App {
     const role = (user.role || 'student').toLowerCase();
 
     // Route guards based on persona role
-    if (role === "student" && ["dashboard", "reports", "instructor", "users"].includes(viewName)) {
+    if (role === "student" && ["dashboard", "reports", "instructor", "users", "docs"].includes(viewName)) {
       this.showToast("🔒 Restricted: This area requires Instructor or Administrator access.", "warning");
       viewName = "catalog";
     } else if (role === "instructor" && ["users", "dashboard"].includes(viewName)) {
@@ -435,7 +435,7 @@ class App {
 
     this.currentView = viewName;
 
-    const isAdminView = ["dashboard", "reports", "instructor", "users"].includes(viewName);
+    const isAdminView = ["dashboard", "reports", "instructor", "users", "docs"].includes(viewName);
 
     // Show/hide contextual Admin Sub-Bar (only for admin role)
     const adminSubBar = document.getElementById("adminSubBar");
@@ -508,6 +508,7 @@ class App {
     const certificatesView = document.getElementById("viewCertificates");
     const instructorView = document.getElementById("viewInstructor");
     const usersView = document.getElementById("viewUsers");
+    const docsView = document.getElementById("viewDocs");
 
     // Hide all
     if (catalogView) catalogView.classList.add("hidden");
@@ -518,6 +519,7 @@ class App {
     if (certificatesView) certificatesView.classList.add("hidden");
     if (instructorView) instructorView.classList.add("hidden");
     if (usersView) usersView.classList.add("hidden");
+    if (docsView) docsView.classList.add("hidden");
 
     this.updateHeaderProfile();
 
@@ -545,6 +547,9 @@ class App {
     } else if (this.currentView === "users") {
       if (usersView) usersView.classList.remove("hidden");
       if (window.userManager) window.userManager.render();
+    } else if (this.currentView === "docs") {
+      if (docsView) docsView.classList.remove("hidden");
+      if (window.docsManager) window.docsManager.render();
     }
   }
 
@@ -639,7 +644,7 @@ class App {
       if (adminSubBar) adminSubBar.classList.add("hidden");
 
       // Redirect if on any restricted admin or instructor view
-      if (["dashboard", "reports", "instructor", "users"].includes(this.currentView)) {
+      if (["dashboard", "reports", "instructor", "users", "docs"].includes(this.currentView)) {
         this.navigate("catalog");
       }
     }
@@ -2093,6 +2098,13 @@ class App {
             class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition cursor-pointer"
           >
             All Reports →
+          </button>
+          <button 
+            onclick="window.app.navigate('docs')" 
+            class="px-3.5 py-2.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 font-bold text-xs border border-indigo-500/40 transition flex items-center space-x-1.5 cursor-pointer"
+            title="Open Enterprise Technical Dossier, VAPT Penetration Results & Architecture Docs"
+          >
+            <span>📚 Product Docs & VAPT</span>
           </button>
         </div>
       </div>
