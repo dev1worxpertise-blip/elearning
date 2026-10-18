@@ -513,10 +513,10 @@ class ApiService {
     return res.json();
   }
 
-  async getAiPrompts(moduleId = 'mod-1', language = 'en') {
-    const res = await fetch(`${API_BASE_URL}/enterprise/ai/prompts/${moduleId}?lang=${encodeURIComponent(language)}`, {
-      headers: this.getHeaders(),
-    });
+  async getAiPrompts(moduleId = 'mod-1', language = 'en', programId = null) {
+    let url = `${API_BASE_URL}/enterprise/ai/prompts/${moduleId}?lang=${encodeURIComponent(language)}`;
+    if (programId) url += `&programId=${encodeURIComponent(programId)}`;
+    const res = await fetch(url, { headers: this.getHeaders() });
     return res.json();
   }
 }

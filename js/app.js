@@ -1037,6 +1037,16 @@ class App {
       }
     }
 
+    // Dedicated Statutory POSH Banner (Shown ONLY for POSH compliance course)
+    const poshBanner = document.getElementById("poshClassroomBanner");
+    if (poshBanner) {
+      if (this.activeProgram && this.activeProgram.id === 'prog-posh-compliance') {
+        poshBanner.classList.remove("hidden");
+      } else {
+        poshBanner.classList.add("hidden");
+      }
+    }
+
     // Render Lesson Details Tabs
     const lessonDescription = document.getElementById("lessonDescription");
     if (lessonDescription) {

@@ -6,7 +6,12 @@
  * 1. Embedded Classroom Tab Workspace (Tab 5 in video learning view)
  * 2. Slide-Over Interactive AI Drawer (accessible anytime during video playback)
  * 3. Floating Quick-Access Launcher button
- * 4. Instant 2-line concise syllabus explanations with statutory citations & takeaways
+ * 4. Multi-Course aware contextual explanations for:
+ *    - Full-Stack Web Development (React, Node, DB)
+ *    - Artificial Intelligence & LLMs (Transformers, RAG, Embeddings)
+ *    - Enterprise Cybersecurity & Threat Defense (OWASP, Zero Trust)
+ *    - POSH Workplace Compliance (Strictly isolated to POSH program)
+ *    - Any custom course created dynamically from backend
  * 5. Multilingual Vernacular support (English, Hindi, Hinglish)
  * 6. Web Speech API Voice Read-Aloud ("Wow Factor" audio explanation)
  * 7. 1-Click suggested prompt chips tailored to current lesson module
@@ -23,8 +28,165 @@ class AiTutorController {
     this.suggestedPrompts = [];
     this.activeModuleId = null;
 
-    // Client-side fallback knowledge base for 100% fail-safe offline demos
+    // Multi-course client-side fallback knowledge base
     this.fallbackKnowledge = {
+      // 1. Full-Stack Web Development
+      fullstack: [
+        {
+          keywords: ["state", "props", "react", "farak", "difference", "antar"],
+          en: {
+            answer: "Props are read-only parameters passed down from parent to child components, whereas State is internal, mutable component memory managed via useState that triggers re-rendering on update.",
+            takeaway: "Props flow downwards (unidirectional); state is private and managed locally inside the component.",
+            source: "React 18 Architecture • State & Props"
+          },
+          hi: {
+            answer: "Props पैरेंट घटक से चाइल्ड को भेजा जाने वाला केवल-पठनीय डेटा है, जबकि State घटक की अपनी आंतरिक मेमोरी है जो useState के जरिए बदलने पर UI को दोबारा रेंडर करती है।",
+            takeaway: "Props बाहर से आते हैं; State घटक के अंदर निजी तौर पर प्रबंधित होती है।",
+            source: "रिएक्ट 18 आर्किटेक्चर • स्टेट और प्रॉप्स प्रबंधन"
+          },
+          hinglish: {
+            answer: "Props parent component se child ko pass hone wala read-only data hai, jabki State component ka apna internal data hota hai jo useState se update hone par UI ko re-render karta hai.",
+            takeaway: "Props bahar se aate hain, state component ke andar manage hoti hai.",
+            source: "React 18 Architecture • State Management"
+          }
+        },
+        {
+          keywords: ["useeffect", "lifecycle", "cleanup", "dependency", "mount"],
+          en: {
+            answer: "useEffect executes side effects (data fetching, subscriptions) after rendering. The dependency array controls when it re-runs, and a returned function handles cleanup on component unmount.",
+            takeaway: "An empty array [] runs once on mount; omitting the array runs on every single render.",
+            source: "React 18 Hooks Specifications • useEffect"
+          },
+          hi: {
+            answer: "useEffect रेंडरिंग के बाद साइड इफेक्ट्स (API कॉल, इवेंट लिसनर) निष्पादित करता है। निर्भरता ऐरे तय करता है कि प्रभाव कब दोबारा चलेगा, और रिटर्न फ़ंक्शन अनमाउंट पर सफाई करता है।",
+            takeaway: "खाली ऐरे [] केवल माउंट पर एक बार चलता है; ऐरे न देने पर यह हर रेंडर के बाद चलता है।",
+            source: "रिएक्ट 18 हुक विनिर्देश • useEffect"
+          },
+          hinglish: {
+            answer: "useEffect render ke baad side effects (API calls, subscriptions) run karta hai. Dependency array batata hai kab rerun hoga, aur cleanup function unmount par clean karta hai.",
+            takeaway: "Empty array [] sirf ek baar mount par chalta hai.",
+            source: "React 18 Hooks Specifications • useEffect"
+          }
+        },
+        {
+          keywords: ["sql", "nosql", "postgres", "mongodb", "relational", "database"],
+          en: {
+            answer: "SQL databases (like PostgreSQL) use relational tables with strict ACID consistency, ideal for transactional data. NoSQL (like MongoDB) offers flexible, document-based schemas suitable for rapid schema evolution.",
+            takeaway: "Use SQL for structured business transactions and NoSQL for polymorphic, unstructured data.",
+            source: "Database Engineering • Relational vs Document Stores"
+          },
+          hi: {
+            answer: "SQL डेटाबेस (जैसे PostgreSQL) ACID नियमों के साथ संरचित तालिकाओं का उपयोग करते हैं, जो लेनदेन के लिए सर्वोत्तम हैं। NoSQL (जैसे MongoDB) लचीले, बिना स्कीमा वाले दस्तावेज़ प्रदान करता है।",
+            takeaway: "वित्तीय व उद्यम डेटा के लिए SQL और अनसंरचित डेटा के लिए NoSQL चुनें।",
+            source: "डेटाबेस इंजीनियरिंग • रिलेशनल बनाम डॉक्युमेंट डेटाबेस"
+          },
+          hinglish: {
+            answer: "SQL database (jaise PostgreSQL) strict relational tables aur ACID transactions deta hai, jabki NoSQL (jaise MongoDB) flexible document-based structure deta hai jo rapid scaling ke liye suitable hai.",
+            takeaway: "Structured aur financial data ke liye SQL use karein, dynamic JSON data ke liye NoSQL.",
+            source: "Database Engineering • SQL vs NoSQL"
+          }
+        }
+      ],
+
+      // 2. Artificial Intelligence & LLMs
+      ai_ml: [
+        {
+          keywords: ["fine tuning", "rag", "retrieval", "farak", "difference", "vector"],
+          en: {
+            answer: "RAG retrieves external factual knowledge from a vector database at query time to ground answers, whereas Fine-Tuning updates the model's neural network weights to learn specific styles, formats, or domain tasks.",
+            takeaway: "Use RAG for dynamic, private enterprise documents; use Fine-Tuning for specialized vocabulary or formatting.",
+            source: "Generative AI Systems Architecture • RAG vs Fine-Tuning"
+          },
+          hi: {
+            answer: "RAG (Retrieval-Augmented Generation) वास्तविक समय में वेक्टर डेटाबेस से कंपनी के दस्तावेज़ खोजकर सटीक उत्तर देता है, जबकि Fine-Tuning में मॉडल के न्यूरल वेट्स को नए डेटा पर प्रशिक्षित किया जाता है।",
+            takeaway: "निजी व लगातार बदलने वाले डेटा के लिए RAG और विशिष्ट स्टाइल या व्याकरण के लिए Fine-Tuning चुनें।",
+            source: "जेनेरेटिव AI आर्किटेक्चर • RAG बनाम फाइन-ट्यूनिंग"
+          },
+          hinglish: {
+            answer: "RAG query ke time vector database se relevant company documents retrieve karke accurate answer deta hai, jabki Fine-Tuning me model ke internal weights ko update karke specific style ya domain sikhaya jaata hai.",
+            takeaway: "Knowledge update ke liye RAG best hai, behavior aur formatting sikhane ke liye Fine-Tuning.",
+            source: "Generative AI Systems Architecture • RAG vs Fine-Tuning"
+          }
+        },
+        {
+          keywords: ["transformer", "attention", "self attention", "bert", "gpt"],
+          en: {
+            answer: "The Transformer architecture replaces sequential RNN recurrence with Multi-Head Self-Attention, computing how every word in a sequence relates to all other words simultaneously in parallel.",
+            takeaway: "Self-attention enables parallel training and captures long-range context across entire documents.",
+            source: "Attention Is All You Need • Vaswani et al."
+          },
+          hi: {
+            answer: "ट्रांसफॉर्मर आर्किटेक्चर पुराने RNN के बजाय सेल्फ-अटेंशन का उपयोग करता है, जिससे वाक्य का प्रत्येक शब्द अन्य सभी शब्दों के साथ एक साथ समानांतर (parallel) रूप से संदर्भ स्थापित करता है।",
+            takeaway: "सेल्फ-अटेंशन लंबी दूरी के संदर्भ को तुरंत समझता है और तेज़ प्रशिक्षण सक्षम करता है।",
+            source: "ट्रांसफॉर्मर न्यूरल नेटवर्क विनिर्देश"
+          },
+          hinglish: {
+            answer: "Transformer architecture Multi-Head Self-Attention ka use karta hai, jisme sentence ke saare words ek sath parallel process hote hain aur unka aapas me relationship calculate hota hai.",
+            takeaway: "Self-attention se model lambe paragraphs ka contextual meaning perfectly samajhta hai.",
+            source: "Vaswani et al. • Transformer Architecture"
+          }
+        },
+        {
+          keywords: ["hallucination", "hallucinate", "temperature", "factual", "grounding"],
+          en: {
+            answer: "LLM Hallucination occurs when a model generates plausible-sounding but factually incorrect statements. Mitigation requires RAG grounding, lowering temperature (e.g. 0.0 - 0.2), and system prompt guardrails.",
+            takeaway: "Ground LLMs with authoritative context to eliminate hallucinations in production.",
+            source: "Enterprise LLM Reliability & Guardrails"
+          },
+          hi: {
+            answer: "AI मॉडल में Hallucination तब होता है जब मॉडल सुनने में सही लगने वाले लेकिन पूरी तरह काल्पनिक या गलत तथ्य पेश करता है। इसे RAG, कम तापमान (Temperature) और सख्त प्रॉम्प्ट से रोका जाता है।",
+            takeaway: "विश्वसनीय संदर्भ और निम्न टेम्परेचर उत्पादन में मतिभ्रम को शून्य करते हैं।",
+            source: "उद्यम LLM विश्वसनीयता एवं सुरक्षा नियम"
+          },
+          hinglish: {
+            answer: "LLM Hallucination ka matlab hai jab AI confidently galat ya fake facts generate kar deta hai. Isko rokne ke liye RAG context grounding, low temperature aur guardrails use kiye jaate hain.",
+            takeaway: "Verified documents ke context ke sath prompt dene se hallucination eliminate hota hai.",
+            source: "Enterprise LLM Reliability & Guardrails"
+          }
+        }
+      ],
+
+      // 3. Enterprise Cybersecurity & Threat Defense
+      cybersecurity: [
+        {
+          keywords: ["sql injection", "sqli", "prepared statement", "parameterized", "injection"],
+          en: {
+            answer: "SQL Injection occurs when untrusted user input is directly concatenated into SQL queries. Defense requires using Parameterized Queries (Prepared Statements) where input is treated strictly as data, never code.",
+            takeaway: "Never concatenate raw strings into SQL queries; always bind parameters ($1, $2).",
+            source: "OWASP Top 10 • A03:2021-Injection Defense"
+          },
+          hi: {
+            answer: "SQL इंजेक्शन तब होता है जब उपयोगकर्ता के इनपुट को सीधे डेटाबेस क्वेरी में जोड़ दिया जाता है। इससे बचाव के लिए पैरामीटरयुक्त प्रश्नों (Prepared Statements) का उपयोग अनिवार्य है।",
+            takeaway: "SQL स्ट्रिंग में कच्चा इनपुट कभी न जोड़ें; हमेशा $1, $2 जैसे पैरामीटर बाइंड करें।",
+            source: "OWASP टॉप 10 • इंजेक्शन रोकथाम दिशानिर्देश"
+          },
+          hinglish: {
+            answer: "SQL Injection tab hota hai jab attacker input field me malicious SQL code daal kar database hack karta hai. Iska 100% defense Parameterized Queries (Prepared Statements) use karna hai.",
+            takeaway: "Kabhie bhi user input ko SQL string ke sath direct jodna (+ ya concat) nahi chahiye.",
+            source: "OWASP Top 10 • A03 Injection Defense"
+          }
+        },
+        {
+          keywords: ["zero trust", "never trust", "verify", "perimeter"],
+          en: {
+            answer: "Zero Trust operates on the principle of 'Never Trust, Always Verify'. It assumes threats exist both outside and inside the corporate perimeter, requiring strict least-privilege access and continuous authentication.",
+            takeaway: "Network location (inside VPN) no longer implies automatic trust; verify identity and device health continuously.",
+            source: "NIST SP 800-207 • Zero Trust Architecture"
+          },
+          hi: {
+            answer: "जीरो ट्रस्ट 'कभी भरोसा न करें, हमेशा सत्यापित करें' के सिद्धांत पर काम करता है। यह मानता है कि खतरा नेटवर्क के अंदर और बाहर दोनों जगह मौजूद है, इसलिए न्यूनतम विशेषाधिकार अनिवार्य हैं।",
+            takeaway: "VPN के अंदर होना भरोसे की गारंटी नहीं है; प्रत्येक अनुरोध पर पहचान सत्यापित करें।",
+            source: "NIST SP 800-207 • जीरो ट्रस्ट सुरक्षा रूपरेखा"
+          },
+          hinglish: {
+            answer: "Zero Trust ka core rule hai 'Never Trust, Always Verify'. Ye assume karta hai ki network ke andar bhi threat ho sakta hai, isliye har request par multi-factor authentication aur least-privilege access compulsory hota hai.",
+            takeaway: "Office network ya VPN par hone ka matlab ye nahi ki sab allow ho; identity verification har step par hoti hai.",
+            source: "NIST SP 800-207 • Zero Trust Architecture"
+          }
+        }
+      ],
+
+      // 4. POSH Workplace Compliance (Strictly Isolated to POSH course)
       posh: [
         {
           keywords: ["quid pro quo", "hostile", "farak", "difference", "antar", "sexual favor", "promotion"],
@@ -45,7 +207,7 @@ class AiTutorController {
           }
         },
         {
-          keywords: ["extended workplace", "workplace", "boundary", "remote", "zoom", "slack", "wfh", "cab", "travel", "karyasthal"],
+          keywords: ["extended workplace", "workplace", "boundary", "remote", "zoom", "slack", "wfh", "cab"],
           en: {
             answer: "Under POSH Section 2(o), 'Workplace' extends beyond physical cubicles to include official cabs, client dinners, corporate offsites, and remote digital communication (Slack, Zoom, WhatsApp).",
             takeaway: "Any location or channel arising out of the course of employment is legally recognized as the workplace.",
@@ -63,25 +225,7 @@ class AiTutorController {
           }
         },
         {
-          keywords: ["intent", "impact", "irada", "prabhav", "joke", "mazaak", "unwelcome", "galat irada"],
-          en: {
-            answer: "Under POSH jurisprudence, the impact on the aggrieved person is primary; claiming 'it was just a harmless joke' or lack of malicious intent does not excuse unwelcome conduct of a sexual nature.",
-            takeaway: "Subjective impact on the recipient is the legal determinant, not the initiator's claimed intent.",
-            source: "Supreme Court Guidelines & POSH Jurisprudence"
-          },
-          hi: {
-            answer: "पॉश नियमों के तहत पीड़ित पर पड़ा प्रभाव प्राथमिक है; यह दावा करना कि 'यह सिर्फ एक मज़ाक था' या दुर्भावनापूर्ण इरादे की कमी अवांछित व्यवहार को सही नहीं ठहराती।",
-            takeaway: "कानून में इरादे से ज़्यादा पीड़ित पर पड़ा प्रभाव कानूनी मानक तय करता है।",
-            source: "सर्वोच्च न्यायालय दिशानिर्देश एवं पॉश न्यायशास्त्र"
-          },
-          hinglish: {
-            answer: "POSH jurisprudence me impact sabse zaroori hai. 'Mera irada bura nahi tha' ya 'ye to bas mazaak tha' bolna unwelcome conduct ko justify nahi karta.",
-            takeaway: "Initiator ki intent se zyada victim par pade impact ko legally judge kiya jaata hai.",
-            source: "Supreme Court Guidelines & POSH Jurisprudence"
-          }
-        },
-        {
-          keywords: ["bystander", "intervention", "4d", "mookdarshak", "witness", "gawah", "madad", "help"],
+          keywords: ["bystander", "intervention", "4d", "mookdarshak", "witness"],
           en: {
             answer: "The 4D Bystander framework provides safe intervention tactics: Direct (address conduct immediately), Distract (change topic or create diversion), Delegate (alert HR/Security), and Delay (check in on colleague afterwards).",
             takeaway: "Active bystanders prevent workplace toxicity through timely, safe interventions.",
@@ -97,23 +241,27 @@ class AiTutorController {
             takeaway: "Khamosh rehne ke bajay safe tareeke se intervene karna POSH compliance ka crucial part hai.",
             source: "Global Workplace Ethics & Prevention Standards"
           }
-        },
+        }
+      ],
+
+      // 5. General / Custom Courses
+      general: [
         {
-          keywords: ["time limit", "samay", "deadline", "90 days", "din", "inquiry", "shikayat", "complaint"],
+          keywords: ["concept", "explain", "samjhao", "help", "summary", "overview"],
           en: {
-            answer: "A formal complaint must be submitted to the Internal Committee within 3 months (90 days) of the incident. The IC must conclude its inquiry within 90 days of receipt and issue its report within 10 days.",
-            takeaway: "Strict statutory timelines protect procedural fairness for both parties.",
-            source: "POSH Act 2013 • Section 9(1) & Section 11(4)"
+            answer: "This module covers core enterprise principles and hands-on competencies designed for professional certification. Review the video key takeaways to prepare for the assessment.",
+            takeaway: "Mastering practical use cases in this lesson guarantees success in the certified exam.",
+            source: "Worxpertise Enterprise Curriculum Specifications"
           },
           hi: {
-            answer: "घटना के 3 महीने (90 दिन) के भीतर आंतरिक समिति (IC) को औपचारिक शिकायत दर्ज करनी होती है। IC को 90 दिनों के भीतर अपनी जांच पूरी करनी चाहिए और 10 दिनों में रिपोर्ट देनी होगी।",
-            takeaway: "सख्त वैधानिक समय-सीमा दोनों पक्षों के लिए प्रक्रियात्मक निष्पक्षता सुनिश्चित करती है।",
-            source: "पॉश अधिनियम 2013 • धारा 9(1) एवं धारा 11(4)"
+            answer: "यह मॉड्यूल पेशेवर प्रमाणन के लिए आवश्यक मुख्य सिद्धांतों और व्यावहारिक दक्षताओं को कवर करता है। मूल्यांकन की तैयारी के लिए वीडियो के मुख्य निष्कर्षों की समीक्षा करें।",
+            takeaway: "इस पाठ के व्यावहारिक उदाहरणों को समझने से परीक्षा में उत्कृष्ट अंक प्राप्त होते हैं।",
+            source: "वर्क्सपर्टीज़ उद्यम प्रशिक्षण पाठ्यक्रम"
           },
           hinglish: {
-            answer: "POSH complaint incident ke 3 months (90 days) ke andar file honi chahiye. Internal Committee ko apni enquiry 90 days ke andar complete karni hoti hai aur report 10 din me submit karni padti hai.",
-            takeaway: "90 days inquiry rule legal compliance aur dono parties ke fair trial ke liye compulsory hai.",
-            source: "POSH Act 2013 • Section 9(1) & Section 11(4)"
+            answer: "Yeh module certification ke core principles aur practical competencies ko cover karta hai. Lesson video ke key takeaways ko review karke assessment ke liye ready rahein.",
+            takeaway: "Practical concepts clear rakhne se final certification exam easily clear ho jata hai.",
+            source: "Worxpertise Enterprise Curriculum Specifications"
           }
         }
       ]
@@ -134,7 +282,7 @@ class AiTutorController {
       }
     });
 
-    console.log("🤖 AI Course Companion & Doubt Resolver Initialized");
+    console.log("🤖 AI Course Companion & Doubt Resolver Initialized (Multi-Course Aware)");
   }
 
   getCurrentLanguage() {
@@ -145,10 +293,13 @@ class AiTutorController {
   }
 
   getCurrentProgramId() {
+    if (window.app && window.app.activeProgram) {
+      return window.app.activeProgram.id;
+    }
     if (window.appState && window.appState.activeProgram) {
       return window.appState.activeProgram.id;
     }
-    return 'prog-posh-compliance';
+    return null;
   }
 
   getCurrentModuleId() {
@@ -225,7 +376,7 @@ class AiTutorController {
             <div>
               <div class="flex items-center space-x-1.5">
                 <h3 class="text-sm font-bold text-white">AI Course Companion</h3>
-                <span class="px-1.5 py-0.5 rounded text-[9px] bg-indigo-500/30 text-indigo-300 font-mono font-bold">GPT-LMS</span>
+                <span class="px-1.5 py-0.5 rounded text-[9px] bg-indigo-500/30 text-indigo-300 font-mono font-bold">WORXPERTISE AI</span>
               </div>
               <p class="text-[11px] text-slate-400">Contextual 2-line syllabus explanations</p>
             </div>
@@ -254,7 +405,7 @@ class AiTutorController {
         <div id="aiDrawerContextBar" class="px-4 py-2 bg-indigo-950/40 border-b border-indigo-900/30 flex items-center justify-between text-[11px]">
           <span class="text-indigo-300 flex items-center space-x-1.5 truncate">
             <span>📚</span>
-            <span id="aiDrawerCourseName" class="font-medium truncate">POSH Workplace Compliance</span>
+            <span id="aiDrawerCourseName" class="font-medium truncate">Worxpertise Academy Tutor</span>
           </span>
           <span id="aiDrawerLangBadge" class="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] text-slate-300 uppercase font-mono font-bold">
             EN
@@ -270,13 +421,13 @@ class AiTutorController {
               <span>Need help understanding this lesson?</span>
             </div>
             <p class="text-slate-300 text-[12px] leading-relaxed">
-              Ask any doubt about the current video lesson or click a suggested prompt below. I'll provide a <strong>crisp 2-line explanation</strong> with exact legal citations.
+              Ask any doubt about the current lesson or click a suggested prompt below. I'll provide a <strong>crisp 2-line explanation</strong> with exact syllabus citations.
             </p>
           </div>
 
           <!-- Suggested Quick Prompts Container -->
           <div class="space-y-2">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Suggested Questions for this Module:</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Suggested Questions for this Course:</span>
             <div id="aiDrawerSuggestedChips" class="flex flex-col space-y-1.5">
               <!-- Dynamically populated chips -->
             </div>
@@ -294,7 +445,7 @@ class AiTutorController {
             <input 
               type="text" 
               id="aiDrawerInput" 
-              placeholder="Type your doubt (e.g. 'Quid Pro Quo vs Hostile?')..." 
+              placeholder="Type your doubt (e.g. 'Props vs State' or 'RAG vs Fine-tuning')..." 
               class="w-full pl-3 pr-20 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
               autocomplete="off"
             />
@@ -387,8 +538,8 @@ class AiTutorController {
     const lang = this.getCurrentLanguage();
 
     if (courseEl) {
-      const prog = (window.appState && window.appState.activeProgram) || { title: "POSH Workplace Compliance" };
-      courseEl.textContent = prog.title || "POSH Workplace Compliance";
+      const prog = (window.app && window.app.activeProgram) || (window.appState && window.appState.activeProgram);
+      courseEl.textContent = prog ? prog.title : "Worxpertise Academy Tutor";
     }
 
     if (langBadge) {
@@ -399,37 +550,100 @@ class AiTutorController {
   async loadSuggestedPrompts() {
     const lang = this.getCurrentLanguage();
     const moduleId = this.getCurrentModuleId();
+    const programId = this.getCurrentProgramId();
 
-    const fallbackPrompts = {
-      en: [
-        "What is the difference between Quid Pro Quo and Hostile Work Environment?",
-        "What is legally included in the Extended Workplace doctrine?",
-        "Does intent matter if behavior is unwelcome?",
-        "How do I use the 4D Bystander Intervention framework?",
-        "What are the statutory inquiry timelines for the Internal Committee?"
-      ],
-      hi: [
-        "क्विड प्रो क्वो और अमित्र कार्य वातावरण में क्या अंतर है?",
-        "विस्तारित कार्यस्थल (Extended Workplace) में कानूनी रूप से क्या शामिल है?",
-        "यदि व्यवहार अवांछित है, तो क्या इरादा मायने रखता है?",
-        "मूकदर्शक हस्तक्षेप के 4D नियम का उपयोग कैसे करें?",
-        "आंतरिक समिति (IC) के लिए वैधानिक जांच समय-सीमा क्या है?"
-      ],
-      hinglish: [
-        "Quid Pro Quo aur Hostile Work Environment me kya farak hai?",
-        "Extended Workplace doctrine me kanooni roop se kya cover hota hai?",
-        "Agar behavior unwelcome hai, to kya 'it was just a joke' bol sakte hain?",
-        "Bystander Intervention ke 4D framework ko kaise apply karein?",
-        "Internal Committee ki inquiry ke liye 90 days ka time limit kya hai?"
-      ]
+    const fallbackPromptsMap = {
+      "prog-fullstack": {
+        en: [
+          "What is the difference between Props and State in React?",
+          "How does useEffect cleanup work on component unmount?",
+          "When should I choose SQL vs NoSQL databases?",
+          "How does Node.js handle async non-blocking I/O?"
+        ],
+        hi: [
+          "रिएक्ट में Props और State में क्या अंतर है?",
+          "useEffect में क्लीनअप फ़ंक्शन कैसे काम करता है?",
+          "SQL और NoSQL डेटाबेस में क्या मुख्य फर्क है?",
+          "Node.js में Async ऑपरेशन कैसे काम करते हैं?"
+        ],
+        hinglish: [
+          "React me Props aur State me kya farak hai?",
+          "useEffect me dependency array kaise kaam karta hai?",
+          "SQL vs NoSQL: kab kaunsa database use karein?",
+          "Node.js event loop non-blocking I/O kaise handle karta hai?"
+        ]
+      },
+      "prog-ai-ml": {
+        en: [
+          "What is the difference between Fine-tuning and RAG?",
+          "How does Self-Attention work in Transformers?",
+          "What are Vector Embeddings and Semantic Search?",
+          "How to mitigate Large Language Model hallucinations?"
+        ],
+        hi: [
+          "Fine-tuning और RAG में क्या मुख्य अंतर है?",
+          "ट्रांसफॉर्मर में Self-Attention कैसे काम करता है?",
+          "वेक्टर एम्बेडिंग और सिमेंटिक सर्च क्या है?",
+          "AI मॉडल में Hallucination कैसे कम करें?"
+        ],
+        hinglish: [
+          "Fine-tuning aur RAG me kya farak hai?",
+          "Transformers me Self-Attention mechanism kaise kaam karta hai?",
+          "Vector Embeddings aur Semantic Search kya hota hai?",
+          "LLM hallucination ko kaise control karein?"
+        ]
+      },
+      "prog-cybersecurity": {
+        en: [
+          "How do Parameterized Queries prevent SQL Injection?",
+          "What is Zero Trust Architecture ('Never Trust, Always Verify')?",
+          "How do Content Security Policies (CSP) mitigate XSS?",
+          "Why is bcrypt hashing required for passwords?"
+        ],
+        hi: [
+          "SQL इंजेक्शन से बचाव के लिए क्या करें?",
+          "Zero Trust सुरक्षा आर्किटेक्चर क्या है?",
+          "XSS हमलों को कैसे रोका जाए?",
+          "पासवर्ड के लिए bcrypt हैशिंग क्यों आवश्यक है?"
+        ],
+        hinglish: [
+          "Parameterized queries se SQL Injection kaise prevent hota hai?",
+          "Zero Trust Architecture ka matlab kya hai?",
+          "XSS attacks se web app ko kaise bachayein?",
+          "Passwords ke liye bcrypt hashing kyu compulsory hai?"
+        ]
+      },
+      "prog-posh-compliance": {
+        en: [
+          "What is the difference between Quid Pro Quo and Hostile Work Environment?",
+          "What is legally included in the Extended Workplace doctrine?",
+          "Does intent matter if behavior is unwelcome?",
+          "How do I use the 4D Bystander Intervention framework?"
+        ],
+        hi: [
+          "क्विड प्रो क्वो और अमित्र कार्य वातावरण में क्या अंतर है?",
+          "विस्तारित कार्यस्थल (Extended Workplace) में कानूनी रूप से क्या शामिल है?",
+          "यदि व्यवहार अवांछित है, तो क्या इरादा मायने रखता है?",
+          "मूकदर्शक हस्तक्षेप के 4D नियम का उपयोग कैसे करें?"
+        ],
+        hinglish: [
+          "Quid Pro Quo aur Hostile Work Environment me kya farak hai?",
+          "Extended Workplace doctrine me kanooni roop se kya cover hota hai?",
+          "Agar behavior unwelcome hai, to kya 'it was just a joke' bol sakte hain?",
+          "Bystander Intervention ke 4D framework ko kaise apply karein?"
+        ]
+      }
     };
 
-    let prompts = fallbackPrompts[lang] || fallbackPrompts.en;
+    // Default to active course, or fullstack if general
+    const effectiveProg = programId || "prog-fullstack";
+    const progData = fallbackPromptsMap[effectiveProg] || fallbackPromptsMap["prog-fullstack"];
+    let prompts = progData[lang] || progData.en;
 
     // Try backend if online
     if (window.apiService && window.apiService.isBackendOnline) {
       try {
-        const res = await window.apiService.getAiPrompts(moduleId, lang);
+        const res = await window.apiService.getAiPrompts(moduleId, lang, effectiveProg);
         if (res && res.success && Array.isArray(res.prompts) && res.prompts.length > 0) {
           prompts = res.prompts;
         }
@@ -543,29 +757,55 @@ class AiTutorController {
 
   resolveLocally(question, lang) {
     const q = question.toLowerCase();
-    const items = this.fallbackKnowledge.posh;
+    const programId = this.getCurrentProgramId();
 
+    // Route knowledge category strictly according to active program
+    let category = 'fullstack';
+    if (programId === 'prog-posh-compliance') category = 'posh';
+    else if (programId === 'prog-ai-ml') category = 'ai_ml';
+    else if (programId === 'prog-cybersecurity') category = 'cybersecurity';
+    else if (programId === 'prog-fullstack') category = 'fullstack';
+    else category = 'general';
+
+    const items = this.fallbackKnowledge[category] || this.fallbackKnowledge.general;
     let matched = items.find(item => item.keywords.some(k => q.includes(k)));
 
     if (!matched) {
-      matched = items[0]; // fallback to quid pro quo vs hostile
+      matched = items[0];
     }
 
-    const content = matched[lang] || matched.en;
+    const content = matched[lang] || matched.hinglish || matched.en;
+
+    const followupsMap = {
+      posh: [
+        lang === 'hi' ? "विस्तारित कार्यस्थल (Extended Workplace) क्या है?" : "What is the Extended Workplace doctrine?",
+        lang === 'hi' ? "मूकदर्शक हस्तक्षेप का 4D नियम क्या है?" : "Explain the 4D Bystander Intervention framework."
+      ],
+      fullstack: [
+        lang === 'hi' ? "रिएक्ट में Props और State में क्या अंतर है?" : "What is the difference between Props and State in React?",
+        lang === 'hi' ? "SQL और NoSQL में क्या फर्क है?" : "When should I choose SQL vs NoSQL?"
+      ],
+      ai_ml: [
+        lang === 'hi' ? "Fine-tuning और RAG में क्या अंतर है?" : "What is the difference between Fine-tuning and RAG?",
+        lang === 'hi' ? "ट्रांसफॉर्मर में Self-Attention कैसे काम करता है?" : "How does Self-Attention work in Transformers?"
+      ],
+      cybersecurity: [
+        lang === 'hi' ? "SQL इंजेक्शन से बचाव के लिए क्या करें?" : "How do Parameterized Queries prevent SQL Injection?",
+        lang === 'hi' ? "Zero Trust आर्किटेक्चर क्या है?" : "What is Zero Trust Architecture ('Never Trust, Always Verify')?"
+      ],
+      general: [
+        "Explain the key architectural takeaway of this lesson",
+        "What are common pitfalls to avoid in this module?"
+      ]
+    };
+
     return {
       success: true,
       question,
       answer: content.answer,
       takeaway: content.takeaway,
       source: content.source,
-      suggestedFollowups: [
-        lang === 'hi' ? "कार्यस्थल में आंतरिक समिति (IC) का गठन कैसे होता है?" :
-        lang === 'hinglish' ? "Internal Committee (IC) ka composition kaise decide hota hai?" :
-        "How is the Internal Committee (IC) officially composed?",
-        lang === 'hi' ? "कर्मचारी के लिए मूकदर्शक हस्तक्षेप के नियम क्या हैं?" :
-        lang === 'hinglish' ? "Bystander intervention ke best practices kya hain?" :
-        "What are the best practices for bystander intervention?"
-      ]
+      suggestedFollowups: followupsMap[category] || followupsMap.general
     };
   }
 
@@ -578,7 +818,7 @@ class AiTutorController {
         <div class="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center text-xs shrink-0">🤖</div>
         <div class="space-y-1.5 flex-1">
           <div class="flex items-center space-x-2">
-            <span class="font-bold text-indigo-300">AI Tutor is searching course syllabus...</span>
+            <span class="font-bold text-indigo-300">AI Tutor is analyzing curriculum context...</span>
           </div>
           <div class="h-2 bg-indigo-800/50 rounded w-3/4"></div>
           <div class="h-2 bg-indigo-800/40 rounded w-1/2"></div>
@@ -633,7 +873,7 @@ class AiTutorController {
               <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-indigo-900/40 text-[10px]">
                 <span class="text-slate-400 font-mono flex items-center space-x-1">
                   <span>📖</span>
-                  <span>${this.escapeHtml(msg.source || 'Course Curriculum')}</span>
+                  <span>${this.escapeHtml(msg.source || 'Curriculum Standards')}</span>
                 </span>
 
                 <div class="flex items-center space-x-1.5">
@@ -775,7 +1015,7 @@ class AiTutorController {
     const container = document.getElementById('tabContentAi');
     if (!container) return;
 
-    const prog = (window.appState && window.appState.activeProgram) || { title: "POSH Workplace Compliance" };
+    const prog = (window.app && window.app.activeProgram) || (window.appState && window.appState.activeProgram) || { title: "Course Curriculum" };
     const lang = this.getCurrentLanguage();
 
     container.innerHTML = `
@@ -821,7 +1061,7 @@ class AiTutorController {
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center space-x-1.5">
               <span>⚡</span>
-              <span>1-Click Suggested Questions for this Video Lesson:</span>
+              <span>1-Click Suggested Questions for this Lesson:</span>
             </span>
             <span class="text-[11px] text-slate-500">Click any chip for instant answer</span>
           </div>
@@ -844,7 +1084,7 @@ class AiTutorController {
               <input 
                 type="text" 
                 id="aiClassroomInput" 
-                placeholder="Ask any doubt about this video lesson (e.g. 'What is Quid Pro Quo?')..." 
+                placeholder="Ask any doubt about this lesson (e.g. 'Explain this concept in 2 lines')..." 
                 class="w-full pl-4 pr-24 py-3 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
                 autocomplete="off"
               />

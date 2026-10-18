@@ -356,19 +356,6 @@
             <span class="hidden xl:inline 2xl:hidden whitespace-nowrap text-xs">Verify</span>
           </button>
 
-          <!-- POSH IC Grievance Helpdesk Button -->
-          <button 
-            id="btnOpenPoshHelpdesk" 
-            type="button"
-            onclick="window.poshHelpdeskManager.openHelpdeskModal()"
-            class="flex items-center space-x-1 px-2.5 py-1 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-200 hover:text-white border border-rose-500/40 text-xs font-semibold transition cursor-pointer shrink-0 shadow-sm"
-            title="POSH Act Section 19: Confidential & Anonymous Internal Committee (IC) Grievance Box"
-          >
-            <span class="text-rose-400 text-xs">⚖️</span>
-            <span data-i18n="posh_helpdesk" class="hidden 2xl:inline whitespace-nowrap text-xs">POSH IC Helpdesk</span>
-            <span class="inline 2xl:hidden whitespace-nowrap text-xs">IC Box</span>
-          </button>
-
           <!-- Gamification XP & Streak Pill -->
           <div 
             id="headerGamificationPill" 
@@ -630,6 +617,29 @@
         <!-- Program Full Completion / Certificate Available Banner -->
         <div id="programCertificateBanner" class="hidden">
           <!-- Injected dynamically -->
+        </div>
+
+        <!-- Dedicated POSH Statutory Grievance & IC Banner (Only shown when studying POSH course) -->
+        <div id="poshClassroomBanner" class="hidden p-4 rounded-2xl bg-gradient-to-r from-rose-950/70 via-slate-900 to-rose-950/50 border border-rose-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center justify-center text-xl shrink-0">
+              ⚖️
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-bold text-white">POSH Act Section 19 Compliance</span>
+                <span class="px-1.5 py-0.2 rounded text-[9px] bg-rose-500/20 text-rose-300 font-bold uppercase">Confidential Helpdesk</span>
+              </div>
+              <p class="text-[11px] text-slate-300">Need to consult the Internal Committee (IC) or file a confidential grievance? Access the statutory redressal box.</p>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            onclick="window.poshHelpdeskManager.openHelpdeskModal()"
+            class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-white text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer shrink-0 shadow-md shadow-rose-950/40"
+          >
+            <span>🛡️ Open IC Box</span>
+          </button>
         </div>
 
         <!-- Interactive Classroom Workspace Tabs -->
