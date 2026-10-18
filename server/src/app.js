@@ -14,6 +14,7 @@ const certificateRoutes = require('./routes/certificateRoutes');
 const instructorRoutes = require('./routes/instructorRoutes');
 const userRoutes = require('./routes/userRoutes');
 const enterpriseRoutes = require('./routes/enterpriseRoutes');
+const poshRoutes = require('./routes/poshRoutes');
 
 const app = express();
 
@@ -141,6 +142,7 @@ app.use('/api/progress', progressRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/instructor', instructorRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/enterprise/posh', poshRoutes);
 app.use('/api/enterprise', enterpriseRoutes);
 
 // 9. 404 Handler for Unmapped Routes

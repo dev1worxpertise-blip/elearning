@@ -471,7 +471,7 @@ class App {
     const role = (user.role || 'student').toLowerCase();
 
     // Route guards based on persona role
-    if (role === "student" && ["dashboard", "reports", "instructor", "users", "docs", "monitoring"].includes(viewName)) {
+    if (role === "student" && ["dashboard", "reports", "instructor", "users", "docs", "monitoring", "posh"].includes(viewName)) {
       this.showToast("🔒 Restricted: This area requires Instructor or Administrator access.", "warning");
       viewName = "catalog";
     } else if (role === "instructor" && ["users", "dashboard"].includes(viewName)) {
@@ -481,7 +481,7 @@ class App {
 
     this.currentView = viewName;
 
-    const isAdminView = ["dashboard", "reports", "instructor", "users", "docs", "monitoring"].includes(viewName);
+    const isAdminView = ["dashboard", "reports", "instructor", "users", "docs", "monitoring", "posh"].includes(viewName);
 
     // Show/hide contextual Admin Sub-Bar (only for admin role)
     const adminSubBar = document.getElementById("adminSubBar");
@@ -556,6 +556,7 @@ class App {
     const usersView = document.getElementById("viewUsers");
     const docsView = document.getElementById("viewDocs");
     const monitoringView = document.getElementById("viewMonitoring");
+    const poshView = document.getElementById("viewPoshHelpdesk");
 
     // Hide all
     if (catalogView) catalogView.classList.add("hidden");
@@ -568,6 +569,7 @@ class App {
     if (usersView) usersView.classList.add("hidden");
     if (docsView) docsView.classList.add("hidden");
     if (monitoringView) monitoringView.classList.add("hidden");
+    if (poshView) poshView.classList.add("hidden");
 
     this.updateHeaderProfile();
 
@@ -603,6 +605,9 @@ class App {
     } else if (this.currentView === "monitoring") {
       if (monitoringView) monitoringView.classList.remove("hidden");
       if (window.monitoringManager) window.monitoringManager.render();
+    } else if (this.currentView === "posh") {
+      if (poshView) poshView.classList.remove("hidden");
+      if (window.poshHelpdeskManager) window.poshHelpdeskManager.renderAdminPoshHub();
     }
   }
 
