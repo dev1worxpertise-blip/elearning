@@ -308,7 +308,7 @@ class AiTutorController {
             </button>
           </form>
           <div class="flex items-center justify-between text-[10px] text-slate-500 px-1">
-            <span>Powered by LearnPulse Context Engine</span>
+            <span>Powered by Worxpertise LearnPulse Context Engine</span>
             <span>Alt + A to open</span>
           </div>
         </div>
@@ -856,6 +856,10 @@ class AiTutorController {
                 <span>➔</span>
               </button>
             </form>
+            <div class="flex items-center justify-between text-[10px] text-slate-500 px-1 pt-1.5">
+              <span>Powered by Worxpertise LearnPulse Context Engine</span>
+              <span>Instant 2-line syllabus verification</span>
+            </div>
           </div>
         </div>
       </div>
