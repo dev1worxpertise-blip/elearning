@@ -67,21 +67,43 @@ class PoshHelpdeskManager {
                 </span>
               </div>
               <h3 class="text-xl font-black text-white mt-0.5">
-                Internal Committee (IC) Confidential Grievance Desk
+                ${window.i18n ? window.i18n.t('posh_modal_title') : 'Internal Committee (IC) Confidential Grievance Desk'}
               </h3>
               <p class="text-xs text-slate-400 mt-0.5">
-                Strict Section 16 Non-Disclosure Protocol • Anonymous filing enabled with tamper-proof tracking PIN.
+                ${window.i18n ? window.i18n.t('posh_modal_desc') : 'Strict Section 16 Non-Disclosure Protocol • Anonymous filing enabled with tamper-proof tracking PIN.'}
               </p>
             </div>
           </div>
 
-          <button 
-            type="button"
-            onclick="window.poshHelpdeskManager.closeHelpdeskModal()" 
-            class="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/60 hover:bg-slate-800 transition cursor-pointer self-start sm:self-center"
-          >
-            ✕
-          </button>
+          <div class="flex items-center space-x-2 self-start sm:self-center">
+            <!-- Language Quick Switcher inside POSH Modal -->
+            <div class="inline-flex items-center p-1 rounded-xl bg-slate-950 border border-slate-800 space-x-1 shadow-inner">
+              <span class="text-[10px] text-slate-400 font-bold px-1.5 hidden md:inline">🌐 Lang:</span>
+              <button 
+                type="button" 
+                onclick="window.i18n.setLanguage('en')" 
+                class="px-2 py-0.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${window.i18n && window.i18n.getLanguage() === 'en' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}"
+              >English</button>
+              <button 
+                type="button" 
+                onclick="window.i18n.setLanguage('hi')" 
+                class="px-2 py-0.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${window.i18n && window.i18n.getLanguage() === 'hi' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}"
+              >हिंदी</button>
+              <button 
+                type="button" 
+                onclick="window.i18n.setLanguage('hinglish')" 
+                class="px-2 py-0.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${window.i18n && window.i18n.getLanguage() === 'hinglish' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}"
+              >Hinglish</button>
+            </div>
+
+            <button 
+              type="button"
+              onclick="window.poshHelpdeskManager.closeHelpdeskModal()" 
+              class="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/60 hover:bg-slate-800 transition cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         <!-- Navigation Tabs -->
@@ -96,7 +118,7 @@ class PoshHelpdeskManager {
             }"
           >
             <span>📝</span>
-            <span>Lodge Confidential Grievance</span>
+            <span>${window.i18n ? window.i18n.t('posh_tab_lodge') : 'Lodge Confidential Grievance'}</span>
           </button>
 
           <button 
@@ -109,7 +131,7 @@ class PoshHelpdeskManager {
             }"
           >
             <span>🔍</span>
-            <span>Track Existing Grievance</span>
+            <span>${window.i18n ? window.i18n.t('posh_tab_track') : 'Track Docket & IC Findings'}</span>
           </button>
 
           <button 
@@ -122,7 +144,7 @@ class PoshHelpdeskManager {
             }"
           >
             <span>⚖️</span>
-            <span>IC Charter & Legal Rights</span>
+            <span>${window.i18n ? window.i18n.t('posh_tab_charter') : 'IC Charter & Legal Rights'}</span>
           </button>
         </div>
 

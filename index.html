@@ -68,19 +68,19 @@
             data-nav-target="catalog" 
             class="px-2.5 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-[#dd1f36] border-b-2 border-[#dd1f36] hover:text-white cursor-pointer shrink-0 whitespace-nowrap"
           >
-            <span>📚 </span><span class="hidden 2xl:inline">Programs </span><span>Catalog</span>
+            <span>📚 </span><span data-i18n="nav_catalog">Programs</span>
           </button>
           <button 
             data-nav-target="mylearning" 
             class="px-2.5 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-slate-400 hover:text-white cursor-pointer shrink-0 whitespace-nowrap"
           >
-            <span>🎓 </span><span class="hidden 2xl:inline">My </span><span>Learning</span>
+            <span>🎓 </span><span data-i18n="nav_mylearning">My Learning</span>
           </button>
           <button 
             data-nav-target="certificates" 
             class="px-2.5 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1.5 cursor-pointer shrink-0 whitespace-nowrap"
           >
-            <span>🏆 Certificates</span>
+            <span>🏆 </span><span data-i18n="nav_certificates">Certificates</span>
             <span id="headerCertCount" class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-slate-950">0</span>
           </button>
 
@@ -273,6 +273,76 @@
             <span class="text-[10px] text-slate-400 font-semibold inline 2xl:hidden whitespace-nowrap">DB</span>
           </div>
 
+          <!-- Vernacular Multi-Language Switcher (English ↔ Hindi ↔ Hinglish) -->
+          <div class="relative shrink-0" id="langSwitcherDropdown">
+            <button 
+              id="btnLangSwitcher" 
+              type="button" 
+              onclick="window.i18n.toggleDropdown()"
+              class="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition cursor-pointer shadow-sm"
+              title="Vernacular Language: Switch between English, हिंदी, and Hinglish"
+            >
+              <span class="text-xs">🌐</span>
+              <span id="currentLangLabel" class="font-extrabold text-[11px] text-amber-300">EN</span>
+              <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <!-- Dropdown Menu -->
+            <div id="langSwitcherMenu" class="hidden absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl py-2 z-50 divide-y divide-slate-800 backdrop-blur-md">
+              <div class="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                Select Language / भाषा चुनें
+              </div>
+              <div class="py-1">
+                <button 
+                  type="button"
+                  data-lang-option="en"
+                  onclick="window.i18n.setLanguage('en'); window.i18n.closeDropdown();"
+                  class="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 flex items-center justify-between transition cursor-pointer group bg-[#dd1f36]/15 text-[#dd1f36] font-bold"
+                >
+                  <div class="flex items-center space-x-2.5">
+                    <span class="text-base">🇬🇧</span>
+                    <div>
+                      <div class="font-bold text-white group-hover:text-[#dd1f36] transition">English</div>
+                      <div class="text-[10px] text-slate-400">Corporate & Global</div>
+                    </div>
+                  </div>
+                  <span class="lang-check-icon text-emerald-400 text-xs font-bold">✓</span>
+                </button>
+
+                <button 
+                  type="button"
+                  data-lang-option="hi"
+                  onclick="window.i18n.setLanguage('hi'); window.i18n.closeDropdown();"
+                  class="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 flex items-center justify-between transition cursor-pointer group"
+                >
+                  <div class="flex items-center space-x-2.5">
+                    <span class="text-base">🇮🇳</span>
+                    <div>
+                      <div class="font-bold text-white group-hover:text-[#dd1f36] transition">हिंदी (Hindi)</div>
+                      <div class="text-[10px] text-slate-400">देवनागरी (Devanagari)</div>
+                    </div>
+                  </div>
+                  <span class="lang-check-icon text-emerald-400 text-xs font-bold hidden">✓</span>
+                </button>
+
+                <button 
+                  type="button"
+                  data-lang-option="hinglish"
+                  onclick="window.i18n.setLanguage('hinglish'); window.i18n.closeDropdown();"
+                  class="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 flex items-center justify-between transition cursor-pointer group"
+                >
+                  <div class="flex items-center space-x-2.5">
+                    <span class="text-base">🇮🇳</span>
+                    <div>
+                      <div class="font-bold text-white group-hover:text-[#dd1f36] transition">Hinglish</div>
+                      <div class="text-[10px] text-slate-400">Frontline Operations</div>
+                    </div>
+                  </div>
+                  <span class="lang-check-icon text-emerald-400 text-xs font-bold hidden">✓</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Verify Credential Button -->
           <button 
             id="btnOpenVerifyModal" 
@@ -282,7 +352,7 @@
             title="Public Verification Portal: Verify credential authenticity"
           >
             <span class="text-emerald-400 text-xs">🛡️</span>
-            <span class="hidden 2xl:inline whitespace-nowrap text-xs">Verify Credential</span>
+            <span data-i18n="verify_credential" class="hidden 2xl:inline whitespace-nowrap text-xs">Verify Credential</span>
             <span class="hidden xl:inline 2xl:hidden whitespace-nowrap text-xs">Verify</span>
           </button>
 
@@ -295,7 +365,7 @@
             title="POSH Act Section 19: Confidential & Anonymous Internal Committee (IC) Grievance Box"
           >
             <span class="text-rose-400 text-xs">⚖️</span>
-            <span class="hidden 2xl:inline whitespace-nowrap text-xs">POSH IC Helpdesk</span>
+            <span data-i18n="posh_helpdesk" class="hidden 2xl:inline whitespace-nowrap text-xs">POSH IC Helpdesk</span>
             <span class="inline 2xl:hidden whitespace-nowrap text-xs">IC Box</span>
           </button>
 
@@ -2391,6 +2461,7 @@
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="js/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/data.js"></script>
   <script src="js/state.js"></script>
   <script src="js/api.js"></script>

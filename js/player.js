@@ -365,19 +365,19 @@ class VideoPlayerController {
               </div>
               <p class="text-xs text-slate-400 mt-1">
                 ${isWatched 
-                  ? 'Video completed! Take the interactive Q&A assessment to verify your understanding (80% passing grade required).' 
-                  : 'Watch the entire video lesson or click "Instant Complete" above to unlock the required Q&A assessment.'}
+                  ? (window.i18n ? window.i18n.t('lesson_unlocked_quiz') : 'Video completed! Take the interactive Q&A assessment to verify your understanding (80% passing grade required).') 
+                  : (window.i18n ? window.i18n.t('lesson_watch_gate') : 'Watch the entire video lesson or click "Instant Complete" above to unlock the required Q&A assessment.')}
               </p>
             </div>
           </div>
 
           <button 
             id="btnStartQuiz" 
-            type="button"
+            type="button" 
             ${!isWatched ? 'disabled' : ''} 
             class="w-full sm:w-auto px-6 py-3 rounded-2xl font-bold text-sm transition flex items-center justify-center space-x-2 shrink-0 ${isWatched ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-lg shadow-emerald-500/20 btn-unlock-ready' : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'}"
           >
-            <span>${isWatched ? 'Take Post-Video Quiz' : 'Locked (Watch Video)'}</span>
+            <span>${isWatched ? (window.i18n ? window.i18n.t('btn_start_quiz') : 'Take Post-Video Quiz') : (window.i18n ? window.i18n.t('lesson_watch_gate') : 'Locked (Watch Video)')}</span>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
           </button>
         </div>

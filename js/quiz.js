@@ -316,14 +316,43 @@ class QuizController {
         </div>
 
         <!-- Quiz Header Info -->
-        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 gap-3">
           <div>
-            <span class="text-xs uppercase font-bold tracking-wider text-[#dd1f36]">Certified Assessment & Exam</span>
-            <h3 class="text-xl font-bold text-white mt-1">${this.quiz.title}</h3>
+            <span class="text-xs uppercase font-bold tracking-wider text-[#dd1f36]">
+              ${window.i18n ? window.i18n.t('quiz_header_badge') : 'Certified Assessment & Exam'}
+            </span>
+            <h3 class="text-xl font-bold text-white mt-1">
+              ${window.i18n ? window.i18n.getQuizTitle(parentProgram ? parentProgram.id : "", this.currentModule.id, this.quiz.title) : this.quiz.title}
+            </h3>
           </div>
-          <div class="text-right">
-            <span class="text-sm font-semibold text-slate-300">Question ${this.currentIndex + 1} of ${totalQuestions}</span>
-            <div class="text-xs text-amber-400 font-bold">🎯 Pass Threshold: ${passScore}% Marks</div>
+          <div class="flex flex-col sm:items-end space-y-1.5">
+            <!-- Dynamic Vernacular Language Switcher Pills inside Exam -->
+            <div class="inline-flex items-center p-1 rounded-xl bg-slate-950 border border-slate-800 space-x-1 shadow-inner">
+              <span class="text-[10px] text-slate-400 font-bold px-1.5 hidden md:inline">🌐 Lang:</span>
+              <button 
+                type="button" 
+                onclick="window.i18n.setLanguage('en')" 
+                class="px-2 py-0.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${window.i18n && window.i18n.getLanguage() === 'en' ? 'bg-[#dd1f36] text-white shadow-sm' : 'text-slate-400 hover:text-white'}"
+              >English</button>
+              <button 
+                type="button" 
+                onclick="window.i18n.setLanguage('hi')" 
+                class="px-2 py-0.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${window.i18n && window.i18n.getLanguage() === 'hi' ? 'bg-[#dd1f36] text-white shadow-sm' : 'text-slate-400 hover:text-white'}"
+              >हिंदी</button>
+              <button 
+                type="button" 
+                onclick="window.i18n.setLanguage('hinglish')" 
+                class="px-2 py-0.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${window.i18n && window.i18n.getLanguage() === 'hinglish' ? 'bg-[#dd1f36] text-white shadow-sm' : 'text-slate-400 hover:text-white'}"
+              >Hinglish</button>
+            </div>
+            <div class="flex items-center space-x-3 text-xs">
+              <span class="font-semibold text-slate-300">
+                ${window.i18n ? window.i18n.t('quiz_question_of') : 'Question'} ${this.currentIndex + 1} ${window.i18n ? window.i18n.t('quiz_of') : 'of'} ${totalQuestions}
+              </span>
+              <span class="text-amber-400 font-bold">
+                🎯 ${window.i18n ? window.i18n.t('quiz_pass_threshold') : 'Pass Threshold'}: ${passScore}%
+              </span>
+            </div>
           </div>
         </div>
 
@@ -333,38 +362,43 @@ class QuizController {
         </div>
 
         <!-- Question Card -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 select-none">
-          <h4 class="text-lg font-semibold text-slate-100 leading-relaxed mb-6">
-            ${this.currentIndex + 1}. ${question.question}
-          </h4>
+        ${(() => {
+          const locQ = window.i18n ? window.i18n.getLocalizedQuestion(parentProgram ? parentProgram.id : "", this.currentModule.id, question) : question;
+          return `
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 select-none">
+              <h4 class="text-lg font-semibold text-slate-100 leading-relaxed mb-6">
+                ${this.currentIndex + 1}. ${locQ.question}
+              </h4>
 
-          <!-- Shuffled Options List -->
-          <div class="space-y-3">
-            ${question.shuffledOptions.map((optObj, sIdx) => {
-              const isSelected = selectedOriginalOption === optObj.originalIndex;
-              return `
-                <div 
-                  class="quiz-option p-4 rounded-xl flex items-center justify-between cursor-pointer border ${
-                    isSelected ? 'border-[#dd1f36] bg-[#dd1f36]/10 text-white' : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:border-slate-700'
-                  } transition" 
-                  onclick="window.quizController.selectAnswer('${question.id}', ${optObj.originalIndex})"
-                >
-                  <div class="flex items-center space-x-3.5">
-                    <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
-                      isSelected ? 'bg-[#dd1f36] text-white' : 'bg-slate-800 text-slate-400 border border-slate-700'
-                    }">
-                      ${String.fromCharCode(65 + sIdx)}
-                    </span>
-                    <span class="text-sm font-medium ${isSelected ? 'text-white font-semibold' : 'text-slate-300'}">${optObj.text}</span>
-                  </div>
-                  <div class="w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? 'border-[#dd1f36] bg-[#dd1f36]' : 'border-slate-700'}">
-                    ${isSelected ? '<span class="w-2 h-2 rounded-full bg-white"></span>' : ''}
-                  </div>
-                </div>
-              `;
-            }).join("")}
-          </div>
-        </div>
+              <!-- Shuffled Options List -->
+              <div class="space-y-3">
+                ${locQ.shuffledOptions.map((optObj, sIdx) => {
+                  const isSelected = selectedOriginalOption === optObj.originalIndex;
+                  return `
+                    <div 
+                      class="quiz-option p-4 rounded-xl flex items-center justify-between cursor-pointer border ${
+                        isSelected ? 'border-[#dd1f36] bg-[#dd1f36]/10 text-white' : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:border-slate-700'
+                      } transition" 
+                      onclick="window.quizController.selectAnswer('${question.id}', ${optObj.originalIndex})"
+                    >
+                      <div class="flex items-center space-x-3.5">
+                        <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
+                          isSelected ? 'bg-[#dd1f36] text-white' : 'bg-slate-800 text-slate-400 border border-slate-700'
+                        }">
+                          ${String.fromCharCode(65 + sIdx)}
+                        </span>
+                        <span class="text-sm font-medium ${isSelected ? 'text-white font-semibold' : 'text-slate-300'}">${optObj.text}</span>
+                      </div>
+                      <div class="w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? 'border-[#dd1f36] bg-[#dd1f36]' : 'border-slate-700'}">
+                        ${isSelected ? '<span class="w-2 h-2 rounded-full bg-white"></span>' : ''}
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            </div>
+          `;
+        })()}
 
         <!-- Navigation Buttons -->
         <div class="flex items-center justify-between pt-2">
@@ -373,7 +407,7 @@ class QuizController {
             class="px-5 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 font-semibold text-sm transition ${this.currentIndex === 0 ? 'opacity-40 cursor-not-allowed' : ''}"
             ${this.currentIndex === 0 ? 'disabled' : ''}
           >
-            ← Previous
+            ← ${window.i18n ? window.i18n.t('btn_prev_question') : 'Previous'}
           </button>
 
           <div class="flex items-center space-x-3">
@@ -382,14 +416,14 @@ class QuizController {
                 onclick="window.quizController.nextQuestion()"
                 class="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm transition"
               >
-                Next →
+                ${window.i18n ? window.i18n.t('btn_next_question') : 'Next'} →
               </button>
             ` : `
               <button 
                 onclick="window.quizController.submitQuiz(false)"
                 class="px-6 py-2.5 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-sm shadow-lg shadow-[#dd1f36]/30 transition transform hover:scale-105"
               >
-                Submit Assessment 🚀
+                ${window.i18n ? window.i18n.t('btn_submit_exam') : 'Submit Assessment'} 🚀
               </button>
             `}
           </div>
@@ -544,6 +578,20 @@ class QuizController {
             ${this.shuffledQuestions.map((q, idx) => {
               const selectedOriginal = this.userAnswers[q.id];
               const isCorrect = selectedOriginal === q.correctAnswer;
+              const parentProgram = window.appState ? window.appState.getProgramForModule(this.currentModule.id) : null;
+              const locQ = window.i18n ? window.i18n.getLocalizedQuestion(parentProgram ? parentProgram.id : "", this.currentModule.id, q) : q;
+
+              // Find localized text for correct and user answers
+              let correctText = q.options[q.correctAnswer];
+              let selectedText = selectedOriginal !== undefined ? q.options[selectedOriginal] : "";
+              if (locQ && locQ.shuffledOptions) {
+                const cOpt = locQ.shuffledOptions.find(o => o.originalIndex === q.correctAnswer);
+                if (cOpt) correctText = cOpt.text;
+                if (selectedOriginal !== undefined) {
+                  const sOpt = locQ.shuffledOptions.find(o => o.originalIndex === selectedOriginal);
+                  if (sOpt) selectedText = sOpt.text;
+                }
+              }
 
               return `
                 <div class="p-5 rounded-2xl border ${isCorrect ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-rose-950/20 border-rose-500/30'}">
@@ -553,9 +601,9 @@ class QuizController {
                         <span class="text-xs font-bold px-2 py-0.5 rounded ${isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">
                           ${isCorrect ? '✓ Correct' : '✕ Incorrect'}
                         </span>
-                        <span class="text-xs text-slate-400 font-semibold">Question ${idx + 1}</span>
+                        <span class="text-xs text-slate-400 font-semibold">${window.i18n ? window.i18n.t('quiz_question_of') : 'Question'} ${idx + 1}</span>
                       </div>
-                      <h5 class="text-base font-semibold text-white mt-1">${q.question}</h5>
+                      <h5 class="text-base font-semibold text-white mt-1">${locQ.question}</h5>
                     </div>
                   </div>
 
@@ -563,16 +611,16 @@ class QuizController {
                   <div class="mt-4 pt-4 border-t border-slate-800/80 space-y-2 text-xs">
                     <p class="text-slate-300">
                       <span class="font-bold text-slate-400">Correct Answer:</span> 
-                      <span class="text-emerald-400 font-semibold">${q.options[q.correctAnswer]}</span>
+                      <span class="text-emerald-400 font-semibold">${correctText}</span>
                     </p>
                     ${!isCorrect && selectedOriginal !== undefined ? `
                       <p class="text-slate-300">
                         <span class="font-bold text-slate-400">Your Selection:</span> 
-                        <span class="text-rose-400 font-semibold">${q.options[selectedOriginal]}</span>
+                        <span class="text-rose-400 font-semibold">${selectedText}</span>
                       </p>
                     ` : ''}
                     <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 leading-relaxed mt-2">
-                      <span class="font-bold text-[#dd1f36]">Explanation:</span> ${q.explanation}
+                      <span class="font-bold text-[#dd1f36]">Explanation:</span> ${locQ.explanation}
                     </div>
                   </div>
                 </div>

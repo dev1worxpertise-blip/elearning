@@ -19,6 +19,11 @@ class App {
       this.activeModule = this.activeProgram.modules[0];
     }
 
+    if (window.i18n) {
+      window.i18n.updateHeaderDropdown();
+      window.i18n.translateDomElements();
+    }
+
     this.bindGlobalEvents();
     this.navigate("catalog");
 
@@ -572,6 +577,7 @@ class App {
     if (poshView) poshView.classList.add("hidden");
 
     this.updateHeaderProfile();
+    if (window.i18n) window.i18n.translateDomElements();
 
     if (this.currentView === "catalog") {
       if (catalogView) catalogView.classList.remove("hidden");
@@ -811,7 +817,7 @@ class App {
             ${hasCert && progress.isComplete ? `
               <div class="absolute bottom-3 right-3">
                 <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500 text-slate-950 flex items-center space-x-1 shadow-lg">
-                  <span>🎓 Certified</span>
+                  <span>🎓 ${window.i18n ? window.i18n.t('card_certified') : 'Certified'}</span>
                 </span>
               </div>
             ` : ''}
@@ -823,24 +829,24 @@ class App {
               <div class="flex items-center space-x-2 text-xs text-slate-400 mb-2">
                 <span>⏱ ${program.duration}</span>
                 <span>•</span>
-                <span>📚 ${program.modules.length} Modules</span>
+                <span>📚 ${program.modules.length} ${window.i18n ? window.i18n.t('card_modules') : 'Modules'}</span>
                 <span>•</span>
-                <span class="text-amber-400 font-bold">🎯 Pass: ${program.passingScore || program.passing_score || 80}%</span>
+                <span class="text-amber-400 font-bold">🎯 ${window.i18n ? window.i18n.t('card_pass') : 'Pass'}: ${program.passingScore || program.passing_score || 80}%</span>
                 <span>•</span>
                 <span>${program.level}</span>
               </div>
 
               <h3 class="text-xl font-bold text-white leading-snug group-hover:text-[#dd1f36] transition">
-                ${program.title}
+                ${window.i18n ? window.i18n.getProgramTitle(program) : program.title}
               </h3>
 
               <p class="text-xs text-slate-400 mt-2 line-clamp-2 leading-relaxed">
-                ${program.tagline}
+                ${window.i18n ? window.i18n.getProgramTagline(program) : program.tagline}
               </p>
 
               <!-- Skills tags -->
               <div class="flex flex-wrap gap-1.5 mt-3">
-                ${program.skills.slice(0, 3).map(skill => `
+                ${(window.i18n ? window.i18n.getProgramSkills(program) : program.skills).slice(0, 3).map(skill => `
                   <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium">
                     ${skill}
                   </span>
@@ -861,7 +867,7 @@ class App {
               ${isEnrolled ? `
                 <div class="space-y-1.5">
                   <div class="flex justify-between text-[11px]">
-                    <span class="text-slate-400">Your Progress</span>
+                    <span class="text-slate-400">${window.i18n ? window.i18n.t('card_progress') : 'Your Progress'}</span>
                     <span class="text-[#dd1f36] font-bold">${progress.percentage}%</span>
                   </div>
                   <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
@@ -877,7 +883,7 @@ class App {
                     onclick="window.app.startProgram('${program.id}')"
                     class="flex-1 py-2.5 px-4 rounded-xl bg-[#dd1f36] hover:bg-[#b81427] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/20 transition flex items-center justify-center space-x-1.5"
                   >
-                    <span>${progress.percentage === 100 ? 'Review Modules' : 'Resume Learning'}</span>
+                    <span>${progress.percentage === 100 ? (window.i18n ? window.i18n.t('btn_review') : 'Review Modules') : (window.i18n ? window.i18n.t('btn_resume') : 'Resume Learning')}</span>
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                   </button>
                   ${hasCert && progress.isComplete ? `
@@ -895,7 +901,7 @@ class App {
                     class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#dd1f36] to-[#9744cc] hover:from-[#b81427] hover:to-[#8235b5] text-white font-bold text-xs shadow-lg shadow-[#dd1f36]/20 transition flex items-center justify-center space-x-1.5"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    <span>Enroll in Program (Free)</span>
+                    <span>${window.i18n ? window.i18n.t('btn_enroll_free') : 'Enroll in Program (Free)'}</span>
                   </button>
                   <button 
                     onclick="window.app.openSyllabusModal('${program.id}')" 
@@ -941,11 +947,11 @@ class App {
     const breadcrumb = document.getElementById("learningBreadcrumb");
     if (breadcrumb) {
       breadcrumb.innerHTML = `
-        <span class="hover:text-white cursor-pointer" onclick="window.app.navigate('catalog')">Programs</span>
+        <span class="hover:text-white cursor-pointer" onclick="window.app.navigate('catalog')">${window.i18n ? window.i18n.t('nav_catalog') : 'Programs'}</span>
         <span class="mx-2">/</span>
-        <span class="text-slate-300 font-semibold">${this.activeProgram.title}</span>
+        <span class="text-slate-300 font-semibold">${window.i18n ? window.i18n.getProgramTitle(this.activeProgram) : this.activeProgram.title}</span>
         <span class="mx-2">/</span>
-        <span class="text-[#dd1f36] font-bold">${this.activeModule.title}</span>
+        <span class="text-[#dd1f36] font-bold">${window.i18n ? window.i18n.getModuleTitle(this.activeProgram.id, this.activeModule) : this.activeModule.title}</span>
       `;
     }
 
@@ -973,7 +979,7 @@ class App {
                 </div>
                 <div>
                   <h5 class="text-sm font-semibold ${isActive ? 'text-white' : 'text-slate-300'}">
-                    ${mod.title}
+                    ${window.i18n ? window.i18n.getModuleTitle(this.activeProgram.id, mod) : mod.title}
                   </h5>
                   <div class="flex items-center space-x-2 text-xs text-slate-400 mt-1">
                     <span>⏱ ${mod.duration}</span>
@@ -1034,7 +1040,7 @@ class App {
     // Render Lesson Details Tabs
     const lessonDescription = document.getElementById("lessonDescription");
     if (lessonDescription) {
-      lessonDescription.textContent = this.activeModule.description;
+      lessonDescription.textContent = window.i18n ? window.i18n.getModuleDescription(this.activeProgram.id, this.activeModule) : this.activeModule.description;
     }
 
     const takeawaysContainer = document.getElementById("lessonTakeaways");
