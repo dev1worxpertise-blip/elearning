@@ -4,14 +4,93 @@
  * 
  * Provides instant 2-line contextual answers, citations, and suggested follow-ups
  * in English, Hindi, and Hinglish for ALL courses:
+ * - Academy Global Guide (When on Home/Catalog page)
  * - Full-Stack Web Development (React, Node, DB)
  * - Artificial Intelligence & LLMs (Transformers, RAG, Fine-Tuning)
  * - Enterprise Cybersecurity & Threat Defense (OWASP, Zero Trust)
- * - POSH Workplace Compliance (POSH Act 2013)
+ * - POSH Workplace Compliance (Strictly isolated to POSH program)
  * - Dynamic support for ANY new custom course created by instructors/admin
  */
 
 const KNOWLEDGE_BASE = {
+  // =========================================================================
+  // 0. Worxpertise Academy Global Guide (Catalog / Home View)
+  // =========================================================================
+  "catalog": [
+    {
+      keywords: ["course", "programs", "available", "kaunse", "offer", "list", "kya hai", "options"],
+      en: {
+        answer: "Worxpertise Academy offers four accredited career tracks: Full-Stack Web Development, Artificial Intelligence & LLMs, Enterprise Cybersecurity, and Corporate Compliance (POSH).",
+        takeaway: "All programs feature interactive video lessons, anti-skip verification gates, and verifiable corporate certifications.",
+        source: "Worxpertise Academy • Enterprise Catalog Directory"
+      },
+      hi: {
+        answer: "वर्क्सपर्टीज़ अकादमी में चार प्रमाणित करियर ट्रैक हैं: फुल-स्टैक वेब डेवलपमेंट, आर्टिफिशियल इंटेलिजेंस और LLMs, एंटरप्राइज साइबर सुरक्षा, और कॉर्पोरेट पॉश कम्प्लायंस।",
+        takeaway: "सभी पाठ्यक्रमों में इंटरैक्टिव वीडियो, एंटी-स्किप गेटिंग और डिजिटल रूप से सत्यापित प्रमाणपत्र शामिल हैं।",
+        source: "वर्क्सपर्टीज़ अकादमी • एंटरप्राइज कैटलॉग डायरेक्टरी"
+      },
+      hinglish: {
+        answer: "Worxpertise Academy me 4 certified career programs hain: Full-Stack Web Development, Artificial Intelligence & LLMs, Enterprise Cybersecurity, aur Corporate Compliance (POSH).",
+        takeaway: "Har program me video lessons, anti-skip verification, aur tamper-proof certificates milte hain.",
+        source: "Worxpertise Academy • Enterprise Catalog Directory"
+      }
+    },
+    {
+      keywords: ["certificate", "pass", "benchmark", "score", "unlock", "pramanpatra", "validity"],
+      en: {
+        answer: "To earn an accredited certificate, watch 100% of the video modules to satisfy the anti-skip verification gate, then score 80% or higher on the proctored post-video assessment.",
+        takeaway: "Digital certificates feature instant public verification with cryptographic serial hashes.",
+        source: "Worxpertise Academy • Credentialing & Verification Policy"
+      },
+      hi: {
+        answer: "प्रमाणपत्र प्राप्त करने के लिए वीडियो को 100% पूरा देखना अनिवार्य है, जिसके बाद मॉड्यूल परीक्षा में 80% या अधिक अंक प्राप्त करने पर डिजिटल सर्टिफिकेट तुरंत अनलॉक हो जाता है।",
+        takeaway: "डिजिटल प्रमाणपत्रों को अद्वितीय सीरियल कोड और QR द्वारा सार्वजनिक रूप से सत्यापित किया जा सकता है।",
+        source: "वर्क्सपर्टीज़ अकादमी • प्रमाणन नीति"
+      },
+      hinglish: {
+        answer: "Certificate unlock karne ke liye 100% video attendance compulsory hai, jiske baad unlocked quiz me 80% ya usse zyada score karna hota hai.",
+        takeaway: "Certificate me unique serial hash hota hai jise 'Verify Credential' portal par koi bhi check kar sakta hai.",
+        source: "Worxpertise Academy • Credentialing Policy"
+      }
+    },
+    {
+      keywords: ["web dev", "fullstack", "react", "node", "coding", "web development"],
+      en: {
+        answer: "The Full-Stack Web Development program trains learners in modern React 18 component architecture, Node.js asynchronous backend services, PostgreSQL database schemas, and REST APIs.",
+        takeaway: "Graduates are equipped to design and scale enterprise-grade web applications.",
+        source: "Full-Stack Web Development Mastery • Curriculum Guide"
+      },
+      hi: {
+        answer: "फुल-स्टैक वेब डेवलपमेंट कोर्स में React 18, Node.js बैकएंड, PostgreSQL रिलेशनल डेटाबेस और सुरक्षित RESTful API आर्किटेक्चर का संपूर्ण व्यावहारिक ज्ञान दिया जाता है।",
+        takeaway: "यह कोर्स शिक्षार्थियों को आधुनिक उद्यम-स्तरीय वेब एप्लिकेशन बनाने के लिए तैयार करता है।",
+        source: "फुल-स्टैक वेब डेवलपमेंट • पाठ्यक्रम गाइड"
+      },
+      hinglish: {
+        answer: "Full-Stack Web Development program me React 18, Node.js backend runtime, PostgreSQL database design aur REST APIs sikhaye jaate hain.",
+        takeaway: "Enterprise-grade web apps build aur deploy karne ke liye ye complete roadmap hai.",
+        source: "Full-Stack Web Development Mastery • Curriculum Guide"
+      }
+    },
+    {
+      keywords: ["ai", "llm", "machine learning", "artificial intelligence", "rag"],
+      en: {
+        answer: "Mastering AI & LLMs covers Transformer self-attention architecture, Retrieval-Augmented Generation (RAG) with vector databases, embeddings, and prompt engineering guardrails.",
+        takeaway: "Empowers engineers to build production-ready Generative AI systems.",
+        source: "Mastering Artificial Intelligence & LLMs • Syllabus"
+      },
+      hi: {
+        answer: "AI और LLM कोर्स में ट्रांसफॉर्मर आर्किटेक्चर, वेक्टर डेटाबेस के साथ RAG पाइपलाइन, एम्बेडिंग और जेनेरेटिव AI सिस्टम बनाना सिखाया जाता है।",
+        takeaway: "इंजीनियरों को प्रोडक्शन-ग्रेड AI समाधान विकसित करने में सक्षम बनाता है।",
+        source: "मास्टरिंग आर्टिफिशियल इंटेलिजेंस • पाठ्यक्रम"
+      },
+      hinglish: {
+        answer: "AI & LLMs program me Transformers, Retrieval-Augmented Generation (RAG), Vector Embeddings aur Generative AI applications sikhaye jaate hain.",
+        takeaway: "Production-ready Generative AI apps develop karne ke liye ye practical training hai.",
+        source: "Mastering Artificial Intelligence & LLMs • Syllabus"
+      }
+    }
+  ],
+
   // =========================================================================
   // 1. Full-Stack Web Development Mastery (prog-fullstack)
   // =========================================================================
@@ -191,7 +270,7 @@ const KNOWLEDGE_BASE = {
       }
     },
     {
-      keywords: ["zero trust", "never trust", "verify", "perimeter", "iam"],
+      keywords: ["zero trust", "never trust", "verify", "perimeter"],
       en: {
         answer: "Zero Trust operates on the principle of 'Never Trust, Always Verify'. It assumes threats exist both outside and inside the corporate perimeter, requiring strict least-privilege access and continuous authentication.",
         takeaway: "Network location (inside VPN) no longer implies automatic trust; verify identity and device health continuously.",
@@ -346,19 +425,19 @@ const KNOWLEDGE_BASE = {
 // General fallback responses when question is conceptual but not keyword-matched
 const GENERAL_FALLBACK = {
   en: {
-    answer: "This concept directly reinforces key module learning objectives. Please review the lesson video and conceptual notes, or test your understanding via the certified assessment.",
-    takeaway: "Active review of module takeaways ensures highest quiz retention.",
-    source: "Worxpertise Enterprise Learning Curriculum"
+    answer: "Worxpertise Academy empowers your career with certified enterprise programs. Explore courses in Full-Stack Web Development, AI & LLMs, Cybersecurity, and Corporate Compliance.",
+    takeaway: "Complete 100% video modules and score 80%+ on assessments to unlock your credentials.",
+    source: "Worxpertise Academy • Enterprise Learning Guide"
   },
   hi: {
-    answer: "यह अवधारणा आपके वर्तमान अध्ययन मॉड्यूल के मुख्य उद्देश्यों से सीधे संबंधित है। कृपया वीडियो और अध्ययन नोट्स की समीक्षा करें और मूल्यांकन में भाग लें।",
-    takeaway: "पाठ के मुख्य बिंदुओं का अभ्यास परीक्षा में 100% सफलता सुनिश्चित करता है।",
-    source: "वर्क्सपर्टीज़ कॉर्पोरेट प्रशिक्षण पाठ्यक्रम"
+    answer: "वर्क्सपर्टीज़ अकादमी प्रमाणित उद्योग पाठ्यक्रमों के माध्यम से आपके करियर को सशक्त बनाती है। फुल-स्टैक वेब डेवलपमेंट, AI और LLMs, साइबर सुरक्षा और कम्प्लायंस में पाठ्यक्रम खोजें।",
+    takeaway: "प्रमाणपत्र अनलॉक करने के लिए वीडियो को 100% देखें और मूल्यांकन में 80%+ अंक प्राप्त करें।",
+    source: "वर्क्सपर्टीज़ अकादमी • एंटरप्राइज लर्निंग गाइड"
   },
   hinglish: {
-    answer: "Yeh concept aapke active lesson ke syllabus se directly connected hai. Video lesson aur syllabus notes review karein aur certified assessment attempt karein.",
-    takeaway: "Key takeaways samajhne se quiz me 80%+ score karna easy ho jata hai.",
-    source: "Worxpertise Enterprise Learning Curriculum"
+    answer: "Worxpertise Academy aapke career ko industry-accredited certifications ke saath boost karti hai. Full-Stack Web Dev, AI & LLMs, Cybersecurity aur Compliance courses explore karein.",
+    takeaway: "Certificates unlock karne ke liye 100% videos complete karein aur quizzes me 80%+ score karein.",
+    source: "Worxpertise Academy • Enterprise Learning Guide"
   }
 };
 
@@ -394,10 +473,10 @@ exports.askAiTutor = async (req, res) => {
 
     const cleanPrompt = question.trim().toLowerCase();
     const effectiveLang = detectLanguage(cleanPrompt, language);
-    const effectiveProg = programId || 'prog-fullstack';
+    const effectiveProg = (programId && programId !== 'catalog' && programId !== 'null') ? programId : 'catalog';
 
-    // 1. Search knowledge base strictly for the current program
-    const courseRules = KNOWLEDGE_BASE[effectiveProg] || [];
+    // 1. Search knowledge base strictly for the current program/catalog
+    const courseRules = KNOWLEDGE_BASE[effectiveProg] || KNOWLEDGE_BASE["catalog"] || [];
     let matchedItem = null;
 
     for (const item of courseRules) {
@@ -417,7 +496,7 @@ exports.askAiTutor = async (req, res) => {
         source: langPack.source
       };
     } else {
-      // If course is custom or no keyword matched, provide course-relevant synthesis
+      // General synthesis
       const fb = GENERAL_FALLBACK[effectiveLang] || GENERAL_FALLBACK.en;
       resultPayload = {
         answer: fb.answer,
@@ -428,6 +507,11 @@ exports.askAiTutor = async (req, res) => {
 
     // Dynamic suggested follow-ups based strictly on the course
     const followupsMap = {
+      "catalog": [
+        "What are the prerequisites for Full-Stack Web Development?",
+        "How is the AI & LLMs certificate verified?",
+        "What is the passing score for certification?"
+      ],
       "prog-posh-compliance": [
         effectiveLang === 'hi' ? "क्विड प्रो क्वो और अमित्र वातावरण में क्या अंतर है?" : effectiveLang === 'hinglish' ? "Quid Pro Quo vs Hostile Environment me kya farak hai?" : "What is Quid Pro Quo vs Hostile Work Environment?",
         effectiveLang === 'hi' ? "विस्तारित कार्यस्थल (Extended Workplace) क्या है?" : effectiveLang === 'hinglish' ? "Extended Workplace doctrine kya hai?" : "What is the Extended Workplace doctrine?",
@@ -450,11 +534,7 @@ exports.askAiTutor = async (req, res) => {
       ]
     };
 
-    const followups = followupsMap[effectiveProg] || [
-      "Explain the key architectural takeaway of this lesson",
-      "What are the common pitfalls in this module?",
-      "How is this evaluated in the certification exam?"
-    ];
+    const followups = followupsMap[effectiveProg] || followupsMap.catalog;
 
     res.json({
       success: true,
@@ -487,9 +567,29 @@ exports.getSuggestedPrompts = async (req, res) => {
     const { moduleId } = req.params;
     const { lang, programId } = req.query;
     const effectiveLang = lang || 'en';
-    const effectiveProg = programId || 'prog-fullstack';
+    const effectiveProg = (programId && programId !== 'catalog' && programId !== 'null') ? programId : 'catalog';
 
     const coursePromptsMap = {
+      "catalog": {
+        en: [
+          "What courses and certifications are offered in this academy?",
+          "Which course should I take for Full-Stack Web Development?",
+          "What topics are covered in Artificial Intelligence & LLMs?",
+          "What are the passing criteria and certification validity?"
+        ],
+        hi: [
+          "इस अकादमी में कौन-कौन से कोर्स और सर्टिफिकेशन उपलब्ध हैं?",
+          "फुल-स्टैक वेब डेवलपमेंट सीखने के लिए क्या रोडमैप है?",
+          "आर्टिफिशियल इंटेलिजेंस और LLMs कोर्स में क्या सिखाया जाता है?",
+          "सर्टिफिकेशन परीक्षा के पासिंग मार्क्स और नियम क्या हैं?"
+        ],
+        hinglish: [
+          "Is academy me kaun-kaun se courses aur certifications available hain?",
+          "Full-Stack Web Development sikhne ke liye kya roadmap hai?",
+          "AI & LLMs curriculum me kya-kya topics cover hote hain?",
+          "Certificate unlock karne ke liye kitna pass percentage chahiye?"
+        ]
+      },
       "prog-fullstack": {
         en: [
           "What is the difference between Props and State in React?",
@@ -499,7 +599,7 @@ exports.getSuggestedPrompts = async (req, res) => {
         ],
         hi: [
           "रिएक्ट में Props और State में क्या अंतर है?",
-          "useEffect में क्लीनअप फंक्शन कैसे काम करता है?",
+          "useEffect में क्लीनअप फ़ंक्शन कैसे काम करता है?",
           "SQL और NoSQL डेटाबेस में क्या मुख्य फर्क है?",
           "Node.js में Async ऑपरेशन कैसे काम करते हैं?"
         ],
@@ -572,7 +672,7 @@ exports.getSuggestedPrompts = async (req, res) => {
       }
     };
 
-    const progData = coursePromptsMap[effectiveProg] || coursePromptsMap["prog-fullstack"];
+    const progData = coursePromptsMap[effectiveProg] || coursePromptsMap["catalog"];
     const prompts = progData[effectiveLang] || progData.en;
 
     res.json({

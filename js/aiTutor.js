@@ -2,20 +2,13 @@
  * LearnPulse / Worxpertise Enterprise LMS
  * AI Course Companion & Contextual Doubt Resolver (aiTutor.js)
  * 
- * Provides:
- * 1. Embedded Classroom Tab Workspace (Tab 5 in video learning view)
- * 2. Slide-Over Interactive AI Drawer (accessible anytime during video playback)
- * 3. Floating Quick-Access Launcher button
- * 4. Multi-Course aware contextual explanations for:
- *    - Full-Stack Web Development (React, Node, DB)
- *    - Artificial Intelligence & LLMs (Transformers, RAG, Embeddings)
- *    - Enterprise Cybersecurity & Threat Defense (OWASP, Zero Trust)
- *    - POSH Workplace Compliance (Strictly isolated to POSH program)
- *    - Any custom course created dynamically from backend
- * 5. Multilingual Vernacular support (English, Hindi, Hinglish)
- * 6. Web Speech API Voice Read-Aloud ("Wow Factor" audio explanation)
- * 7. 1-Click suggested prompt chips tailored to current lesson module
- * 8. Zero-latency offline client fallback so demos NEVER fail
+ * Multi-Course aware contextual explanations for:
+ * 1. Academy Global Guide (When on Home / Catalog view - answers about all courses)
+ * 2. Full-Stack Web Development (React, Node, DB)
+ * 3. Artificial Intelligence & LLMs (Transformers, RAG, Embeddings)
+ * 4. Enterprise Cybersecurity & Threat Defense (OWASP, Zero Trust)
+ * 5. POSH Workplace Compliance (Strictly isolated to POSH program)
+ * 6. Dynamic support for any new course added from backend
  */
 
 class AiTutorController {
@@ -30,6 +23,82 @@ class AiTutorController {
 
     // Multi-course client-side fallback knowledge base
     this.fallbackKnowledge = {
+      // 0. Catalog / Home / General Academy Guide
+      catalog: [
+        {
+          keywords: ["course", "programs", "available", "kaunse", "offer", "list", "kya hai", "options"],
+          en: {
+            answer: "Worxpertise Academy offers four accredited career tracks: Full-Stack Web Development, Artificial Intelligence & LLMs, Enterprise Cybersecurity, and Corporate Compliance (POSH).",
+            takeaway: "All programs feature interactive video lessons, anti-skip verification gates, and verifiable corporate certifications.",
+            source: "Worxpertise Academy • Enterprise Catalog Directory"
+          },
+          hi: {
+            answer: "वर्क्सपर्टीज़ अकादमी में चार प्रमाणित करियर ट्रैक हैं: फुल-स्टैक वेब डेवलपमेंट, आर्टिफिशियल इंटेलिजेंस और LLMs, एंटरप्राइज साइबर सुरक्षा, और कॉर्पोरेट पॉश कम्प्लायंस।",
+            takeaway: "सभी पाठ्यक्रमों में इंटरैक्टिव वीडियो, एंटी-स्किप गेटिंग और डिजिटल रूप से सत्यापित प्रमाणपत्र शामिल हैं।",
+            source: "वर्क्सपर्टीज़ अकादमी • एंटरप्राइज कैटलॉग डायरेक्टरी"
+          },
+          hinglish: {
+            answer: "Worxpertise Academy me 4 certified career programs hain: Full-Stack Web Development, Artificial Intelligence & LLMs, Enterprise Cybersecurity, aur Corporate Compliance (POSH).",
+            takeaway: "Har program me video lessons, anti-skip verification, aur tamper-proof certificates milte hain.",
+            source: "Worxpertise Academy • Enterprise Catalog Directory"
+          }
+        },
+        {
+          keywords: ["certificate", "pass", "benchmark", "score", "unlock", "pramanpatra", "validity"],
+          en: {
+            answer: "To earn an accredited certificate, watch 100% of the video modules to satisfy the anti-skip verification gate, then score 80% or higher on the proctored post-video assessment.",
+            takeaway: "Digital certificates feature instant public verification with cryptographic serial hashes.",
+            source: "Worxpertise Academy • Credentialing & Verification Policy"
+          },
+          hi: {
+            answer: "प्रमाणपत्र प्राप्त करने के लिए वीडियो को 100% पूरा देखना अनिवार्य है, जिसके बाद मॉड्यूल परीक्षा में 80% या अधिक अंक प्राप्त करने पर डिजिटल सर्टिफिकेट तुरंत अनलॉक हो जाता है।",
+            takeaway: "डिजिटल प्रमाणपत्रों को अद्वितीय सीरियल कोड और QR द्वारा सार्वजनिक रूप से सत्यापित किया जा सकता है।",
+            source: "वर्क्सपर्टीज़ अकादमी • प्रमाणन नीति"
+          },
+          hinglish: {
+            answer: "Certificate unlock karne ke liye 100% video attendance compulsory hai, jiske baad unlocked quiz me 80% ya usse zyada score karna hota hai.",
+            takeaway: "Certificate me unique serial hash hota hai jise 'Verify Credential' portal par koi bhi check kar sakta hai.",
+            source: "Worxpertise Academy • Credentialing Policy"
+          }
+        },
+        {
+          keywords: ["web dev", "fullstack", "react", "node", "coding", "web development"],
+          en: {
+            answer: "The Full-Stack Web Development program trains learners in modern React 18 component architecture, Node.js asynchronous backend services, PostgreSQL database schemas, and REST APIs.",
+            takeaway: "Graduates are equipped to design and scale enterprise-grade web applications.",
+            source: "Full-Stack Web Development Mastery • Curriculum Guide"
+          },
+          hi: {
+            answer: "फुल-स्टैक वेब डेवलपमेंट कोर्स में React 18, Node.js बैकएंड, PostgreSQL रिलेशनल डेटाबेस और सुरक्षित RESTful API आर्किटेक्चर का संपूर्ण व्यावहारिक ज्ञान दिया जाता है।",
+            takeaway: "यह कोर्स शिक्षार्थियों को आधुनिक उद्यम-स्तरीय वेब एप्लिकेशन बनाने के लिए तैयार करता है।",
+            source: "फुल-स्टैक वेब डेवलपमेंट • पाठ्यक्रम गाइड"
+          },
+          hinglish: {
+            answer: "Full-Stack Web Development program me React 18, Node.js backend runtime, PostgreSQL database design aur REST APIs sikhaye jaate hain.",
+            takeaway: "Enterprise-grade web apps build aur deploy karne ke liye ye complete roadmap hai.",
+            source: "Full-Stack Web Development Mastery • Curriculum Guide"
+          }
+        },
+        {
+          keywords: ["ai", "llm", "machine learning", "artificial intelligence", "rag"],
+          en: {
+            answer: "Mastering AI & LLMs covers Transformer self-attention architecture, Retrieval-Augmented Generation (RAG) with vector databases, embeddings, and prompt engineering guardrails.",
+            takeaway: "Empowers engineers to build production-ready Generative AI systems.",
+            source: "Mastering Artificial Intelligence & LLMs • Syllabus"
+          },
+          hi: {
+            answer: "AI और LLM कोर्स में ट्रांसफॉर्मर आर्किटेक्चर, वेक्टर डेटाबेस के साथ RAG पाइपलाइन, एम्बेडिंग और जेनेरेटिव AI सिस्टम बनाना सिखाया जाता है।",
+            takeaway: "इंजीनियरों को प्रोडक्शन-ग्रेड AI समाधान विकसित करने में सक्षम बनाता है।",
+            source: "मास्टरिंग आर्टिफिशियल इंटेलिजेंस • पाठ्यक्रम"
+          },
+          hinglish: {
+            answer: "AI & LLMs program me Transformers, Retrieval-Augmented Generation (RAG), Vector Embeddings aur Generative AI applications sikhaye jaate hain.",
+            takeaway: "Production-ready Generative AI apps develop karne ke liye ye practical training hai.",
+            source: "Mastering Artificial Intelligence & LLMs • Syllabus"
+          }
+        }
+      ],
+
       // 1. Full-Stack Web Development
       fullstack: [
         {
@@ -242,28 +311,6 @@ class AiTutorController {
             source: "Global Workplace Ethics & Prevention Standards"
           }
         }
-      ],
-
-      // 5. General / Custom Courses
-      general: [
-        {
-          keywords: ["concept", "explain", "samjhao", "help", "summary", "overview"],
-          en: {
-            answer: "This module covers core enterprise principles and hands-on competencies designed for professional certification. Review the video key takeaways to prepare for the assessment.",
-            takeaway: "Mastering practical use cases in this lesson guarantees success in the certified exam.",
-            source: "Worxpertise Enterprise Curriculum Specifications"
-          },
-          hi: {
-            answer: "यह मॉड्यूल पेशेवर प्रमाणन के लिए आवश्यक मुख्य सिद्धांतों और व्यावहारिक दक्षताओं को कवर करता है। मूल्यांकन की तैयारी के लिए वीडियो के मुख्य निष्कर्षों की समीक्षा करें।",
-            takeaway: "इस पाठ के व्यावहारिक उदाहरणों को समझने से परीक्षा में उत्कृष्ट अंक प्राप्त होते हैं।",
-            source: "वर्क्सपर्टीज़ उद्यम प्रशिक्षण पाठ्यक्रम"
-          },
-          hinglish: {
-            answer: "Yeh module certification ke core principles aur practical competencies ko cover karta hai. Lesson video ke key takeaways ko review karke assessment ke liye ready rahein.",
-            takeaway: "Practical concepts clear rakhne se final certification exam easily clear ho jata hai.",
-            source: "Worxpertise Enterprise Curriculum Specifications"
-          }
-        }
       ]
     };
   }
@@ -293,23 +340,28 @@ class AiTutorController {
   }
 
   getCurrentProgramId() {
-    if (window.app && window.app.activeProgram) {
+    if (window.app && window.app.currentView === 'learning' && window.app.activeProgram) {
       return window.app.activeProgram.id;
     }
-    if (window.appState && window.appState.activeProgram) {
-      return window.appState.activeProgram.id;
-    }
-    return null;
+    return 'catalog';
   }
 
   getCurrentModuleId() {
     if (window.app && window.app.activeModule) {
       return window.app.activeModule.id;
     }
-    if (window.appState && window.appState.activeModule) {
-      return window.appState.activeModule.id;
-    }
     return 'mod-1';
+  }
+
+  onViewOrCourseChanged() {
+    this.updateContextInfo();
+    this.loadSuggestedPrompts();
+    if (this.isOpen) {
+      this.renderSuggestedChips();
+    }
+    if (window.app && window.app.activeClassroomTab === 'ai') {
+      this.renderClassroomView();
+    }
   }
 
   setupGlobalShortcuts() {
@@ -405,7 +457,7 @@ class AiTutorController {
         <div id="aiDrawerContextBar" class="px-4 py-2 bg-indigo-950/40 border-b border-indigo-900/30 flex items-center justify-between text-[11px]">
           <span class="text-indigo-300 flex items-center space-x-1.5 truncate">
             <span>📚</span>
-            <span id="aiDrawerCourseName" class="font-medium truncate">Worxpertise Academy Tutor</span>
+            <span id="aiDrawerCourseName" class="font-medium truncate">Worxpertise Academy (All Programs)</span>
           </span>
           <span id="aiDrawerLangBadge" class="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] text-slate-300 uppercase font-mono font-bold">
             EN
@@ -418,16 +470,16 @@ class AiTutorController {
           <div class="p-3.5 rounded-2xl bg-indigo-950/30 border border-indigo-800/40 text-xs space-y-2">
             <div class="flex items-center space-x-2 text-indigo-300 font-bold">
               <span>💡</span>
-              <span>Need help understanding this lesson?</span>
+              <span>Need learning guidance or concept help?</span>
             </div>
             <p class="text-slate-300 text-[12px] leading-relaxed">
-              Ask any doubt about the current lesson or click a suggested prompt below. I'll provide a <strong>crisp 2-line explanation</strong> with exact syllabus citations.
+              Ask any doubt about our courses, certifications, or specific technical lessons. I'll provide a <strong>crisp 2-line explanation</strong> with exact syllabus citations.
             </p>
           </div>
 
           <!-- Suggested Quick Prompts Container -->
           <div class="space-y-2">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Suggested Questions for this Course:</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Suggested Questions:</span>
             <div id="aiDrawerSuggestedChips" class="flex flex-col space-y-1.5">
               <!-- Dynamically populated chips -->
             </div>
@@ -445,7 +497,7 @@ class AiTutorController {
             <input 
               type="text" 
               id="aiDrawerInput" 
-              placeholder="Type your doubt (e.g. 'Props vs State' or 'RAG vs Fine-tuning')..." 
+              placeholder="Ask about Web Dev, AI/ML, Cyber, or current lesson..." 
               class="w-full pl-3 pr-20 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
               autocomplete="off"
             />
@@ -538,8 +590,8 @@ class AiTutorController {
     const lang = this.getCurrentLanguage();
 
     if (courseEl) {
-      const prog = (window.app && window.app.activeProgram) || (window.appState && window.appState.activeProgram);
-      courseEl.textContent = prog ? prog.title : "Worxpertise Academy Tutor";
+      const isLearning = window.app && window.app.currentView === 'learning' && window.app.activeProgram;
+      courseEl.textContent = isLearning ? window.app.activeProgram.title : "Worxpertise Academy (All Programs)";
     }
 
     if (langBadge) {
@@ -553,6 +605,26 @@ class AiTutorController {
     const programId = this.getCurrentProgramId();
 
     const fallbackPromptsMap = {
+      "catalog": {
+        en: [
+          "What courses and certifications are offered in this academy?",
+          "Which course should I take for Full-Stack Web Development?",
+          "What topics are covered in Artificial Intelligence & LLMs?",
+          "What are the passing criteria and certification validity?"
+        ],
+        hi: [
+          "इस अकादमी में कौन-कौन से कोर्स और सर्टिफिकेशन उपलब्ध हैं?",
+          "फुल-स्टैक वेब डेवलपमेंट सीखने के लिए क्या रोडमैप है?",
+          "आर्टिफिशियल इंटेलिजेंस और LLMs कोर्स में क्या सिखाया जाता है?",
+          "सर्टिफिकेशन परीक्षा के पासिंग मार्क्स और नियम क्या हैं?"
+        ],
+        hinglish: [
+          "Is academy me kaun-kaun se courses aur certifications available hain?",
+          "Full-Stack Web Development sikhne ke liye kya roadmap hai?",
+          "AI & LLMs curriculum me kya-kya topics cover hote hain?",
+          "Certificate unlock karne ke liye kitna pass percentage chahiye?"
+        ]
+      },
       "prog-fullstack": {
         en: [
           "What is the difference between Props and State in React?",
@@ -635,9 +707,8 @@ class AiTutorController {
       }
     };
 
-    // Default to active course, or fullstack if general
-    const effectiveProg = programId || "prog-fullstack";
-    const progData = fallbackPromptsMap[effectiveProg] || fallbackPromptsMap["prog-fullstack"];
+    const effectiveProg = programId || "catalog";
+    const progData = fallbackPromptsMap[effectiveProg] || fallbackPromptsMap["catalog"];
     let prompts = progData[lang] || progData.en;
 
     // Try backend if online
@@ -759,15 +830,15 @@ class AiTutorController {
     const q = question.toLowerCase();
     const programId = this.getCurrentProgramId();
 
-    // Route knowledge category strictly according to active program
-    let category = 'fullstack';
+    // Route knowledge category strictly according to active program/view
+    let category = 'catalog';
     if (programId === 'prog-posh-compliance') category = 'posh';
     else if (programId === 'prog-ai-ml') category = 'ai_ml';
     else if (programId === 'prog-cybersecurity') category = 'cybersecurity';
     else if (programId === 'prog-fullstack') category = 'fullstack';
-    else category = 'general';
+    else category = 'catalog';
 
-    const items = this.fallbackKnowledge[category] || this.fallbackKnowledge.general;
+    const items = this.fallbackKnowledge[category] || this.fallbackKnowledge.catalog;
     let matched = items.find(item => item.keywords.some(k => q.includes(k)));
 
     if (!matched) {
@@ -777,6 +848,11 @@ class AiTutorController {
     const content = matched[lang] || matched.hinglish || matched.en;
 
     const followupsMap = {
+      catalog: [
+        "What are the prerequisites for Full-Stack Web Development?",
+        "How is the AI & LLMs certificate verified?",
+        "What is the passing score for certification?"
+      ],
       posh: [
         lang === 'hi' ? "विस्तारित कार्यस्थल (Extended Workplace) क्या है?" : "What is the Extended Workplace doctrine?",
         lang === 'hi' ? "मूकदर्शक हस्तक्षेप का 4D नियम क्या है?" : "Explain the 4D Bystander Intervention framework."
@@ -792,10 +868,6 @@ class AiTutorController {
       cybersecurity: [
         lang === 'hi' ? "SQL इंजेक्शन से बचाव के लिए क्या करें?" : "How do Parameterized Queries prevent SQL Injection?",
         lang === 'hi' ? "Zero Trust आर्किटेक्चर क्या है?" : "What is Zero Trust Architecture ('Never Trust, Always Verify')?"
-      ],
-      general: [
-        "Explain the key architectural takeaway of this lesson",
-        "What are common pitfalls to avoid in this module?"
       ]
     };
 
@@ -805,7 +877,7 @@ class AiTutorController {
       answer: content.answer,
       takeaway: content.takeaway,
       source: content.source,
-      suggestedFollowups: followupsMap[category] || followupsMap.general
+      suggestedFollowups: followupsMap[category] || followupsMap.catalog
     };
   }
 

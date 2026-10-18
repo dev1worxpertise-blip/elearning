@@ -13,11 +13,8 @@ class App {
   }
 
   init() {
-    // Set default active program if any
-    if (window.COURSES_DATA && window.COURSES_DATA.length > 0) {
-      this.activeProgram = window.COURSES_DATA[0];
-      this.activeModule = this.activeProgram.modules[0];
-    }
+    this.activeProgram = null;
+    this.activeModule = null;
 
     if (window.i18n) {
       window.i18n.updateHeaderDropdown();
@@ -538,6 +535,11 @@ class App {
       adminHubMenu.classList.add("hidden");
     }
 
+    if (viewName !== 'learning' && !programId) {
+      this.activeProgram = null;
+      this.activeModule = null;
+    }
+
     if (programId) {
       const prog = (window.COURSES_DATA || []).find(p => p.id === programId);
       if (prog) {
@@ -548,6 +550,11 @@ class App {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
     this.render();
+
+    // Automatically synchronize AI Tutor with current view and course context
+    if (window.aiTutor && typeof window.aiTutor.onViewOrCourseChanged === 'function') {
+      window.aiTutor.onViewOrCourseChanged();
+    }
   }
 
   render() {
