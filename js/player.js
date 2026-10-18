@@ -283,6 +283,18 @@ class VideoPlayerController {
               <span>Anti-Skip Locked</span>
             </div>
 
+            <!-- Ask AI Tutor Button (Modern Wow Factor) -->
+            <button 
+              id="btnAskAiTutorVideo" 
+              type="button"
+              onclick="window.aiTutor ? window.aiTutor.openDrawer() : (window.app && window.app.setClassroomTab('ai'))"
+              title="Ask AI Tutor any doubt about this video lesson" 
+              class="text-xs px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold border border-indigo-400/40 shadow-md shadow-indigo-900/40 transition flex items-center space-x-1.5 cursor-pointer active:scale-95"
+            >
+              <span class="animate-pulse">✨</span>
+              <span>Ask AI Tutor</span>
+            </button>
+
             <!-- Fast-Track / Test Mode Button -->
             <button 
               id="btnFastTrack" 

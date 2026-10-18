@@ -1070,10 +1070,10 @@ class App {
     this.renderClassroomTabs();
   }
 
-  // --- CLASSROOM TABS CONTROLLER (OVERVIEW / NOTES / TRANSCRIPT / DISCUSSION) ---
+  // --- CLASSROOM TABS CONTROLLER (OVERVIEW / NOTES / TRANSCRIPT / DISCUSSION / AI TUTOR) ---
   setClassroomTab(tabName) {
     this.activeClassroomTab = tabName;
-    const tabs = ["overview", "notes", "transcript", "discussion"];
+    const tabs = ["overview", "notes", "transcript", "discussion", "ai"];
 
     tabs.forEach(t => {
       const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -1081,12 +1081,20 @@ class App {
 
       if (t === tabName) {
         if (btn) {
-          btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-[#dd1f36] text-white flex items-center space-x-1.5 cursor-pointer";
+          if (t === "ai") {
+            btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center space-x-1.5 cursor-pointer shadow-md shadow-indigo-900/40 ring-1 ring-indigo-400";
+          } else {
+            btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-[#dd1f36] text-white flex items-center space-x-1.5 cursor-pointer";
+          }
         }
         if (content) content.classList.remove("hidden");
       } else {
         if (btn) {
-          btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5 cursor-pointer";
+          if (t === "ai") {
+            btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-indigo-950/50 text-indigo-300 hover:text-white hover:bg-indigo-900/50 border border-indigo-800/40 flex items-center space-x-1.5 cursor-pointer";
+          } else {
+            btn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-1.5 cursor-pointer";
+          }
         }
         if (content) content.classList.add("hidden");
       }
@@ -1124,6 +1132,9 @@ class App {
           }
         });
       }
+    }
+    if (tabName === "ai" && window.aiTutor && typeof window.aiTutor.renderClassroomView === "function") {
+      window.aiTutor.renderClassroomView();
     }
   }
 

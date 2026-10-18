@@ -502,6 +502,23 @@ class ApiService {
     });
     return res.json();
   }
+
+  // --- Contextual AI Course Companion & Instant Doubt Resolver ---
+  async askAiTutor(question, programId = null, moduleId = null, language = 'en') {
+    const res = await fetch(`${API_BASE_URL}/enterprise/ai/ask`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ question, programId, moduleId, language }),
+    });
+    return res.json();
+  }
+
+  async getAiPrompts(moduleId = 'mod-1', language = 'en') {
+    const res = await fetch(`${API_BASE_URL}/enterprise/ai/prompts/${moduleId}?lang=${encodeURIComponent(language)}`, {
+      headers: this.getHeaders(),
+    });
+    return res.json();
+  }
 }
 
 window.apiService = new ApiService();

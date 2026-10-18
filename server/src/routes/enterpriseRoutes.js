@@ -48,4 +48,9 @@ router.get('/recertification/status', optionalAuth, enterpriseController.getRece
 router.post('/recertification/sweep', optionalAuth, enterpriseController.processRecertificationSweep);
 router.post('/recertification/simulate-expiry', optionalAuth, enterpriseController.simulateCertificateExpiry);
 
+// --- Contextual AI Course Companion & Instant Doubt Resolver ---
+const aiTutorController = require('../controllers/aiTutorController');
+router.post('/ai/ask', optionalAuth, aiTutorController.askAiTutor);
+router.get('/ai/prompts/:moduleId', optionalAuth, aiTutorController.getSuggestedPrompts);
+
 module.exports = router;
