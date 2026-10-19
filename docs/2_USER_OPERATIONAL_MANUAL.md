@@ -1,7 +1,7 @@
 # 📖 User Operational Manual & Role Playbook
 **Platform:** LearnPulse / Worxpertise Enterprise E-Learning & Compliance LMS  
-**Target Roles:** 🎓 Student / Learner | 👨‍🏫 Faculty / Instructor | 👑 System Administrator  
-**Version:** 2.0  
+**Target Roles:** 🎓 Student / Learner | 👨‍🏫 Faculty / Instructor | 👑 System Administrator & IC Presiding Officer  
+**Version:** 3.0 (Enterprise Certified with POSH IC Desk, Recertification & AI Companion)  
 
 ---
 
@@ -15,7 +15,7 @@
 4. If you enter an incorrect password 3 consecutive times, your account will be temporarily locked for security. Contact your platform administrator to unlock it in 1-click.
 
 ### 1.2 Accessing Courses & Interactive Classroom
-1. Under **Explore Curricula**, browse mandatory or elective courses.
+1. Under **Explore Curricula**, browse mandatory compliance or elective technical tracks.
 2. Click **Start Learning** or **Resume Course**.
 3. The video classroom launches with:
    - **Video Lecture Player (Center):** High-definition video with anti-skip verification.
@@ -25,8 +25,8 @@
 
 ### 1.3 Anti-Skip & Compliance Verification Rules
 - **Anti-Fast-Forward Protection:** You cannot drag the timeline seekbar forward to skip the video. Playback must be watched sequentially.
-- **Tab Focus Defense:** If you minimize the window or switch to another browser tab, video playback will pause and log an anti-cheat alert to ensure true training compliance.
-- **Resume Playback:** If you close the window, your exact playback position is saved so you can resume where you left off.
+- **Tab Focus Defense:** If you minimize the window or switch to another browser tab, video playback automatically pauses and logs an anti-cheat alert to ensure genuine compliance.
+- **Resume Playback:** If you close the browser, your exact playback position is saved so you can resume seamlessly.
 
 ### 1.4 Taking Proctored Exams & Earning Certificates
 1. Once all required video lessons are watched, the **Knowledge Assessment Quiz** unlocks.
@@ -37,6 +37,65 @@
    - Your official corporate certificate is generated with a **Unique Credential ID** and **QR Code**.
    - Click **Download PDF / Print Certificate** to save your official credential.
    - The credential can be verified publicly by scanning the QR code or visiting the verification search box.
+
+### 1.5 Statutory POSH Act Section 19 IC Grievance Redressal Helpdesk
+LearnPulse provides a dedicated, legally compliant Internal Committee (IC) Helpdesk for workplace sexual harassment grievances under the POSH Act 2013:
+
+```mermaid
+flowchart LR
+    OpenDesk["Click [⚖️ IC Desk] on Catalog or Nav"] --> SelectMode{"Select Submission Mode"}
+    SelectMode -->|Mode A| Identified["Confidential Identified Mode (Linked to Profile)"]
+    SelectMode -->|Mode B| Anonymous["100% Anonymous Whistleblower Mode"]
+    Anonymous --> TokenGen["Generates Unique Docket ID + 6-digit Secret PIN"]
+    Identified --> Submit["Submit Incident Details, Date, Location & Narrative"]
+    TokenGen --> Submit
+    Submit --> PresidingOfficer["Encrypted Intake to IC Presiding Officer"]
+    Submit --> TrackPortal["Track Real-time Status via Docket ID + PIN"]
+```
+
+#### A. Lodging a Complaint:
+1. Click **`⚖️ IC Desk`** on the POSH course catalog card, or open **Internal Committee Redressal** from the navigation bar or footer.
+2. Choose your submission mode:
+   - **Mode A: Confidential Identified Mode:** Ideal for direct case communication. Your profile identity is shared strictly and confidentially with the IC Presiding Officer only.
+   - **Mode B: 100% Anonymous Whistleblower Mode:** Absolutely zero metadata (name, email, IP address, user agent) is logged. The system generates a unique **Docket ID** (e.g. `POSH-2026-4921`) and a **6-Digit Secret PIN**. **Save these securely!**
+3. Fill in the incident details:
+   - Incident Date & Approximate Time
+   - Specific Workplace Location (Office premise, client site, offsite, digital/remote)
+   - Accused Person(s) & Department
+   - Witnesses (if any)
+   - Detailed Narrative of the Incident
+   - Interim Relief Requested (Optional: transfer, change of reporting manager, leave)
+4. Click **Submit Statutory Complaint to IC**.
+
+#### B. Tracking an Existing Complaint:
+1. Open the IC Helpdesk modal and switch to the **`🔍 Track Docket Status`** tab.
+2. Enter your **Docket ID** and **6-Digit Secret PIN**.
+3. View the current adjudication stage, statutory countdown, IC officer notes, and next scheduled hearings in complete privacy.
+
+#### C. Reviewing the Statutory Workflow Guide:
+- Click the **`📘 Legal Workflow Guide`** button inside the IC Helpdesk modal to view an interactive breakdown of the 5 legal stages, statutory timelines, conciliation rules under Section 10, and mandatory penalty frameworks.
+
+### 1.6 Vernacular Multi-Language Switcher
+- Look for the language selector toggle in the header: **`🌐 EN | हिन्दी | Hinglish`**.
+- Switch instantly between:
+  - **English (EN):** Standard corporate English.
+  - **Hindi (हिन्दी):** Formal Hindi for regional and factory compliance training.
+  - **Hinglish (Hinglish):** Conversational Indian-English vernacular, highly preferred by frontline, BPO, and retail teams for maximum engagement.
+- Changing the language updates the course catalog, lesson modules, quiz instructions, and UI labels in real time with zero page refresh.
+
+### 1.7 Multi-Course AI Course Companion / Tutor
+1. Click the floating **`💬 AI Tutor`** badge in the bottom-right corner of your screen.
+2. **Dual-Mode Intelligence:**
+   - **Global Catalog & Academy Guide Mode:** Active on the home screen and catalog. Ask about course paths, certificate policies, compliance requirements, or career tracks.
+   - **Contextual Classroom Tutor Mode:** When you are inside an active course (Full-Stack Web Dev, AI & Machine Learning, Enterprise Cybersecurity, or POSH Compliance), the AI Tutor automatically switches into a specialized mentor for that specific curriculum.
+3. Use pre-configured quick suggestion pills (e.g., *"Explain this concept simply"*, *"Give me a practice question"*, *"Show a real-world example"*, *"What are the legal penalties under POSH?"*).
+4. All AI conversations are course-bounded, distraction-free, and available 24/7.
+
+### 1.8 Annual Recertification & Expiry Cycle
+- Compliance certificates (such as POSH Act and Cybersecurity) are valid for **365 days** from the date of issue.
+- As your certificate nears its 365-day expiration, the platform alerts you that annual recertification is due.
+- Once expired, the automated recertification engine archives your past credential and re-enrolls you in the current year's training cohort.
+- All historical certificates remain permanently verifiable in your profile's **Credential Archive**.
 
 ---
 
@@ -78,7 +137,7 @@
 
 ---
 
-## 👑 Role 3: System Administrator Playbook
+## 👑 Role 3: System Administrator & Presiding Officer Playbook
 
 ### 3.1 User Directory & Role Assignment
 1. Log in as System Administrator (`admin@learnpulse.dev`).
@@ -117,13 +176,56 @@ When you already have existing users who completed Course 1 (e.g. *POSH Act*) an
 3. Paste the emails of existing users (one per line or comma-separated).
 4. Select the target course and click **`🚀 Assign Course to Existing Users`**.
 
-### 3.5 Tamper-Proof Audit Trail
-1. Click **Audit Trail** in the Admin sticky sub-bar or Admin Hub.
-2. Inspect chronologically ordered security events:
-   - Event Action, Admin Identity, Target User/Course, Severity, and Client IP.
-   - Filter by actions: `BULK_COURSE_ASSIGNED`, `BULK_USER_IMPORT`, `ACCOUNT_LOCKED`, etc.
+### 3.5 Presiding Officer & IC Grievance Adjudication Console
+Administrators and designated IC Presiding Officers manage all statutory sexual harassment complaints directly from the **POSH IC Desk** in the Admin Control Hub:
 
-### 3.6 Automated Email & Webhook Gateway Configuration
+```mermaid
+stateDiagram-v2
+    [*] --> Stage1: 1. Formal Complaint Filed (Intake & Notice within 7 days)
+    Stage1 --> Stage2: 2. Notice & Conciliation Under Sec 10 (Optional)
+    Stage1 --> Stage3: 2. Direct to Inquiry (If conciliation waived)
+    Stage2 --> Stage3: Conciliation Unsuccessful / Breach
+    Stage2 --> Stage5: Conciliation Reached & Implemented
+    Stage3 --> Stage4: 3. Formal IC Inquiry Under Sec 11 (Max 90 Days)
+    Stage4 --> Stage5: 4. Inquiry Report Issued Under Sec 13 (Within 10 Days)
+    Stage5 --> [*]: 5. Management Action Taken Under Sec 19/21 (Within 60 Days)
+```
+
+1. Open **Admin Control Hub** $\rightarrow$ **POSH IC Redressal**.
+2. Review active grievance dockets:
+   - **Docket ID & Mode:** Highlights Anonymous Whistleblower vs Identified Employee.
+   - **Statutory Clock:** Shows remaining days out of the mandatory 90-day inquiry window.
+   - **Current Legal Status:** Color-coded badge reflecting the case's active stage.
+3. Click **Review / Update Docket**:
+   - Change case status through the statutory 5-stage sequence.
+   - Add confidential Presiding Officer case notes.
+   - Record interim relief orders or final disciplinary sanctions.
+4. **Generate Section 21 MWCD Annual Report:**
+   - Click **`📄 Export MWCD Annual Report`** to generate the mandatory statutory table (Complaints Received, Disposed Within 90 Days, Pending > 90 Days, Workshops Conducted) required by the Ministry of Women & Child Development.
+
+### 3.6 Annual Recertification & Expiry Auto-Reassignment Engine
+Mandatory compliance mandates require certifications to be renewed every 365 days. LearnPulse automates this entire lifecycle:
+1. **Automated Expiry Sweep:** The background engine scans for certificates where `issued_at <= CURRENT_TIMESTAMP - INTERVAL '365 days'`.
+2. **Atomic Recertification Execution:**
+   - Moves the active certificate to the `certificate_archives` ledger with status `ARCHIVED`.
+   - Resets module progress and exam attempts for that user to 0%.
+   - Re-enrolls the learner into the current annual compliance cohort with status `is_completed = false`.
+   - Sends an automated re-certification notification to the employee.
+3. **Admin Simulation & Testing:**
+   - In the Admin Hub under **Compliance Controls**, administrators can click **`🔄 Run Recertification Sweep / Test Simulation`** to immediately trigger an audit sweep and verify the re-enrollment process on demand.
+
+### 3.7 Admin Executive Command Center & Layout Optimization
+- **2-Column Responsive Flyout Menu:** The Admin Navigation Hub organizes tools into structured categories (*Compliance & IC*, *User Directory & Bulk Actions*, *Curriculum Management*, *Security & Audit Logs*).
+- **Zero-Clipping Auto-Clamping:** Menus automatically detect viewport boundaries and clamp positions to prevent dropdowns from overflowing off the screen on laptops and tablets.
+- **High-Contrast Dark Backing:** Solid `#0b0f19` opaque background ensures crisp readability and high visual contrast over background elements.
+
+### 3.8 Tamper-Proof Audit Trail
+1. Click **Audit Trail** in the Admin Hub.
+2. Inspect chronologically ordered security and compliance events:
+   - Event Action, Admin/User Identity, Target User/Course, Severity, and Client IP.
+   - Filter by actions: `BULK_COURSE_ASSIGNED`, `BULK_USER_IMPORT`, `POSH_STATUS_UPDATED`, `RECERTIFICATION_SWEEP_EXECUTED`, `ACCOUNT_LOCKED`.
+
+### 3.9 Automated Email & Webhook Gateway Configuration
 1. Click **Email Gateway** in the Admin Hub.
 2. Toggle between **Simulated Sandbox Mode** (safe offline testing) and **Live External Dispatch**.
 3. Use 1-click presets for **Gmail**, **Microsoft 365**, **Amazon SES**, or **SendGrid**.
