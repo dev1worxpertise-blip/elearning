@@ -920,6 +920,16 @@ class App {
                     <span>${progress.percentage === 100 ? (window.i18n ? window.i18n.t('btn_review') : 'Review Modules') : (window.i18n ? window.i18n.t('btn_resume') : 'Resume Learning')}</span>
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                   </button>
+                  ${program.id === 'prog-posh-compliance' ? `
+                    <button 
+                      onclick="event.stopPropagation(); window.poshHelpdeskManager.openHelpdeskModal()" 
+                      title="Section 19 POSH IC Confidential Grievance Desk" 
+                      class="px-3 py-2.5 rounded-xl bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/40 transition cursor-pointer flex items-center space-x-1 shrink-0"
+                    >
+                      <span>⚖️</span>
+                      <span class="text-[10px] font-bold">IC Desk</span>
+                    </button>
+                  ` : ''}
                   ${hasCert && progress.isComplete ? `
                     <button 
                       onclick="window.certificateStudio.openCertificateModal('${program.id}')" 
@@ -937,6 +947,16 @@ class App {
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                     <span>${window.i18n ? window.i18n.t('btn_enroll_free') : 'Enroll in Program (Free)'}</span>
                   </button>
+                  ${program.id === 'prog-posh-compliance' ? `
+                    <button 
+                      onclick="event.stopPropagation(); window.poshHelpdeskManager.openHelpdeskModal()" 
+                      title="Section 19 POSH IC Confidential Grievance Desk" 
+                      class="px-3 py-2.5 rounded-xl bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/40 transition cursor-pointer flex items-center space-x-1 shrink-0"
+                    >
+                      <span>⚖️</span>
+                      <span class="text-[10px] font-bold">IC Desk</span>
+                    </button>
+                  ` : ''}
                   <button 
                     onclick="window.app.openSyllabusModal('${program.id}')" 
                     class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
