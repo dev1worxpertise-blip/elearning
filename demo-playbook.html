@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Executive Demo Script & Presentation Playbook - LearnPulse LMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #080c14;
+      color: #e2e8f0;
+    }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; color: black !important; }
+      .print-card { border: 1px solid #cbd5e1 !important; background: white !important; color: black !important; box-shadow: none !important; }
+      .print-text { color: black !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-rose-500/30 selection:text-rose-200">
+
+  <!-- Top Sticky Navigation Bar -->
+  <header class="no-print sticky top-0 z-50 backdrop-blur-xl bg-[#080c14]/90 border-b border-slate-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xl">
+    <div class="flex items-center space-x-3">
+      <a href="/" class="flex items-center space-x-2 text-slate-300 hover:text-white transition group">
+        <span class="p-2 rounded-xl bg-slate-900 border border-slate-800 group-hover:border-slate-700 transition">⚡</span>
+        <span class="font-extrabold text-base tracking-tight text-white">LearnPulse <span class="text-rose-400">Enterprise</span></span>
+      </a>
+      <span class="text-slate-600">|</span>
+      <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20">
+        🎬 Executive Demo Script v3.0
+      </span>
+    </div>
+
+    <div class="flex items-center space-x-2.5">
+      <button onclick="downloadMarkdown()" class="cursor-pointer px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5 shadow-sm">
+        <span>📥</span>
+        <span>Download .MD</span>
+      </button>
+      <button onclick="window.print()" class="cursor-pointer px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition flex items-center space-x-1.5 shadow-lg shadow-rose-900/30">
+        <span>🖨️</span>
+        <span>Print / Save PDF</span>
+      </button>
+      <a href="/" class="cursor-pointer px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 transition">
+        ✕ Close
+      </a>
+    </div>
+  </header>
+
+  <!-- Document Container -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-8 py-10">
+
+    <!-- Hero Header -->
+    <div class="p-8 rounded-3xl bg-gradient-to-br from-slate-900/90 via-[#0e1626] to-slate-950 border border-slate-800 shadow-2xl relative overflow-hidden mb-10 print-card">
+      <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <div class="flex flex-wrap items-center gap-2 mb-4">
+        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          ⏱️ 15-Minute Narrative Arc
+        </span>
+        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-500/10 text-sky-400 border border-sky-500/20">
+          👑 CHRO & Legal Focus
+        </span>
+        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20">
+          🛡️ POSH & Anti-Cheat
+        </span>
+      </div>
+
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight mb-3 print-text">
+        Executive Demo Script & Presentation Playbook
+      </h1>
+      <p class="text-slate-400 text-sm sm:text-base leading-relaxed max-w-3xl">
+        Complete minute-by-minute speaking script, interactive click paths, objection handling matrix, and presenter cheat sheet for enterprise client pitches.
+      </p>
+    </div>
+
+    <!-- Section 1: Pre-Demo Setup & Credentials -->
+    <section class="mb-12">
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center space-x-2">
+        <span class="text-rose-400">1.</span>
+        <span>Pre-Demo Credentials & Environment Setup</span>
+      </h2>
+
+      <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl print-card">
+        <table class="w-full text-left text-xs sm:text-sm text-slate-300">
+          <thead class="bg-slate-950 text-white font-bold text-xs uppercase tracking-wider border-b border-slate-800">
+            <tr>
+              <th class="px-5 py-3.5">Persona / Role</th>
+              <th class="px-5 py-3.5">Demo Email</th>
+              <th class="px-5 py-3.5">Password</th>
+              <th class="px-5 py-3.5">Primary Showcase Objective</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/80 font-mono text-xs">
+            <tr class="hover:bg-slate-800/30 transition">
+              <td class="px-5 py-3.5 font-sans font-semibold text-rose-300 flex items-center space-x-1.5">
+                <span>👑</span>
+                <span>Admin & IC Presiding Officer</span>
+              </td>
+              <td class="px-5 py-3.5 text-slate-200">admin@learnpulse.dev</td>
+              <td class="px-5 py-3.5 text-emerald-400">Admin@123</td>
+              <td class="px-5 py-3.5 font-sans text-slate-400">Admin Hub, 5-Stage IC Console, 90-day clock, Recertification Engine, MWCD Report</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30 transition">
+              <td class="px-5 py-3.5 font-sans font-semibold text-sky-300 flex items-center space-x-1.5">
+                <span>🎓</span>
+                <span>Learner / Trainee</span>
+              </td>
+              <td class="px-5 py-3.5 text-slate-200">learner@learnpulse.dev</td>
+              <td class="px-5 py-3.5 text-emerald-400">Learner@123</td>
+              <td class="px-5 py-3.5 font-sans text-slate-400">Anti-cheat video player, Vernacular switcher, Contextual AI Tutor, Dual-signatory certificate</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30 transition">
+              <td class="px-5 py-3.5 font-sans font-semibold text-purple-300 flex items-center space-x-1.5">
+                <span>👨‍🏫</span>
+                <span>Faculty / Instructor</span>
+              </td>
+              <td class="px-5 py-3.5 text-slate-200">sarah.chen@learnpulse.dev</td>
+              <td class="px-5 py-3.5 text-emerald-400">Instructor@123</td>
+              <td class="px-5 py-3.5 font-sans text-slate-400">Faculty Studio, dynamic certificate signatory setup, student Q&A management</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Section 2: 15-Minute Minute-by-Minute Script -->
+    <section class="mb-12">
+      <h2 class="text-xl font-bold text-white mb-6 flex items-center space-x-2">
+        <span class="text-rose-400">2.</span>
+        <span>Minute-by-Minute Live Presentation Script</span>
+      </h2>
+
+      <!-- Phase 1 -->
+      <div class="mb-8 p-6 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition shadow-xl print-card">
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-300 text-xs font-bold font-mono">00:00 – 02:00</span>
+            <h3 class="text-lg font-bold text-white">Phase 1: The Opening Hook & Vernacular Inclusivity</h3>
+          </div>
+          <span class="text-xs text-slate-400">Screen: Home Landing Page</span>
+        </div>
+
+        <div class="space-y-4 text-sm leading-relaxed">
+          <div class="p-4 rounded-xl bg-slate-950/80 border-l-4 border-sky-500 text-slate-300 italic">
+            <p class="font-bold font-sans text-sky-400 not-italic text-xs mb-1">🎙️ Speaker Script (Pitch):</p>
+            "Good morning/afternoon everyone. Today, every enterprise in India and globally faces stringent regulatory compliance mandates—most notably the POSH Act 2013 and ISO 27001. Under Section 26 of the POSH Act, failure to conduct verifiable training carries a ₹50,000 fine and risk of business license cancellation. Most companies use generic LMS platforms where employees click 'play', mute the tab, skip to the end, and falsely claim completion. LearnPulse is different: It is an anti-cheat, legally auditable, zero-compromise compliance platform with a built-in statutory Internal Committee (IC) Helpdesk and automated 365-day recertification."
+          </div>
+
+          <div>
+            <p class="font-semibold text-white mb-2 text-xs uppercase tracking-wider text-slate-400">🖱️ Live Screen Actions:</p>
+            <ol class="list-decimal list-inside space-y-1.5 text-xs text-slate-300 pl-2">
+              <li>Click the top bar language toggle: <span class="font-mono text-cyan-300 bg-slate-950 px-2 py-0.5 rounded">🌐 EN | हिन्दी | Hinglish</span>.</li>
+              <li>Switch to <strong>हिन्दी</strong> &rarr; Show entire catalog, cards, and UI translating in real time without page reload.</li>
+              <li>Switch to <strong>Hinglish</strong> &rarr; Explain: <em>"Frontline workers, warehouse staff, and regional BPO teams often struggle with complex legal English. Our zero-reload trilingual engine guarantees 100% genuine comprehension."</em></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 2 -->
+      <div class="mb-8 p-6 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition shadow-xl print-card">
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-bold font-mono">02:00 – 06:00</span>
+            <h3 class="text-lg font-bold text-white">Phase 2: Learner Experience, Anti-Cheat Classroom & AI Companion</h3>
+          </div>
+          <span class="text-xs text-slate-400">Screen: Course Classroom</span>
+        </div>
+
+        <div class="space-y-4 text-sm leading-relaxed">
+          <div class="p-4 rounded-xl bg-slate-950/80 border-l-4 border-emerald-500 text-slate-300 italic">
+            <p class="font-bold font-sans text-emerald-400 not-italic text-xs mb-1">🎙️ Speaker Script (Pitch):</p>
+            "Now let's step into the shoes of an employee. Here is where LearnPulse proves its audit defensibility through two patent-grade security protections: Anti-Skip seekbar locking and Tab-Focus Defense."
+          </div>
+
+          <div>
+            <p class="font-semibold text-white mb-2 text-xs uppercase tracking-wider text-slate-400">🖱️ Live Screen Actions:</p>
+            <ol class="list-decimal list-inside space-y-2 text-xs text-slate-300 pl-2">
+              <li><strong>Seekbar Lock Demonstration:</strong> Play the video and attempt to drag the seekbar forward. Show that playback instantly snaps back: <em>"Employees cannot fast-forward. Real watching seconds are strictly enforced."</em></li>
+              <li><strong>Tab-Focus Defense Demonstration:</strong> Switch to another browser tab or minimize window. Return to show the <strong>Tab-Blur Alert</strong> and video auto-paused: <em>"If an employee switches tabs to check email or watch YouTube, the course halts. Legal counsel has 100% proof of presence."</em></li>
+              <li><strong>Contextual AI Tutor:</strong> Click the floating <span class="font-mono text-cyan-300 bg-slate-950 px-2 py-0.5 rounded">💬 AI Tutor</span> badge. Ask a POSH question (e.g. <em>"What constitutes quid pro quo harassment?"</em>). Show the AI giving an exact legal answer. Mention: <em>"In technical courses, it automatically shifts persona into a Senior Technical Mentor."</em></li>
+              <li><strong>Dynamic Dual-Signatory Certificate:</strong> Pass assessment quiz (&ge; 80%) &rarr; Show certificate with dynamic signatures, golden seal, unique Credential ID, and <strong>scannable public QR code</strong>.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 3 -->
+      <div class="mb-8 p-6 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition shadow-xl print-card">
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-xs font-bold font-mono">06:00 – 09:00</span>
+            <h3 class="text-lg font-bold text-white">Phase 3: Statutory POSH Grievance & Anonymous Whistleblower Helpdesk</h3>
+          </div>
+          <span class="text-xs text-slate-400">Screen: [⚖️ IC Desk] Modal</span>
+        </div>
+
+        <div class="space-y-4 text-sm leading-relaxed">
+          <div class="p-4 rounded-xl bg-slate-950/80 border-l-4 border-rose-500 text-slate-300 italic">
+            <p class="font-bold font-sans text-rose-400 not-italic text-xs mb-1">🎙️ Speaker Script (Pitch):</p>
+            "Under Section 19 of the POSH Act, employers must provide an accessible grievance redressal mechanism. But in reality, employees fear retaliation and rarely complain using their corporate email. Under Section 16, disclosing complainant identity carries severe legal penalties. LearnPulse solves this with a 100% Anonymous Whistleblower Helpdesk."
+          </div>
+
+          <div>
+            <p class="font-semibold text-white mb-2 text-xs uppercase tracking-wider text-slate-400">🖱️ Live Screen Actions:</p>
+            <ol class="list-decimal list-inside space-y-2 text-xs text-slate-300 pl-2">
+              <li>Click <strong>[⚖️ IC Desk]</strong> on the POSH course card or navigation bar.</li>
+              <li>Select <strong>100% Anonymous Whistleblower Mode</strong> &rarr; Fill in incident date, location, accused person, and narrative &rarr; Click <strong>Submit Statutory Complaint to IC</strong>.</li>
+              <li>Show the generated <strong>Docket ID</strong> (e.g. <span class="font-mono text-rose-300">POSH-2026-4921</span>) and <strong>6-Digit Secret PIN</strong>: <em>"Zero IP, zero cookies, zero user IDs stored. Only this Docket ID + PIN can query progress."</em></li>
+              <li>Switch to <strong>Track Docket Status</strong> tab &rarr; Input Docket ID + PIN &rarr; View real-time investigation stage and Presiding Officer notes.</li>
+              <li>Click <strong>📘 Legal Workflow Guide</strong> &rarr; Show the interactive 5-stage legal lifecycle, 90-day inquiry clock, and Section 10 conciliation boundaries.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 4 -->
+      <div class="mb-8 p-6 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition shadow-xl print-card">
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-xs font-bold font-mono">09:00 – 13:00</span>
+            <h3 class="text-lg font-bold text-white">Phase 4: Admin Command Hub, Adjudication Console & Recertification Engine</h3>
+          </div>
+          <span class="text-xs text-slate-400">Screen: Admin Control Hub</span>
+        </div>
+
+        <div class="space-y-4 text-sm leading-relaxed">
+          <div class="p-4 rounded-xl bg-slate-950/80 border-l-4 border-amber-500 text-slate-300 italic">
+            <p class="font-bold font-sans text-amber-400 not-italic text-xs mb-1">🎙️ Speaker Script (Pitch):</p>
+            "Now let's switch to the executive view. As HR Head, Compliance Director, or Internal Committee Presiding Officer, you have a centralized command center to oversee compliance health, adjudicate grievances, and automate annual recertifications."
+          </div>
+
+          <div>
+            <p class="font-semibold text-white mb-2 text-xs uppercase tracking-wider text-slate-400">🖱️ Live Screen Actions:</p>
+            <ol class="list-decimal list-inside space-y-2 text-xs text-slate-300 pl-2">
+              <li>Open <strong>POSH IC Redressal</strong> in Admin Hub &rarr; View the grievance filed in Phase 3.</li>
+              <li>Highlight the <strong>90-Day Statutory Countdown Clock</strong> (Section 11 requirement).</li>
+              <li>Walk through the <strong>5-Stage Status Sequence Dropdown</strong> (<em>Complaint Filed &rarr; Notice & Conciliation &rarr; Formal Inquiry &rarr; Report Issued &rarr; Action Taken</em>).</li>
+              <li>Click <strong>📄 Export MWCD Annual Report</strong> &rarr; Show the 1-click summary table ready for submission to the Ministry of Women & Child Development.</li>
+              <li><strong>Annual Recertification Simulation:</strong> Click <span class="font-mono text-emerald-300 bg-slate-950 px-2 py-0.5 rounded">🔄 Run Recertification Sweep / Test Simulation</span>. Show how expired credentials move to archives and users are automatically re-enrolled into the current year's training without manual HR spreadsheets.</li>
+              <li><strong>User Management & Brute-Force Unlock:</strong> Show 1-click account unlock for locked accounts (<span class="font-mono text-rose-300">🔓 Unlock Account</span>) and Case 1 bulk assigning Course 2 to completed learners.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 5 -->
+      <div class="p-6 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition shadow-xl print-card">
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 text-xs font-bold font-mono">13:00 – 15:00</span>
+            <h3 class="text-lg font-bold text-white">Phase 5: Audit Trail, VAPT Security & ROI Closing</h3>
+          </div>
+          <span class="text-xs text-slate-400">Screen: Product & Technical Docs</span>
+        </div>
+
+        <div class="space-y-4 text-sm leading-relaxed">
+          <div class="p-4 rounded-xl bg-slate-950/80 border-l-4 border-purple-500 text-slate-300 italic">
+            <p class="font-bold font-sans text-purple-400 not-italic text-xs mb-1">🎙️ Speaker Script (Pitch):</p>
+            "Finally, when government auditors or enterprise security teams inspect your organization, where do you stand? In summary, LearnPulse saves an enterprise of 1,000 employees over ₹12 Lakhs per year (75% to 85% cost savings), completely eliminates Section 26 non-compliance penalties, and protects company reputation with an ironclad, tamper-proof legal defense."
+          </div>
+
+          <div>
+            <p class="font-semibold text-white mb-2 text-xs uppercase tracking-wider text-slate-400">🖱️ Live Screen Actions:</p>
+            <ol class="list-decimal list-inside space-y-1.5 text-xs text-slate-300 pl-2">
+              <li>Open <strong>Product & Technical Docs</strong> in Admin Hub.</li>
+              <li>Show the <strong>OWASP Top 10 PASS Matrix (SEC-01 to SEC-14)</strong> proving zero vulnerability in all endpoints.</li>
+              <li>Show the <strong>4,000 QPS database connection pool math</strong> sustaining 30,000+ simultaneous trainees.</li>
+              <li>Show client-ready exportability via <strong>Download .MD</strong> or <strong>Print Document</strong>.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Objection Handling Matrix -->
+    <section class="mb-12">
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center space-x-2">
+        <span class="text-rose-400">3.</span>
+        <span>Client Objection Handling & Defense Matrix</span>
+      </h2>
+
+      <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl print-card">
+        <table class="w-full text-left text-xs sm:text-sm text-slate-300">
+          <thead class="bg-slate-950 text-white font-bold text-xs uppercase tracking-wider border-b border-slate-800">
+            <tr>
+              <th class="px-5 py-3.5 w-1/3">Client Objection / Question</th>
+              <th class="px-5 py-3.5 w-2/3">Winning Executive Response</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/80 text-xs">
+            <tr class="hover:bg-slate-800/30 transition">
+              <td class="px-5 py-3.5 font-semibold text-rose-300">"Why not just use Moodle or an open-source LMS?"</td>
+              <td class="px-5 py-3.5 text-slate-300 leading-relaxed">"Moodle is built for academic homework, not corporate statutory compliance. It lacks native anti-skip enforcement, tab-blur pausing, anonymous POSH whistleblower filing, 90-day statutory clocks, MWCD Section 21 reporting, and 365-day automated recertification. Matching LearnPulse on Moodle would require ₹10 Lakhs+ in custom plugin engineering."</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30 transition">
+              <td class="px-5 py-3.5 font-semibold text-sky-300">"Can employees bypass video watching with browser scripts?"</td>
+              <td class="px-5 py-3.5 text-slate-300 leading-relaxed">"No. The player tracks real watched seconds and enforces verification on the backend before the quiz unlocks. Even if client code is manipulated, the server strictly rejects unearned certificate issuances."</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30 transition">
+              <td class="px-5 py-3.5 font-semibold text-purple-300">"How does anonymous mode comply with POSH Section 16?"</td>
+              <td class="px-5 py-3.5 text-slate-300 leading-relaxed">"Under Section 16, identity disclosure carries severe fines. In anonymous mode, the backend strips all IP addresses, user IDs, and session tokens before database commit. Only the bcrypt-hashed 6-digit PIN + Docket ID can query case status."</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30 transition">
+              <td class="px-5 py-3.5 font-semibold text-amber-300">"How does it handle 5,000+ employees on the same deadline?"</td>
+              <td class="px-5 py-3.5 text-slate-300 leading-relaxed">"Our Edge-Decoupled architecture delivers heavy video bytes directly from edge CDNs. The backend processes only lightweight JSON heartbeats (&lt; 1KB). Our connection pool is benchmarked at 4,000 QPS, sustaining thousands of concurrent trainees on a standard instance."</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Presenter Cheat Sheet -->
+    <section class="mb-12">
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center space-x-2">
+        <span class="text-rose-400">4.</span>
+        <span>1-Page Presenter Quick-Reference Cheat Sheet</span>
+      </h2>
+
+      <div class="p-6 rounded-2xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-400 shadow-xl overflow-x-auto leading-relaxed print-card">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       LEARNPULSE DEMO QUICK SHEET                           │
+├─────────┬──────────────────────┬────────────────────────────────────────────┤
+│ Minute  │ Phase                │ Key Actions & Click Path                   │
+├─────────┼──────────────────────┼────────────────────────────────────────────┤
+│ 00 - 02 │ 1. Opening Hook      │ • Open localhost:5000                      │
+│         │                      │ • Toggle EN -> हिन्दी -> Hinglish          │
+│         │                      │ • Pitch statutory compliance & anti-cheat  │
+├─────────┼──────────────────────┼────────────────────────────────────────────┤
+│ 02 - 06 │ 2. Learner Classroom │ • Open POSH Course -> "Start Learning"     │
+│         │    & Anti-Cheat      │ • Try fast-forward (Seekbar blocked!)      │
+│         │                      │ • Switch browser tab (Tab-blur warning!)   │
+│         │                      │ • Open AI Tutor (Contextual POSH help)     │
+│         │                      │ • Pass Quiz -> Show QR-code Certificate    │
+├─────────┼──────────────────────┼────────────────────────────────────────────┤
+│ 06 - 09 │ 3. POSH IC Helpdesk  │ • Click [⚖️ IC Desk] on POSH card          │
+│         │    & Whistleblower   │ • Select "100% Anonymous Whistleblower"    │
+│         │                      │ • Submit -> Show Docket ID + 6-digit PIN   │
+│         │                      │ • Track Docket Status tab                  │
+│         │                      │ • Open Legal Workflow Guide (5 stages)     │
+├─────────┼──────────────────────┼────────────────────────────────────────────┤
+│ 09 - 13 │ 4. Admin Command Hub │ • Open Admin Hub (2-column dark menu)      │
+│         │    & Recertification │ • POSH IC Desk -> Show 90-day clock        │
+│         │                      │ • Click "Export MWCD Annual Report"        │
+│         │                      │ • Click "Run Recertification Simulation"   │
+│         │                      │ • User Directory -> 1-Click Unlock Account │
+│         │                      │ • Case 1: Bulk assign Course 2 to users    │
+├─────────┼──────────────────────┼────────────────────────────────────────────┤
+│ 13 - 15 │ 5. VAPT Docs & ROI   │ • Open "Product & Technical Docs" in Admin │
+│         │                      │ • Show OWASP Top 10 PASS Matrix (SEC 01-14)│
+│         │                      │ • Pitch 75%-85% ROI and closing call-to-act│
+└─────────┴──────────────────────┴────────────────────────────────────────────┘
+</pre>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Download Handler -->
+  <script>
+    async function downloadMarkdown() {
+      try {
+        const resp = await fetch('/docs/5_EXECUTIVE_DEMO_PLAYBOOK_AND_SCRIPT.md');
+        if (!resp.ok) throw new Error('Failed to fetch markdown');
+        const text = await resp.text();
+        const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '5_EXECUTIVE_DEMO_PLAYBOOK_AND_SCRIPT.md';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert('Could not download markdown directly: ' + e.message);
+      }
+    }
+  </script>
+</body>
+</html>
