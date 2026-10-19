@@ -40,6 +40,249 @@ class PoshHelpdeskManager {
     document.body.classList.remove("overflow-hidden");
   }
 
+  // --- STATUTORY WORKFLOW & STATUS SEQUENCE GUIDE MODAL ---
+  openWorkflowGuideModal() {
+    const modal = document.getElementById("poshWorkflowGuideModal");
+    const container = document.getElementById("poshWorkflowGuideModalContent");
+    if (!modal || !container) return;
+
+    container.innerHTML = this.renderWorkflowGuideModal();
+    modal.classList.remove("hidden");
+    document.body.classList.add("overflow-hidden");
+  }
+
+  closeWorkflowGuideModal() {
+    const modal = document.getElementById("poshWorkflowGuideModal");
+    if (modal) modal.classList.add("hidden");
+    const helpdeskModal = document.getElementById("poshHelpdeskModal");
+    const reviewModal = document.getElementById("poshReviewModal");
+    if ((!helpdeskModal || helpdeskModal.classList.contains("hidden")) &&
+        (!reviewModal || reviewModal.classList.contains("hidden"))) {
+      document.body.classList.remove("overflow-hidden");
+    }
+  }
+
+  renderWorkflowGuideModal() {
+    return `
+      <div class="space-y-6 text-slate-200">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/40 flex items-center justify-center text-2xl shadow-lg shrink-0">
+              ⚖️
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs uppercase font-extrabold tracking-wider text-indigo-400">Statutory Compliance Manual</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  POSH ACT 2013 • SEC 9 - 14
+                </span>
+              </div>
+              <h3 class="text-xl font-black text-white mt-0.5">
+                Internal Committee (IC) Legal Lifecycle & Case Workflow Guide
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">
+                Standard Statutory Adjudication Procedure for Presiding Officers & Employee Redressal Rights.
+              </p>
+            </div>
+          </div>
+
+          <button 
+            type="button"
+            onclick="window.poshHelpdeskManager.closeWorkflowGuideModal()" 
+            class="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/60 hover:bg-slate-800 transition cursor-pointer self-start sm:self-center"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Visual Flow Diagram Roadmap -->
+        <div class="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <span class="flex items-center space-x-2">
+              <span class="text-base">🗺️</span>
+              <span class="text-white">Sequential Lifecycle Map</span>
+            </span>
+            <span class="text-emerald-400 text-[11px] font-bold">Strict 90-Day Inquiry Mandate</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 relative">
+            <!-- Stage 1 -->
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 relative">
+              <div class="text-[10px] font-mono font-bold text-slate-400">STAGE 1</div>
+              <div class="font-bold text-white text-xs mt-1">1. Filed</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Section 9 Intake</div>
+              <div class="mt-2 text-[10px] text-indigo-400 font-semibold">Docket & PIN Created</div>
+            </div>
+
+            <!-- Stage 2 -->
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-indigo-500/30 relative">
+              <div class="text-[10px] font-mono font-bold text-indigo-400">STAGE 2</div>
+              <div class="font-bold text-white text-xs mt-1">2. Under Review</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Section 10 Scrutiny</div>
+              <div class="mt-2 text-[10px] text-amber-400 font-semibold">Prima Facie & Notice</div>
+            </div>
+
+            <!-- Stage 3 -->
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-amber-500/30 relative">
+              <div class="text-[10px] font-mono font-bold text-amber-400">STAGE 3</div>
+              <div class="font-bold text-white text-xs mt-1">3. Formal Inquiry</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Section 11 Proceedings</div>
+              <div class="mt-2 text-[10px] text-rose-400 font-semibold">Civil Court Powers (90d)</div>
+            </div>
+
+            <!-- Stage 4 -->
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-emerald-500/30 relative">
+              <div class="text-[10px] font-mono font-bold text-emerald-400">STAGE 4</div>
+              <div class="font-bold text-white text-xs mt-1">4. Resolved</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Section 13 Orders</div>
+              <div class="mt-2 text-[10px] text-emerald-400 font-semibold">Sanctions Enforced (60d)</div>
+            </div>
+          </div>
+
+          <!-- Stage 5 Alternate Branch -->
+          <div class="p-3 rounded-xl bg-purple-950/20 border border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+            <div class="flex items-center space-x-2.5">
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">STAGE 5 (ALTERNATE)</span>
+              <span class="font-bold text-white">5. Dismissed (Conciliated / No Merit)</span>
+              <span class="text-slate-400 text-[11px]">• Section 10 Conciliation Deed or Unsubstantiated finding</span>
+            </div>
+            <span class="text-[10px] text-purple-300 font-semibold shrink-0">Amicable Settlement Closure</span>
+          </div>
+        </div>
+
+        <!-- 5 Detailed Stage Cards -->
+        <div class="space-y-3.5">
+          <!-- Card 1 -->
+          <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <div class="flex items-center space-x-2">
+                <span class="w-6 h-6 rounded-lg bg-slate-800 text-indigo-400 font-bold flex items-center justify-center text-xs">1</span>
+                <span class="font-extrabold text-white text-sm">1. Filed (New Intake)</span>
+                <span class="px-2 py-0.2 rounded text-[9px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Section 9</span>
+              </div>
+              <span class="text-[11px] text-slate-400">Timeframe: Incident ke 3 mahine ke andar</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Jab employee/trainee grievance box se form submit karta hai (Confidential Identified ya 100% Anonymous mode me), case system me <strong>"Filed"</strong> mark hota hai. System ek unique <strong>Docket Number</strong> aur <strong>6-digit Secret PIN</strong> generate karta hai.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-[11px] text-slate-400">
+              <div><strong class="text-slate-200">Statutory Window:</strong> 3 months (IC can extend by +3 months for valid reasons).</div>
+              <div><strong class="text-slate-200">Filing Privacy:</strong> Whistleblower anonymity completely shielded.</div>
+              <div><strong class="text-slate-200">System Trigger:</strong> Presiding Officer dashboard inbox notification.</div>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="p-4 rounded-2xl bg-slate-900/90 border border-indigo-500/30 space-y-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <div class="flex items-center space-x-2">
+                <span class="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-400 font-bold flex items-center justify-center text-xs">2</span>
+                <span class="font-extrabold text-white text-sm">2. Under Review (Prima Facie Assessment)</span>
+                <span class="px-2 py-0.2 rounded text-[9px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Section 10</span>
+              </div>
+              <span class="text-[11px] text-indigo-300">Notice to Respondent: 7 Working Days</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Internal Committee complaint ko scrutinize karti hai ki kya ye workplace sexual harassment (Sec 2(n)) ke purview me aati hai. Respondent ko 7 working days me notice bhej kar 10 days me written reply manga jata hai.
+            </p>
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-indigo-500/20 text-[11px] space-y-1">
+              <div class="font-bold text-amber-300 flex items-center space-x-1.5">
+                <span>🤝</span>
+                <span>Section 10 Conciliation Option (Formal Inquiry se pehle):</span>
+              </div>
+              <p class="text-slate-400">
+                Complainant ke explicit written request par, formal legal inquiry shuru hone se pehle mutual settlement (conciliation) allow hai. <strong>Kanoon ke mutabiq monetary settlement strictly prohibited hai.</strong>
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="p-4 rounded-2xl bg-slate-900/90 border border-amber-500/30 space-y-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <div class="flex items-center space-x-2">
+                <span class="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center text-xs">3</span>
+                <span class="font-extrabold text-white text-sm">3. Formal Inquiry Commenced</span>
+                <span class="px-2 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Section 11 & 12</span>
+              </div>
+              <span class="text-[11px] text-amber-300 font-bold">⏱️ Mandatory 90-Day Legal Limit</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Agar conciliation nahi hoti ya matter serious hai, toh IC formal legal trial shuru karti hai. Is stage par Internal Committee ke paas <strong>Code of Civil Procedure, 1908 ke under Civil Court ki powers</strong> hoti hain:
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-400">
+              <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                <strong class="text-white block mb-0.5">🏛️ Civil Court Powers:</strong>
+                Witnesses ko summon karna, oath par statement lena, CCTV footage, emails, chat history aur records inspect karna.
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                <strong class="text-white block mb-0.5">🛡️ Section 12 Interim Relief:</strong>
+                Inquiry ke dauran complainant ko 3 months paid leave, separate desk/seating, ya respondent ka transfer facilitate karna.
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="p-4 rounded-2xl bg-slate-900/90 border border-emerald-500/30 space-y-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <div class="flex items-center space-x-2">
+                <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-xs">4</span>
+                <span class="font-extrabold text-white text-sm">4. Resolved (Final Redressal Order Issued)</span>
+                <span class="px-2 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Section 13</span>
+              </div>
+              <span class="text-[11px] text-emerald-300 font-bold">Enforcement Window: 60 Days</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Inquiry complete hone ke 10 din ke andar IC apni Final Inquiry Report Employer ko submit karti hai. Employer ko 60 din ke andar recommendations lagu karni hoti hain.
+            </p>
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-emerald-500/20 text-[11px] text-slate-300 flex flex-wrap gap-2">
+              <span class="px-2 py-1 rounded bg-slate-800 text-slate-200">✍️ Written Apology</span>
+              <span class="px-2 py-1 rounded bg-slate-800 text-slate-200">⚠️ Formal Warning / Reprimand</span>
+              <span class="px-2 py-1 rounded bg-slate-800 text-slate-200">📉 Promotion / Increment Withholding</span>
+              <span class="px-2 py-1 rounded bg-slate-800 text-slate-200">💰 Compensation Deduction from Salary</span>
+              <span class="px-2 py-1 rounded bg-rose-950 text-rose-300 font-bold border border-rose-800">🚫 Termination / Dismissal</span>
+            </div>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="p-4 rounded-2xl bg-slate-900/90 border border-purple-500/30 space-y-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <div class="flex items-center space-x-2">
+                <span class="w-6 h-6 rounded-lg bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center text-xs">5</span>
+                <span class="font-extrabold text-white text-sm">5. Dismissed (No Merit / Conciliated)</span>
+                <span class="px-2 py-0.2 rounded text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">Section 10 & 14</span>
+              </div>
+              <span class="text-[11px] text-purple-300">Amicable / Merits Closure</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Ye alternate closing status hai: (A) Jab Section 10 conciliation agreement dono parties ke beech execute ho jata hai, ya (B) Preliminary examination ya inquiry me allegation baseless ya non-workplace dispute prove hoti hai.
+            </p>
+          </div>
+        </div>
+
+        <!-- Statutory Legal Safeguards Notice -->
+        <div class="p-4 rounded-2xl bg-gradient-to-r from-slate-950 to-slate-900 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
+          <div class="space-y-1">
+            <div class="font-bold text-white flex items-center space-x-1.5">
+              <span>🔒</span>
+              <span>Section 16 Non-Disclosure & Section 19 Anti-Victimisation Protection:</span>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              Kanoon ke mutabiq victim, respondent, ya witnesses ka naam press ya public me reveal karna punishable offence hai (₹5,000 fine). Complainant ke khilaf kisi bhi tarah ka retaliation ya victimisation strictly illegal hai.
+            </p>
+          </div>
+          <button 
+            type="button" 
+            onclick="window.poshHelpdeskManager.closeWorkflowGuideModal()" 
+            class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shrink-0 cursor-pointer shadow-md shadow-indigo-950/40"
+          >
+            Got it, Close Guide
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
   setModalTab(tabId) {
     this.activeModalTab = tabId;
     this.renderModal();
@@ -733,6 +976,30 @@ class PoshHelpdeskManager {
           </div>
         </div>
 
+        <!-- Interactive Workflow Guide Banner in Learner Helpdesk -->
+        <button 
+          type="button" 
+          onclick="window.poshHelpdeskManager.openWorkflowGuideModal()" 
+          class="w-full p-4 rounded-2xl bg-gradient-to-r from-rose-950/60 via-purple-950/40 to-slate-900 border border-rose-500/40 hover:border-rose-400 transition flex items-center justify-between cursor-pointer group text-left shadow-lg"
+        >
+          <div class="flex items-center space-x-3.5">
+            <span class="text-2xl">🗺️</span>
+            <div>
+              <div class="text-xs font-bold text-white group-hover:text-rose-300 transition flex items-center space-x-2">
+                <span>View 5-Stage Statutory Redressal Sequence & Inquiry Rules</span>
+                <span class="px-2 py-0.2 rounded text-[9px] bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold uppercase">Section 9-14 Guide</span>
+              </div>
+              <div class="text-[11px] text-slate-400 mt-0.5">
+                Understand how a complaint progresses: Filing → Preliminary Review → 90-Day Formal Inquiry → Final Order or Conciliation.
+              </div>
+            </div>
+          </div>
+          <span class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md shrink-0 flex items-center space-x-1">
+            <span>Explore Guide</span>
+            <span>→</span>
+          </span>
+        </button>
+
         <!-- 3 Core Statutory Pillars -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
@@ -870,6 +1137,16 @@ class PoshHelpdeskManager {
         </div>
 
         <div class="flex flex-wrap items-center gap-2 self-start lg:self-center shrink-0">
+          <button 
+            type="button"
+            onclick="window.poshHelpdeskManager.openWorkflowGuideModal()"
+            class="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold text-xs shadow-lg transition flex items-center space-x-1.5 cursor-pointer shadow-rose-950/40"
+            title="Legal Workflow, 5-Stage Sequence & Section Guide"
+          >
+            <span>ℹ️</span>
+            <span>Legal Workflow & Status Guide</span>
+          </button>
+
           <button 
             type="button"
             onclick="window.poshHelpdeskManager.exportAnnualReport()"
@@ -1162,7 +1439,18 @@ class PoshHelpdeskManager {
           
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="font-semibold text-slate-400 text-[11px] block mb-1">Advance Legal Case Status</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="font-semibold text-slate-400 text-[11px] block">Advance Legal Case Status</label>
+                <button 
+                  type="button" 
+                  onclick="window.poshHelpdeskManager.openWorkflowGuideModal()" 
+                  class="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold flex items-center space-x-1 cursor-pointer bg-indigo-500/10 px-2 py-0.5 rounded-lg border border-indigo-500/30 hover:bg-indigo-500/20 transition"
+                  title="How do statuses transition? View 5-Stage Statutory Workflow Guide"
+                >
+                  <span>ℹ️</span>
+                  <span>Sequence & Legal Guide</span>
+                </button>
+              </div>
               <select id="poshAdjudicateStatus" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-bold text-xs focus:outline-none focus:border-rose-500">
                 <option value="Filed" ${c.status === 'Filed' ? 'selected' : ''}>1. Filed (New Intake)</option>
                 <option value="Under Review" ${c.status === 'Under Review' ? 'selected' : ''}>2. Under Review (Prima Facie Assessment)</option>
