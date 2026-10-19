@@ -26,7 +26,7 @@ class I18nManager {
     this.translations = {
       en: {
         // Navigation & Header
-        nav_catalog: "Programs & Catalog",
+        nav_catalog: "Programs",
         nav_mylearning: "My Learning",
         nav_certificates: "Certificates",
         nav_instructor: "Instructor Studio",
@@ -113,7 +113,7 @@ class I18nManager {
 
       hi: {
         // Navigation & Header
-        nav_catalog: "प्रोग्राम एवं पाठ्यक्रम",
+        nav_catalog: "प्रोग्राम",
         nav_mylearning: "मेरा प्रशिक्षण",
         nav_certificates: "प्रमाण पत्र",
         nav_instructor: "प्रशिक्षक स्टूडियो",
@@ -200,7 +200,7 @@ class I18nManager {
 
       hinglish: {
         // Navigation & Header
-        nav_catalog: "Programs & Courses",
+        nav_catalog: "Programs",
         nav_mylearning: "Mera Learning",
         nav_certificates: "Certificates",
         nav_instructor: "Instructor Studio",

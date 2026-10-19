@@ -162,19 +162,46 @@ class App {
       });
     });
 
-    // Admin Hub Dropdown toggle on click & dismiss on outside click
+    // Admin Hub Dropdown toggle on click & dismiss on outside click with smart viewport clamping
     const adminHubTrigger = document.getElementById("adminHubTrigger");
     const adminHubMenu = document.getElementById("adminHubMenu");
+    const adminHubDropdown = document.getElementById("adminHubDropdown");
+
+    const clampAdminHubMenu = () => {
+      if (!adminHubMenu) return;
+      // Reset first to evaluate natural position
+      adminHubMenu.style.left = "50%";
+      adminHubMenu.style.transform = "translateX(-50%)";
+      const rect = adminHubMenu.getBoundingClientRect();
+      const padding = 16;
+      if (rect.right > window.innerWidth - padding) {
+        const overflow = rect.right - (window.innerWidth - padding);
+        adminHubMenu.style.transform = `translateX(calc(-50% - ${overflow}px))`;
+      } else if (rect.left < padding) {
+        const underflow = padding - rect.left;
+        adminHubMenu.style.transform = `translateX(calc(-50% + ${underflow}px))`;
+      }
+    };
+
     if (adminHubTrigger && adminHubMenu) {
       adminHubTrigger.addEventListener("click", (e) => {
         e.stopPropagation();
         adminHubMenu.classList.toggle("hidden");
+        clampAdminHubMenu();
       });
+      if (adminHubDropdown) {
+        adminHubDropdown.addEventListener("mouseenter", () => {
+          setTimeout(clampAdminHubMenu, 10);
+        });
+      }
       document.addEventListener("click", (e) => {
         if (!e.target.closest("#adminHubDropdown")) {
           adminHubMenu.classList.add("hidden");
+          adminHubMenu.style.left = "";
+          adminHubMenu.style.transform = "";
         }
       });
+      window.addEventListener("resize", clampAdminHubMenu);
     }
 
     // Student profile edit button

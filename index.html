@@ -66,19 +66,19 @@
         <nav class="hidden md:flex items-center space-x-1 py-1 shrink-0">
           <button 
             data-nav-target="catalog" 
-            class="px-2.5 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-[#dd1f36] border-b-2 border-[#dd1f36] hover:text-white cursor-pointer shrink-0 whitespace-nowrap"
+            class="px-2 lg:px-2.5 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-[#dd1f36] border-b-2 border-[#dd1f36] hover:text-white cursor-pointer shrink-0 whitespace-nowrap"
           >
             <span>📚 </span><span data-i18n="nav_catalog">Programs</span>
           </button>
           <button 
             data-nav-target="mylearning" 
-            class="px-2.5 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-slate-400 hover:text-white cursor-pointer shrink-0 whitespace-nowrap"
+            class="px-2 lg:px-2.5 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-slate-400 hover:text-white cursor-pointer shrink-0 whitespace-nowrap"
           >
             <span>🎓 </span><span data-i18n="nav_mylearning">My Learning</span>
           </button>
           <button 
             data-nav-target="certificates" 
-            class="px-2.5 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1.5 cursor-pointer shrink-0 whitespace-nowrap"
+            class="px-2 lg:px-2.5 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1 cursor-pointer shrink-0 whitespace-nowrap"
           >
             <span>🏆 </span><span data-i18n="nav_certificates">Certificates</span>
             <span id="headerCertCount" class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-amber-500 text-slate-950">0</span>
@@ -88,7 +88,7 @@
           <button 
             id="navItemInstructor"
             data-nav-target="instructor" 
-            class="hidden px-2.5 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1.5 cursor-pointer shrink-0 whitespace-nowrap hover:bg-slate-800/60"
+            class="hidden px-2 lg:px-2.5 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1 cursor-pointer shrink-0 whitespace-nowrap hover:bg-slate-800/60"
           >
             <span>👨‍🏫 </span><span class="hidden 2xl:inline">Instructor </span><span>Studio</span>
             <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#dd1f36]/20 text-[#dd1f36] border border-[#dd1f36]/30">Creator</span>
@@ -99,178 +99,212 @@
             <button 
               id="adminHubTrigger"
               type="button"
-              class="px-2.5 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1 cursor-pointer shrink-0 whitespace-nowrap hover:bg-slate-800/60"
+              class="px-2 lg:px-2.5 py-1.5 rounded-xl text-xs lg:text-sm font-semibold transition text-slate-400 hover:text-white flex items-center space-x-1 cursor-pointer shrink-0 whitespace-nowrap hover:bg-slate-800/60"
             >
               <span class="text-amber-400">👑</span>
               <span class="whitespace-nowrap font-bold">Admin Hub</span>
               <svg class="w-3.5 h-3.5 ml-0.5 text-slate-400 group-hover:text-white group-hover:rotate-180 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </button>
 
-            <!-- Dropdown Flyout Panel -->
+            <!-- Dropdown Flyout Panel: 2-Column Responsive Mega-Grid -->
             <div 
               id="adminHubMenu" 
-              class="hidden group-hover:block absolute left-0 mt-1.5 w-64 rounded-2xl bg-[#0f1422] border border-slate-700/80 shadow-2xl p-2 z-50 backdrop-blur-xl animate-in fade-in slide-in-from-top-1 duration-150"
+              class="hidden group-hover:block absolute left-1/2 -translate-x-1/2 mt-1.5 w-[570px] max-w-[calc(100vw-24px)] rounded-2xl border border-slate-700 shadow-2xl p-3 z-50 animate-in fade-in slide-in-from-top-1 duration-150 max-h-[calc(100vh-80px)] overflow-y-auto"
+              style="background-color: #0b0f19 !important; border: 1px solid #334155; box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(51, 65, 85, 0.7);"
             >
-              <div class="px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-800/80 mb-1 flex items-center justify-between">
-                <span>Executive Tools</span>
-                <span class="text-amber-400">Admin</span>
+              <!-- Hub Header -->
+              <div class="px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-800/80 mb-2 flex items-center justify-between">
+                <div class="flex items-center space-x-1.5">
+                  <span class="text-amber-400 text-xs">👑</span>
+                  <span class="text-slate-200 font-bold">Executive Command Center</span>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[9px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30">10 Modules</span>
               </div>
               
-              <button 
-                data-nav-target="dashboard" 
-                class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center justify-between group/item cursor-pointer"
-              >
-                <div class="flex items-center space-x-2.5">
-                  <span class="text-base">📊</span>
-                  <div>
-                    <div class="font-bold text-slate-200 group-hover/item:text-white">Admin Dashboard</div>
-                    <div class="text-[10px] text-slate-400">5 Analytical executive cuts</div>
+              <!-- 2-Column Split -->
+              <div class="grid grid-cols-2 gap-2">
+                <!-- Column 1: Analytics & Statutory Compliance -->
+                <div class="space-y-1">
+                  <div class="px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                    <span>Analytics & Compliance</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                   </div>
-                </div>
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-[#dd1f36]/20 text-[#dd1f36] border border-[#dd1f36]/30">5 Cuts</span>
-              </button>
 
-              <button 
-                type="button"
-                onclick="window.reportsManager.setReportTab('audit'); window.app.navigate('reports');" 
-                class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center justify-between group/item cursor-pointer"
-              >
-                <div class="flex items-center space-x-2.5">
-                  <span class="text-base">🛡️</span>
-                  <div>
-                    <div class="font-bold text-slate-200 group-hover/item:text-white">Tamper-Proof Audit Logs</div>
-                    <div class="text-[10px] text-slate-400">SHA-256 verified activity trail</div>
-                  </div>
-                </div>
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">SHA-256</span>
-              </button>
+                  <!-- 1. Admin Dashboard -->
+                  <button 
+                    data-nav-target="dashboard" 
+                    class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/90 transition flex items-center justify-between group/item cursor-pointer border border-transparent hover:border-slate-700/60"
+                  >
+                    <div class="flex items-center space-x-2 min-w-0">
+                      <span class="text-base shrink-0">📊</span>
+                      <div class="min-w-0">
+                        <div class="font-bold text-slate-200 group-hover/item:text-white truncate">Admin Dashboard</div>
+                        <div class="text-[10px] text-slate-400 truncate">5 analytical cuts</div>
+                      </div>
+                    </div>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-[#dd1f36]/20 text-[#dd1f36] border border-[#dd1f36]/30 shrink-0">5 Cuts</span>
+                  </button>
 
-              <button 
-                data-nav-target="reports" 
-                class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center justify-between group/item cursor-pointer"
-              >
-                <div class="flex items-center space-x-2.5">
-                  <span class="text-base">📈</span>
-                  <div>
-                    <div class="font-bold text-slate-200 group-hover/item:text-white">Reports & Audit Center</div>
-                    <div class="text-[10px] text-slate-400">Excel exports & POSH logs</div>
-                  </div>
-                </div>
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Excel</span>
-              </button>
+                  <!-- 2. Reports & Audit Center -->
+                  <button 
+                    data-nav-target="reports" 
+                    class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/90 transition flex items-center justify-between group/item cursor-pointer border border-transparent hover:border-slate-700/60"
+                  >
+                    <div class="flex items-center space-x-2 min-w-0">
+                      <span class="text-base shrink-0">📈</span>
+                      <div class="min-w-0">
+                        <div class="font-bold text-slate-200 group-hover/item:text-white truncate">Reports & Audit</div>
+                        <div class="text-[10px] text-slate-400 truncate">Excel exports & logs</div>
+                      </div>
+                    </div>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">Excel</span>
+                  </button>
 
-              <button 
-                type="button"
-                onclick="window.app.openEmailGatewaySettingsModal()" 
-                class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center justify-between group/item cursor-pointer"
-              >
-                <div class="flex items-center space-x-2.5">
-                  <span class="text-base">⚙️</span>
-                  <div>
-                    <div class="font-bold text-slate-200 group-hover/item:text-white">Email & SMTP Gateway</div>
-                    <div class="text-[10px] text-slate-400">SMTP relay & webhook alerts</div>
-                  </div>
-                </div>
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Gateway</span>
-              </button>
+                  <!-- 3. Tamper-Proof Audit Logs -->
+                  <button 
+                    type="button"
+                    onclick="window.reportsManager.setReportTab('audit'); window.app.navigate('reports');" 
+                    class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/90 transition flex items-center justify-between group/item cursor-pointer border border-transparent hover:border-slate-700/60"
+                  >
+                    <div class="flex items-center space-x-2 min-w-0">
+                      <span class="text-base shrink-0">🛡️</span>
+                      <div class="min-w-0">
+                        <div class="font-bold text-slate-200 group-hover/item:text-white truncate">Tamper-Proof Audit</div>
+                        <div class="text-[10px] text-slate-400 truncate">SHA-256 activity trail</div>
+                      </div>
+                    </div>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">SHA-256</span>
+                  </button>
 
-              <button 
-                data-nav-target="instructor" 
-                class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center justify-between group/item cursor-pointer"
-              >
-                <div class="flex items-center space-x-2.5">
-                  <span class="text-base">👨‍🏫</span>
-                  <div>
-                    <div class="font-bold text-slate-200 group-hover/item:text-white">Instructor Studio</div>
-                    <div class="text-[10px] text-slate-400">Course & video creator</div>
-                  </div>
-                </div>
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#dd1f36]/20 text-[#dd1f36] border border-[#dd1f36]/30">Creator</span>
-              </button>
+                  <!-- 4. POSH IC Grievance Redressal -->
+                  <button 
+                    data-nav-target="posh" 
+                    class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/90 transition flex items-center justify-between group/item cursor-pointer border border-transparent hover:border-slate-700/60"
+                  >
+                    <div class="flex items-center space-x-2 min-w-0">
+                      <span class="text-base shrink-0">⚖️</span>
+                      <div class="min-w-0">
+                        <div class="font-bold text-slate-200 group-hover/item:text-white truncate">POSH IC Redressal</div>
+                        <div class="text-[10px] text-slate-400 truncate">Sec 19 grievance desk</div>
+                      </div>
+                    </div>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">IC Desk</span>
+                  </button>
 
-              <button 
-                data-nav-target="users" 
-                class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center justify-between group/item cursor-pointer"
-              >
-                <div class="flex items-center space-x-2.5">
-                  <span class="text-base">👥</span>
-                  <div>
-                    <div class="font-bold text-slate-200 group-hover/item:text-white">User Directory & Roles</div>
-                    <div class="text-[10px] text-slate-400">Roles & 3-strike lockout</div>
-                  </div>
+                  <!-- 5. Email & SMTP Gateway -->
+                  <button 
+                    type="button"
+                    onclick="window.app.openEmailGatewaySettingsModal()" 
+                    class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/90 transition flex items-center justify-between group/item cursor-pointer border border-transparent hover:border-slate-700/60"
+                  >
+                    <div class="flex items-center space-x-2 min-w-0">
+                      <span class="text-base shrink-0">⚙️</span>
+                      <div class="min-w-0">
+                        <div class="font-bold text-slate-200 group-hover/item:text-white truncate">Email & SMTP Gateway</div>
+                        <div class="text-[10px] text-slate-400 truncate">Relay & webhook alerts</div>
+                      </div>
+                    </div>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shrink-0">SMTP</span>
+                  </button>
                 </div>
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/30">Roles</span>
-              </button>
 
-              <button 
-                data-nav-target="docs" 
-                class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center justify-between group/item cursor-pointer"
-              >
-                <div class="flex items-center space-x-2.5">
-                  <span class="text-base">📚</span>
-                  <div>
-                    <div class="font-bold text-slate-200 group-hover/item:text-white">Product & Technical Docs</div>
-                    <div class="text-[10px] text-slate-400">VAPT, User Manual, Load Math & Business Case</div>
+                <!-- Column 2: Governance & Operations -->
+                <div class="space-y-1">
+                  <div class="px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                    <span>Operations & Security</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
                   </div>
+
+                  <!-- 6. User Directory & Roles -->
+                  <button 
+                    data-nav-target="users" 
+                    class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/90 transition flex items-center justify-between group/item cursor-pointer border border-transparent hover:border-slate-700/60"
+                  >
+                    <div class="flex items-center space-x-2 min-w-0">
+                      <span class="text-base shrink-0">👥</span>
+                      <div class="min-w-0">
+                        <div class="font-bold text-slate-200 group-hover/item:text-white truncate">User Directory & Roles</div>
+                        <div class="text-[10px] text-slate-400 truncate">Roles & lockout security</div>
+                      </div>
+                    </div>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">Roles</span>
+                  </button>
+
+                  <!-- 7. Instructor Studio -->
+                  <button 
+                    data-nav-target="instructor" 
+                    class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/90 transition flex items-center justify-between group/item cursor-pointer border border-transparent hover:border-slate-700/60"
+                  >
+                    <div class="flex items-center space-x-2 min-w-0">
+                      <span class="text-base shrink-0">👨‍🏫</span>
+                      <div class="min-w-0">
+                        <div class="font-bold text-slate-200 group-hover/item:text-white truncate">Instructor Studio</div>
+                        <div class="text-[10px] text-slate-400 truncate">Course & video creator</div>
+                      </div>
+                    </div>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#dd1f36]/20 text-[#dd1f36] border border-[#dd1f36]/30 shrink-0">Creator</span>
+                  </button>
+
+                  <!-- 8. Live System & User Monitoring -->
+                  <button 
+                    data-nav-target="monitoring" 
+                    class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/90 transition flex items-center justify-between group/item cursor-pointer border border-transparent hover:border-slate-700/60"
+                  >
+                    <div class="flex items-center space-x-2 min-w-0">
+                      <span class="text-base shrink-0">📡</span>
+                      <div class="min-w-0">
+                        <div class="font-bold text-slate-200 group-hover/item:text-white truncate">Live Radar Monitoring</div>
+                        <div class="text-[10px] text-slate-400 truncate">Concurrency, CPU & DB pool</div>
+                      </div>
+                    </div>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">Live</span>
+                  </button>
+
+                  <!-- 9. Product & Technical Docs -->
+                  <button 
+                    data-nav-target="docs" 
+                    class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/90 transition flex items-center justify-between group/item cursor-pointer border border-transparent hover:border-slate-700/60"
+                  >
+                    <div class="flex items-center space-x-2 min-w-0">
+                      <span class="text-base shrink-0">📚</span>
+                      <div class="min-w-0">
+                        <div class="font-bold text-slate-200 group-hover/item:text-white truncate">Technical Docs & VAPT</div>
+                        <div class="text-[10px] text-slate-400 truncate">Architecture & User manual</div>
+                      </div>
+                    </div>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">Docs</span>
+                  </button>
+
+                  <!-- 10. Reset Demo Data -->
+                  <button 
+                    id="btnResetProgress" 
+                    type="button"
+                    class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 transition flex items-center justify-between cursor-pointer border border-transparent hover:border-rose-900/60"
+                    title="Reset demo progress for evaluation"
+                  >
+                    <div class="flex items-center space-x-2 min-w-0">
+                      <svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                      <div class="min-w-0">
+                        <div class="font-bold text-rose-300 truncate">Reset Demo Data</div>
+                        <div class="text-[10px] text-rose-400/80 truncate">Clear progress & reload</div>
+                      </div>
+                    </div>
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-[9px] font-mono uppercase bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">Reset</span>
+                  </button>
                 </div>
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Docs</span>
-              </button>
-
-              <button 
-                data-nav-target="monitoring" 
-                class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center justify-between group/item cursor-pointer"
-              >
-                <div class="flex items-center space-x-2.5">
-                  <span class="text-base">📊</span>
-                  <div>
-                    <div class="font-bold text-slate-200 group-hover/item:text-white">Live System & User Monitoring</div>
-                    <div class="text-[10px] text-slate-400">Concurrency, CPU/RAM, DB Pool & Compliance</div>
-                  </div>
-                </div>
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Live</span>
-              </button>
-
-              <button 
-                data-nav-target="posh" 
-                class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center justify-between group/item cursor-pointer"
-              >
-                <div class="flex items-center space-x-2.5">
-                  <span class="text-base">🛡️</span>
-                  <div>
-                    <div class="font-bold text-slate-200 group-hover/item:text-white">POSH IC Grievance Redressal</div>
-                    <div class="text-[10px] text-slate-400">Section 19 confidential helpdesk & case tracker</div>
-                  </div>
-                </div>
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">IC Desk</span>
-              </button>
-
-              <!-- Reset Demo Progress cleanly integrated into Admin Menu -->
-              <div class="pt-1.5 mt-1 border-t border-slate-800/80">
-                <button 
-                  id="btnResetProgress" 
-                  type="button"
-                  class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 transition flex items-center justify-between cursor-pointer"
-                  title="Reset demo progress for evaluation"
-                >
-                  <div class="flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                    <span>Reset Demo Data</span>
-                  </div>
-                  <span class="text-[9px] font-mono uppercase text-slate-500">Reset</span>
-                </button>
               </div>
             </div>
           </div>
         </nav>
 
         <!-- User Profile & Action Tools -->
-        <div class="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
+        <div class="flex items-center space-x-1 sm:space-x-1.5 shrink-0 ml-auto pr-0.5 sm:pr-1">
 
           <!-- Backend Connection Badge -->
-          <div id="backendStatusBadge" class="flex items-center space-x-1 px-2 py-1 rounded-full bg-slate-800/90 border border-slate-700/80 shrink-0 cursor-pointer" title="PostgreSQL Database Connection Status">
+          <div id="backendStatusBadge" class="flex items-center space-x-1 px-1.5 py-1 sm:px-2 rounded-full bg-slate-800/90 border border-slate-700/80 shrink-0 cursor-pointer" title="PostgreSQL Database Connection Status">
             <span class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span>
             <span class="text-[10px] text-slate-400 font-semibold hidden 2xl:inline whitespace-nowrap">Standalone Mode</span>
-            <span class="text-[10px] text-slate-400 font-semibold inline 2xl:hidden whitespace-nowrap">DB</span>
+            <span class="text-[10px] text-slate-400 font-semibold hidden xl:inline 2xl:hidden whitespace-nowrap">DB</span>
           </div>
 
           <!-- Vernacular Multi-Language Switcher (English ↔ Hindi ↔ Hinglish) -->
@@ -279,7 +313,7 @@
               id="btnLangSwitcher" 
               type="button" 
               onclick="window.i18n.toggleDropdown()"
-              class="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition cursor-pointer shadow-sm"
+              class="flex items-center space-x-1 px-2 py-1 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition cursor-pointer shadow-sm"
               title="Vernacular Language: Switch between English, हिंदी, and Hinglish"
             >
               <span class="text-xs">🌐</span>
@@ -364,8 +398,8 @@
             title="Click to view Top Learners Leaderboard"
           >
             <span class="flex items-center text-amber-400">⚡ <span id="headerXp" class="ml-0.5 text-white">0</span><span class="text-[9px] text-amber-300 ml-0.5">XP</span></span>
-            <span class="text-slate-600">•</span>
-            <span class="flex items-center text-rose-400">🔥 <span id="headerStreak" class="ml-0.5 text-white">1</span><span class="text-[9px] text-rose-300 ml-0.5">d</span></span>
+            <span class="hidden xl:inline text-slate-600">•</span>
+            <span class="hidden xl:flex items-center text-rose-400">🔥 <span id="headerStreak" class="ml-0.5 text-white">1</span><span class="text-[9px] text-rose-300 ml-0.5">d</span></span>
           </div>
 
           <!-- Sign In / Register Button (Shown only when logged out) -->
@@ -379,7 +413,7 @@
           </button>
 
           <!-- User Profile Pill (Active Persona & Account Switcher) -->
-          <div id="userProfilePill" class="flex items-center space-x-1.5 pl-1.5 border-l border-slate-800 cursor-pointer hover:bg-slate-800/40 rounded-xl p-1 transition shrink-0" title="Account Profile & Persona Switcher (Click to switch Student / Admin / Instructor)">
+          <div id="userProfilePill" class="flex items-center space-x-1 sm:space-x-1.5 pl-1.5 pr-1 border-l border-slate-800 cursor-pointer hover:bg-slate-800/40 rounded-xl p-1 transition shrink-0" title="Account Profile & Persona Switcher (Click to switch Student / Admin / Instructor)">
             <img 
               id="headerUserAvatar" 
               src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" 
@@ -387,7 +421,7 @@
               class="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-slate-700 object-cover shrink-0"
             />
             <div class="hidden sm:block text-left shrink-0">
-              <div id="headerStudentName" class="text-xs font-bold text-white truncate max-w-[85px] xl:max-w-[110px]">Sachin Chauhan</div>
+              <div id="headerStudentName" class="text-xs font-bold text-white truncate max-w-[70px] sm:max-w-[85px] lg:max-w-[100px] xl:max-w-[120px]">Sachin Chauhan</div>
               <div class="flex items-center space-x-1">
                 <span id="headerRoleBadge" class="px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Student</span>
               </div>
