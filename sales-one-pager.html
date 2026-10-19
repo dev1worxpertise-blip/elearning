@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LearnPulse Enterprise LMS - Business & Sales 2-Pager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #080c14;
+      color: #e2e8f0;
+    }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 10mm 12mm;
+      }
+      .no-print { display: none !important; }
+      body {
+        background: white !important;
+        color: #0f172a !important;
+        font-size: 11px !important;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+      .print-card {
+        border: 1px solid #cbd5e1 !important;
+        background: white !important;
+        color: #0f172a !important;
+        box-shadow: none !important;
+      }
+      .print-dark-text {
+        color: #0f172a !important;
+      }
+      .print-muted-text {
+        color: #475569 !important;
+      }
+      .print-badge {
+        border: 1px solid #94a3b8 !important;
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-rose-500/30 selection:text-rose-200">
+
+  <!-- Top Sticky Navigation Bar -->
+  <header class="no-print sticky top-0 z-50 backdrop-blur-xl bg-[#080c14]/90 border-b border-slate-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xl">
+    <div class="flex items-center space-x-3">
+      <a href="/" class="flex items-center space-x-2 text-slate-300 hover:text-white transition group">
+        <span class="p-2 rounded-xl bg-slate-900 border border-slate-800 group-hover:border-slate-700 transition">⚡</span>
+        <span class="font-extrabold text-base tracking-tight text-white">LearnPulse <span class="text-rose-400">Enterprise</span></span>
+      </a>
+      <span class="text-slate-600">|</span>
+      <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20">
+        💼 Sales & Business 2-Pager
+      </span>
+    </div>
+
+    <div class="flex items-center space-x-2.5">
+      <a href="/demo-playbook.html" class="cursor-pointer px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition flex items-center space-x-1.5">
+        <span>🎬</span>
+        <span>Open Demo Playbook</span>
+      </a>
+      <button onclick="downloadMarkdown()" class="cursor-pointer px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5 shadow-sm">
+        <span>📥</span>
+        <span>Download .MD</span>
+      </button>
+      <button onclick="window.print()" class="cursor-pointer px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition flex items-center space-x-1.5 shadow-lg shadow-rose-900/30">
+        <span>🖨️</span>
+        <span>Print 2-Page PDF</span>
+      </button>
+      <a href="/" class="cursor-pointer px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 transition">
+        ✕ Close
+      </a>
+    </div>
+  </header>
+
+  <!-- Document Container -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-8 py-8">
+
+    <!-- ==================== PAGE 1: STATUTORY VALUE & FRONT-FACING FEATURES ==================== -->
+    <div class="print-page-1 mb-8">
+      
+      <!-- Header Banner -->
+      <div class="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-slate-900/90 via-[#0e1626] to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden mb-6 print-card">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+          <div class="flex items-center space-x-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30 print-badge">
+              2026 Commercial Edition
+            </span>
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 print-badge">
+              OWASP Top 10 Certified
+            </span>
+          </div>
+          <span class="text-xs font-mono text-slate-400 print-muted-text">LearnPulse / Worxpertise Enterprise Suite</span>
+        </div>
+
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug print-dark-text">
+          Anti-Cheat Compliance Training, Statutory POSH IC Redressal & Automated Recertification
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-3xl leading-relaxed print-muted-text">
+          A verifiable enterprise learning platform engineered to eliminate regulatory liability under the POSH Act 2013, prevent compliance fraud, and save 75% to 85% in operational overhead.
+        </p>
+      </div>
+
+      <!-- High-Stakes Business Pain Points Table -->
+      <div class="mb-6">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-rose-400 mb-2.5 flex items-center space-x-1.5 print-dark-text">
+          <span>⚠️</span>
+          <span>The High-Stakes Corporate Risks We Eliminate</span>
+        </h2>
+        
+        <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60 shadow-lg print-card">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950 text-white font-bold text-[11px] uppercase tracking-wider border-b border-slate-800">
+              <tr>
+                <th class="px-4 py-2.5 w-1/4">Regulatory Threat</th>
+                <th class="px-4 py-2.5 w-1/3 text-rose-400">Risk with Generic LMS</th>
+                <th class="px-4 py-2.5 w-5/12 text-emerald-400">The LearnPulse Ironclad Solution</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/70 text-xs">
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-2 font-semibold text-slate-200 print-dark-text">POSH Act Non-Compliance</td>
+                <td class="px-4 py-2 text-rose-300/90 print-muted-text">Section 26 fines (₹50,000) & risk of commercial business license cancellation.</td>
+                <td class="px-4 py-2 text-emerald-300 print-dark-text font-medium">Pre-certified POSH curriculum, tamper-proof rosters & Section 21 MWCD report compiler.</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-2 font-semibold text-slate-200 print-dark-text">"Fake" Check-the-Box Training</td>
+                <td class="px-4 py-2 text-rose-300/90 print-muted-text">Trainees mute and skip videos; certificates fail legal scrutiny in labor tribunals.</td>
+                <td class="px-4 py-2 text-emerald-300 print-dark-text font-medium">Patent-grade Anti-Skip player: seekbar locked & tab-focus pause defense.</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-2 font-semibold text-slate-200 print-dark-text">Whistleblower Retaliation Fear</td>
+                <td class="px-4 py-2 text-rose-300/90 print-muted-text">Staff fear retribution using corporate email; leaks violate Section 16 non-disclosure.</td>
+                <td class="px-4 py-2 text-emerald-300 print-dark-text font-medium">100% Anonymous Whistleblower Helpdesk: strips all IP/PII, issues Docket ID + 6-digit PIN.</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-2 font-semibold text-slate-200 print-dark-text">Frontline Language Barrier</td>
+                <td class="px-4 py-2 text-rose-300/90 print-muted-text">English-heavy LMS leads to low comprehension among factory & retail staff.</td>
+                <td class="px-4 py-2 text-emerald-300 print-dark-text font-medium">Instant zero-reload Trilingual Switcher (English, हिन्दी, Hinglish) for 100% workforce coverage.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Feature Grid Part 1 (First 4 Core Features) -->
+      <div>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-rose-400 mb-2.5 flex items-center space-x-1.5 print-dark-text">
+          <span>🚀</span>
+          <span>Core Capabilities: Compliance & Learner Defense</span>
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <!-- Feature 1 -->
+          <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md print-card">
+            <div class="flex items-center space-x-2 mb-1.5">
+              <span class="p-1.5 rounded-lg bg-sky-500/20 text-sky-400 text-xs">🛡️</span>
+              <h3 class="text-xs font-bold text-white print-dark-text">1. Anti-Cheat Verifiable Video Classroom</h3>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed print-muted-text">
+              Enforces real watching seconds via seekbar fast-forward locking and HTML5 <code class="text-sky-300 text-[10px]">visibilitychange</code> tab-focus detection that auto-pauses training when minimizing or switching tabs. Proves genuine employee presence in court.
+            </p>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md print-card">
+            <div class="flex items-center space-x-2 mb-1.5">
+              <span class="p-1.5 rounded-lg bg-rose-500/20 text-rose-400 text-xs">⚖️</span>
+              <h3 class="text-xs font-bold text-white print-dark-text">2. Statutory POSH Act Section 19 IC Helpdesk</h3>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed print-muted-text">
+              Provides dual filing pathways: <strong>Confidential Identified</strong> and <strong>100% Anonymous Whistleblower</strong>. Completely satisfies Section 16 non-disclosure by stripping all IP and user metadata, issuing a bcrypt-hashed 6-digit Secret PIN.
+            </p>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md print-card">
+            <div class="flex items-center space-x-2 mb-1.5">
+              <span class="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs">⏳</span>
+              <h3 class="text-xs font-bold text-white print-dark-text">3. 5-Stage Legal Adjudication & 90-Day Clock</h3>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed print-muted-text">
+              Presiding Officer workflow enforcing the legal progression: <em>Complaint &rarr; Notice & Conciliation (Sec 10) &rarr; Formal Inquiry (Sec 11) &rarr; Report (Sec 13) &rarr; Action Taken</em>, with an automated <strong>90-Day countdown clock</strong> preventing procedural lapses.
+            </p>
+          </div>
+
+          <!-- Feature 4 -->
+          <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md print-card">
+            <div class="flex items-center space-x-2 mb-1.5">
+              <span class="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs">🌐</span>
+              <h3 class="text-xs font-bold text-white print-dark-text">4. Trilingual Vernacular Engine (EN | हिन्दी | Hinglish)</h3>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed print-muted-text">
+              Zero-reload client-side translation across catalog cards, module lessons, quiz questions, and navigation labels. Eliminates language barriers to ensure 100% genuine comprehension across regional, blue-collar, and BPO workforce cohorts.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Break for 2-Pager Printing -->
+    <div class="page-break"></div>
+
+    <!-- ==================== PAGE 2: SCALE, AUTOMATION, ROI & PRICING ==================== -->
+    <div class="print-page-2">
+
+      <!-- Feature Grid Part 2 (Admin, Scale & AI) -->
+      <div class="mb-6">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-rose-400 mb-2.5 flex items-center space-x-1.5 print-dark-text">
+          <span>⚡</span>
+          <span>Enterprise Automation, Scale & Intelligence</span>
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <!-- Feature 5 -->
+          <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md print-card">
+            <div class="flex items-center space-x-2 mb-1.5">
+              <span class="p-1.5 rounded-lg bg-purple-500/20 text-purple-400 text-xs">🔄</span>
+              <h3 class="text-xs font-bold text-white print-dark-text">5. 365-Day Recertification & Expiry Engine</h3>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed print-muted-text">
+              Automated daemon checks certificate validity dates. Expired credentials move to historical archive ledgers, progress resets to 0%, and learners are auto-re-enrolled for the new annual cycle. Eliminates manual HR spreadsheets and audit lapses.
+            </p>
+          </div>
+
+          <!-- Feature 6 -->
+          <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md print-card">
+            <div class="flex items-center space-x-2 mb-1.5">
+              <span class="p-1.5 rounded-lg bg-pink-500/20 text-pink-400 text-xs">📄</span>
+              <h3 class="text-xs font-bold text-white print-dark-text">6. 1-Click Section 21 MWCD Report Generator</h3>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed print-muted-text">
+              Compiles annual statutory statistics (Complaints Received, Inquired, Disposed within 90 Days, Pending Matters) in the exact format required by the Ministry of Women & Child Development (MWCD) and District Officers. Saves 40+ HR hours.
+            </p>
+          </div>
+
+          <!-- Feature 7 -->
+          <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md print-card">
+            <div class="flex items-center space-x-2 mb-1.5">
+              <span class="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 text-xs">🤖</span>
+              <h3 class="text-xs font-bold text-white print-dark-text">7. Contextual Multi-Course AI Companion</h3>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed print-muted-text">
+              24/7 intelligent tutor that dynamically adapts persona based on the active course (e.g. POSH Legal Advisor vs Senior Technical Mentor). Operates within strict curriculum guardrails, eliminating faculty response bottlenecks.
+            </p>
+          </div>
+
+          <!-- Feature 8 -->
+          <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 shadow-md print-card">
+            <div class="flex items-center space-x-2 mb-1.5">
+              <span class="p-1.5 rounded-lg bg-yellow-500/20 text-yellow-400 text-xs">📜</span>
+              <h3 class="text-xs font-bold text-white print-dark-text">8. Dynamic Dual-Signatory Certificate with QR</h3>
+            </div>
+            <p class="text-slate-300 text-[11px] leading-relaxed print-muted-text">
+              Dynamic signatures (Lead Faculty + Dean), photorealistic gold corporate seal, unique immutable Credential ID, and mobile-scannable public QR verification. Defeats forged certificate tampering on regulatory inspection.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial ROI Comparison Table -->
+      <div class="mb-6">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-rose-400 mb-2.5 flex items-center space-x-1.5 print-dark-text">
+          <span>💰</span>
+          <span>Financial ROI: 1,000-Employee Corporate Cohort</span>
+        </h2>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60 shadow-lg print-card">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950 text-white font-bold text-[11px] uppercase tracking-wider border-b border-slate-800">
+              <tr>
+                <th class="px-4 py-2.5">Cost & Operational Factor</th>
+                <th class="px-4 py-2.5">Classroom Seminars</th>
+                <th class="px-4 py-2.5">Legacy Third-Party LMS</th>
+                <th class="px-4 py-2.5 text-emerald-400">LearnPulse Enterprise</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/70 text-xs">
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-2 font-semibold text-slate-200 print-dark-text">Trainer / Speaker Retainers</td>
+                <td class="px-4 py-2 text-slate-400 print-muted-text">₹2,50,000 – ₹4,50,000</td>
+                <td class="px-4 py-2 text-slate-400 print-muted-text">₹0</td>
+                <td class="px-4 py-2 text-emerald-300 font-bold print-dark-text">₹0 (Pre-certified built-in faculty)</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-2 font-semibold text-slate-200 print-dark-text">Employee Downtime Cost</td>
+                <td class="px-4 py-2 text-slate-400 print-muted-text">4 hours / user (~₹10L)</td>
+                <td class="px-4 py-2 text-slate-400 print-muted-text">1.5 hours / user</td>
+                <td class="px-4 py-2 text-emerald-300 font-bold print-dark-text">45 mins self-paced (75% time saved)</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-2 font-semibold text-slate-200 print-dark-text">Annual Platform Licensing</td>
+                <td class="px-4 py-2 text-slate-400 print-muted-text">₹0</td>
+                <td class="px-4 py-2 text-slate-400 print-muted-text">₹800 – ₹1,500 / user / yr</td>
+                <td class="px-4 py-2 text-emerald-300 font-bold print-dark-text">₹150 – ₹300 / user / yr</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-2 font-semibold text-slate-200 print-dark-text">Annual Recertification Overhead</td>
+                <td class="px-4 py-2 text-slate-400 print-muted-text">120+ HR hours</td>
+                <td class="px-4 py-2 text-slate-400 print-muted-text">Manual spreadsheets</td>
+                <td class="px-4 py-2 text-emerald-300 font-bold print-dark-text">Fully Automated (Zero manual effort)</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="px-4 py-2 font-semibold text-slate-200 print-dark-text">Statutory POSH IC Desk Add-on</td>
+                <td class="px-4 py-2 text-slate-400 print-muted-text">Separate tool (~₹2L)</td>
+                <td class="px-4 py-2 text-slate-400 print-muted-text">Not supported</td>
+                <td class="px-4 py-2 text-emerald-300 font-bold print-dark-text">Included Natively (Sec 19 Helpdesk)</td>
+              </tr>
+              <tr class="bg-slate-950 font-bold border-t border-slate-700">
+                <td class="px-4 py-2.5 text-white print-dark-text">Total Corporate Investment</td>
+                <td class="px-4 py-2.5 text-slate-300 print-dark-text">₹15,00,000+</td>
+                <td class="px-4 py-2.5 text-slate-300 print-dark-text">₹12,00,000+</td>
+                <td class="px-4 py-2.5 text-emerald-400 text-sm print-dark-text">₹2,00,000 – ₹3,50,000 (75%–85% Savings)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Security Credentials & Commercial Packaging -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
+        <div class="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 print-card">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 print-muted-text">Security Standard</p>
+          <p class="text-xs font-bold text-emerald-300 print-dark-text">OWASP Top 10 PASS (SEC 01-14)</p>
+          <p class="text-[10px] text-slate-400 mt-1 print-muted-text">Bcrypt PIN hashing, Section 16 isolation, SQL binding, brute-force defense.</p>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 print-card">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 print-muted-text">Concurrency Benchmark</p>
+          <p class="text-xs font-bold text-sky-300 print-dark-text">4,000 QPS / 30,000+ Concurrent</p>
+          <p class="text-[10px] text-slate-400 mt-1 print-muted-text">Edge-decoupled video stream offload; pure telemetry backend &lt; 1KB.</p>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 print-card">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 print-muted-text">Commercial Licensing</p>
+          <p class="text-xs font-bold text-rose-300 print-dark-text">SaaS PUPM / Site License / OEM</p>
+          <p class="text-[10px] text-slate-400 mt-1 print-muted-text">₹25-₹50 PUPM or Enterprise Flat Site License with dedicated VPC/SSO.</p>
+        </div>
+      </div>
+
+      <!-- Call to Action Footer -->
+      <div class="p-4 rounded-2xl bg-gradient-to-r from-rose-950/60 via-slate-900 to-slate-950 border border-rose-500/30 flex flex-wrap items-center justify-between gap-3 print-card">
+        <div>
+          <h3 class="text-xs font-bold text-white print-dark-text">Request a Live Executive Demo or 30-Day Enterprise Pilot</h3>
+          <p class="text-[11px] text-slate-400 print-muted-text">Deploy in your corporate branding with customized signatory seals in under 48 hours.</p>
+        </div>
+        <div class="text-xs font-mono text-rose-300 font-semibold print-dark-text">
+          sales@worxpertise.com | enterprise@learnpulse.dev
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Download Handler -->
+  <script>
+    async function downloadMarkdown() {
+      try {
+        const resp = await fetch('/docs/6_BUSINESS_SALES_ONE_PAGER.md');
+        if (!resp.ok) throw new Error('Failed to fetch markdown');
+        const text = await resp.text();
+        const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '6_BUSINESS_SALES_ONE_PAGER.md';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert('Could not download markdown directly: ' + e.message);
+      }
+    }
+  </script>
+</body>
+</html>
