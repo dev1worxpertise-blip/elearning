@@ -700,6 +700,10 @@ class AppState {
     return entry;
   }
 
+  logAuditTrail(action, target, details, severity = 'INFO') {
+    return this.logAudit(action, target, details, severity);
+  }
+
   getAuditLogs() {
     return this.auditLogs || [];
   }

@@ -1530,3 +1530,4 @@ class CertificateStudio {
 }
 
 window.certificateStudio = new CertificateStudio();
+window.certificateManager = window.certificateStudio;

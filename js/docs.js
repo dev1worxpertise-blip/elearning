@@ -1925,3 +1925,4 @@ Ready to replace check-the-box compliance with ironclad legal audit defense?
 
 // Instantiate Global DocsManager
 window.docsManager = new DocsManager();
+window.docsController = window.docsManager;
