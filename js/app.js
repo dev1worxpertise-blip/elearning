@@ -510,7 +510,7 @@ class App {
 
     this.currentView = viewName;
 
-    const isAdminView = ["dashboard", "reports", "instructor", "users", "docs", "monitoring", "posh"].includes(viewName);
+    const isAdminView = ["dashboard", "reports", "instructor", "users", "docs", "monitoring", "posh", "testing"].includes(viewName);
 
     // Show/hide contextual Admin Sub-Bar (only for admin role)
     const adminSubBar = document.getElementById("adminSubBar");
@@ -596,6 +596,7 @@ class App {
     const docsView = document.getElementById("viewDocs");
     const monitoringView = document.getElementById("viewMonitoring");
     const poshView = document.getElementById("viewPoshHelpdesk");
+    const testingView = document.getElementById("viewTesting");
 
     // Hide all
     if (catalogView) catalogView.classList.add("hidden");
@@ -609,6 +610,7 @@ class App {
     if (docsView) docsView.classList.add("hidden");
     if (monitoringView) monitoringView.classList.add("hidden");
     if (poshView) poshView.classList.add("hidden");
+    if (testingView) testingView.classList.add("hidden");
 
     this.updateHeaderProfile();
     if (window.i18n) window.i18n.translateDomElements();
@@ -648,6 +650,9 @@ class App {
     } else if (this.currentView === "posh") {
       if (poshView) poshView.classList.remove("hidden");
       if (window.poshHelpdeskManager) window.poshHelpdeskManager.renderAdminPoshHub();
+    } else if (this.currentView === "testing") {
+      if (testingView) testingView.classList.remove("hidden");
+      if (window.testingSuite) window.testingSuite.render();
     }
   }
 
