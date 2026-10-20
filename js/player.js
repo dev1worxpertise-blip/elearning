@@ -24,6 +24,7 @@ class VideoPlayerController {
     this.activeMode = "html5"; // "html5" | "youtube"
     this.maxWatchedTime = 0; // High-water mark of cumulative legitimate watch time
     this.lastSeekWarningTime = 0; // Throttles skip warning notifications
+    this.isVideoCurrentlyPlaying = false; // Tracks active playback for focus loss detection
 
     // YouTube API Integration State
     this.ytPlayer = null;
@@ -306,18 +307,16 @@ class VideoPlayerController {
               <span>Instant Complete (Test Mode)</span>
             </button>
 
-            <!-- Reset Watch Status (For Testing Anti-Skip) -->
-            ${(isWatched || initialPercent > 0) ? `
-              <button 
-                id="btnResetLesson" 
-                type="button"
-                title="Reset this module back to unwatched to test anti-skip gate" 
-                class="text-xs px-2.5 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-rose-400 border border-slate-700/70 transition flex items-center space-x-1"
-              >
-                <span>↺</span>
-                <span class="hidden md:inline">Reset Watch (0%)</span>
-              </button>
-            ` : ''}
+            <!-- Reset Watch Status (Always Available For Testing & Demos) -->
+            <button 
+              id="btnResetLesson" 
+              type="button"
+              title="Reset this module back to unwatched to test anti-skip gate" 
+              class="text-xs px-2.5 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-rose-400 border border-slate-700/70 transition flex items-center space-x-1 cursor-pointer"
+            >
+              <span>↺</span>
+              <span class="hidden md:inline">Reset Watch (0%)</span>
+            </button>
           </div>
 
           <!-- Controls Right: Speed & Fullscreen -->
@@ -444,8 +443,10 @@ class VideoPlayerController {
         if (this.ytPlayer && typeof this.ytPlayer.getPlayerState === "function") {
           const state = this.ytPlayer.getPlayerState();
           if (state === 1) { // Playing -> Pause
+            this.isVideoCurrentlyPlaying = false;
             this.ytPlayer.pauseVideo();
           } else { // Paused -> Play
+            this.isVideoCurrentlyPlaying = true;
             this.ytPlayer.playVideo();
           }
         }
@@ -459,16 +460,19 @@ class VideoPlayerController {
             try { this.ytPlayer.pauseVideo(); } catch (e) {}
           }
 
+          this.isVideoCurrentlyPlaying = true;
           const playPromise = this.videoElement.play();
           if (playPromise !== undefined) {
             playPromise.catch(err => {
               console.warn("HTML5 playback error:", err);
+              this.isVideoCurrentlyPlaying = false;
               // If primary video source cannot be played, show fallback banner
               const errorBanner = document.getElementById("videoErrorBanner");
               if (errorBanner) errorBanner.classList.remove("hidden");
             });
           }
         } else {
+          this.isVideoCurrentlyPlaying = false;
           this.videoElement.pause();
         }
       }
@@ -477,6 +481,7 @@ class VideoPlayerController {
     if (this.videoElement) {
       // React to native video playback events (Guarantees icons always match reality)
       this.videoElement.addEventListener("playing", () => {
+        this.isVideoCurrentlyPlaying = true;
         if (playOverlay) playOverlay.classList.add("hidden");
         if (playIcon) playIcon.classList.add("hidden");
         if (pauseIcon) pauseIcon.classList.remove("hidden");
@@ -484,7 +489,14 @@ class VideoPlayerController {
         if (errorBanner) errorBanner.classList.add("hidden");
       });
 
+      this.videoElement.addEventListener("play", () => {
+        this.isVideoCurrentlyPlaying = true;
+      });
+
       this.videoElement.addEventListener("pause", () => {
+        if (!document.hidden && document.hasFocus()) {
+          this.isVideoCurrentlyPlaying = false;
+        }
         if (playOverlay) playOverlay.classList.remove("hidden");
         if (playIcon) playIcon.classList.remove("hidden");
         if (pauseIcon) pauseIcon.classList.add("hidden");
@@ -524,7 +536,8 @@ class VideoPlayerController {
 
       // Trap native seeking to prevent skipping forward past watched territory
       this.videoElement.addEventListener("seeking", () => {
-        if (this.videoElement.currentTime > this.maxWatchedTime + 0.5) {
+        const isFinished = window.appState ? window.appState.isVideoFinished(this.currentModule?.id) : false;
+        if (!isFinished && this.videoElement.currentTime > this.maxWatchedTime + 0.8) {
           // Clamp back to highest watched position
           this.videoElement.currentTime = this.maxWatchedTime;
           this.showSkipRestrictedNotice();
@@ -537,7 +550,7 @@ class VideoPlayerController {
 
         const current = this.videoElement.currentTime;
         const duration = this.videoElement.duration || 1;
-        const isFinished = window.appState.isVideoFinished(this.currentModule.id);
+        const isFinished = window.appState ? window.appState.isVideoFinished(this.currentModule?.id) : false;
 
         // Save position for playback resume memory
         if (window.appState && typeof window.appState.saveVideoPosition === "function") {
@@ -546,12 +559,14 @@ class VideoPlayerController {
 
         // Only advance maxWatchedTime during legitimate natural forward playback
         if (!this.videoElement.paused) {
-          if (current > this.maxWatchedTime) {
+          this.isVideoCurrentlyPlaying = true;
+          if (!isFinished && current > this.maxWatchedTime) {
             if (current - this.maxWatchedTime <= 3.0) {
               this.maxWatchedTime = current;
             } else {
               // Sudden jump detected - revert back
               this.videoElement.currentTime = this.maxWatchedTime;
+              this.showSkipRestrictedNotice();
               return;
             }
           }
@@ -598,6 +613,7 @@ class VideoPlayerController {
 
       // On Video Ended
       this.videoElement.addEventListener("ended", () => {
+        this.isVideoCurrentlyPlaying = false;
         const duration = this.videoElement.duration || 1;
         // Genuine completion requires having watched practically the whole video
         if (this.maxWatchedTime >= duration * 0.90 || window.appState.isVideoFinished(this.currentModule.id)) {
@@ -697,6 +713,10 @@ class VideoPlayerController {
       this.handleVideoFocusChange("Tab Switched or Browser Minimized");
     };
     this.boundVideoBlurHandler = () => {
+      // If focus transferred to an embedded iframe, ignore to prevent false focus lost
+      if (document.activeElement && document.activeElement.tagName === "IFRAME") {
+        return;
+      }
       this.handleVideoFocusChange("Window Focus Lost");
     };
 
@@ -709,8 +729,8 @@ class VideoPlayerController {
       this.resumeFromFocusLost();
     });
 
-    // Seek via progress container click (Gated: only allow seeking backwards or within watched range for both MP4 and YouTube)
-    progressContainer?.addEventListener("click", (e) => {
+    // Seek via progress container click & drag prevention (Anti-Skip Gate)
+    const handleSeekbarInteraction = (e) => {
       let duration = 0;
       if (this.activeMode === "html5") {
         duration = this.videoElement ? this.videoElement.duration : 0;
@@ -725,13 +745,17 @@ class VideoPlayerController {
       const ratio = Math.max(0, Math.min(1, clickX / rect.width));
       const targetTime = ratio * duration;
 
+      const isFinished = window.appState ? window.appState.isVideoFinished(this.currentModule?.id) : false;
+      const currentPlayTime = this.getCurrentTime();
+      const allowedTime = isFinished ? duration : Math.max(this.maxWatchedTime, currentPlayTime);
+
       // Anti-skip rule: Seeking backwards or within already watched bounds is permitted.
       // Forward scrubbing beyond the highest watched position is strictly blocked!
-      if (targetTime > this.maxWatchedTime + 0.5) {
+      if (!isFinished && targetTime > allowedTime + 0.8) {
         if (this.activeMode === "html5" && this.videoElement) {
-          this.videoElement.currentTime = this.maxWatchedTime;
+          this.videoElement.currentTime = allowedTime;
         } else if (this.activeMode === "youtube" && this.ytPlayer && typeof this.ytPlayer.seekTo === "function") {
-          this.ytPlayer.seekTo(this.maxWatchedTime, true);
+          this.ytPlayer.seekTo(allowedTime, true);
         }
         this.showSkipRestrictedNotice();
         return;
@@ -743,7 +767,10 @@ class VideoPlayerController {
       } else if (this.activeMode === "youtube" && this.ytPlayer && typeof this.ytPlayer.seekTo === "function") {
         this.ytPlayer.seekTo(targetTime, true);
       }
-    });
+    };
+
+    progressContainer?.addEventListener("click", handleSeekbarInteraction);
+    progressContainer?.addEventListener("pointerdown", handleSeekbarInteraction);
 
     // Reset Watch Status (Allows instructors / testers to re-test the anti-skip gate)
     btnResetLesson?.addEventListener("click", () => {
@@ -884,14 +911,21 @@ class VideoPlayerController {
           events: {
             onReady: (event) => {
               this.ytReady = true;
+              const duration = typeof event.target.getDuration === "function" ? event.target.getDuration() : 0;
+              const isFinished = window.appState ? window.appState.isVideoFinished(this.currentModule.id) : false;
               const savedPos = window.appState ? window.appState.getVideoPosition(this.currentModule.id) : 0;
-              if (savedPos > 3) {
+              if (savedPos > 3 && (!duration || savedPos < duration - 3) && !isFinished) {
                 try {
                   event.target.seekTo(savedPos, true);
                   this.maxWatchedTime = Math.max(this.maxWatchedTime, savedPos);
                   if (window.app && window.app.showToast) {
                     window.app.showToast(`⏯ Resumed video from ${this.formatTime(savedPos)}`, "info");
                   }
+                } catch (e) {}
+              } else {
+                this.maxWatchedTime = 0;
+                try {
+                  event.target.seekTo(0, true);
                 } catch (e) {}
               }
               event.target.playVideo();
@@ -938,15 +972,22 @@ class VideoPlayerController {
     // event.data values:
     // 1 (playing), 2 (paused), 0 (ended), 3 (buffering), -1 (unstarted)
     if (event.data === 1) { // Playing
+      this.isVideoCurrentlyPlaying = true;
       if (playOverlay) playOverlay.classList.add("hidden");
       if (playIcon) playIcon.classList.add("hidden");
       if (pauseIcon) pauseIcon.classList.remove("hidden");
       if (errorBanner) errorBanner.classList.add("hidden");
       this.startYouTubeSync();
+    } else if (event.data === 3) { // Buffering
+      this.isVideoCurrentlyPlaying = true;
     } else if (event.data === 2) { // Paused
+      if (!document.hidden && document.hasFocus()) {
+        this.isVideoCurrentlyPlaying = false;
+      }
       if (playIcon) playIcon.classList.remove("hidden");
       if (pauseIcon) pauseIcon.classList.add("hidden");
     } else if (event.data === 0) { // Ended
+      this.isVideoCurrentlyPlaying = false;
       if (playIcon) playIcon.classList.remove("hidden");
       if (pauseIcon) pauseIcon.classList.add("hidden");
       const duration = this.ytPlayer && typeof this.ytPlayer.getDuration === "function" ? this.ytPlayer.getDuration() : 0;
@@ -983,8 +1024,10 @@ class VideoPlayerController {
 
       // Anti-skip enforcement for YouTube:
       // While playing naturally (state === 1)
+      const isFinished = window.appState ? window.appState.isVideoFinished(this.currentModule.id) : false;
       if (state === 1) {
-        if (current > this.maxWatchedTime) {
+        this.isVideoCurrentlyPlaying = true;
+        if (!isFinished && current > this.maxWatchedTime) {
           if (current - this.maxWatchedTime <= 3.0) {
             this.maxWatchedTime = current;
           } else {
@@ -1040,19 +1083,28 @@ class VideoPlayerController {
 
   showSkipRestrictedNotice() {
     const now = Date.now();
-    if (now - this.lastSeekWarningTime < 2500) return;
+    if (now - this.lastSeekWarningTime < 600) return;
     this.lastSeekWarningTime = now;
 
     if (window.app && window.app.showToast) {
-      window.app.showToast("⏩ Forward skipping is restricted. Please watch the complete lesson to unlock the assessment.", "info");
+      window.app.showToast("⏩ Forward skipping locked: Anti-Tamper requires watching sequentially to unlock the assessment.", "warning");
     }
 
     const container = document.getElementById("videoProgressBarContainer");
     if (container) {
-      container.classList.add("ring-2", "ring-[#dd1f36]");
+      container.classList.add("ring-4", "ring-[#dd1f36]", "bg-rose-950/40");
       setTimeout(() => {
-        container.classList.remove("ring-2", "ring-[#dd1f36]");
-      }, 800);
+        container.classList.remove("ring-4", "ring-[#dd1f36]", "bg-rose-950/40");
+      }, 700);
+    }
+
+    const badge = document.getElementById("antiSkipBadge");
+    if (badge) {
+      badge.classList.remove("hidden");
+      badge.classList.add("scale-110", "ring-2", "ring-rose-500", "bg-rose-950");
+      setTimeout(() => {
+        badge.classList.remove("scale-110", "ring-2", "ring-rose-500", "bg-rose-950");
+      }, 700);
     }
   }
 
@@ -1213,10 +1265,6 @@ class VideoPlayerController {
   }
 
   handleVideoFocusChange(reason) {
-    const isCompleted = window.appState ? window.appState.isVideoFinished(this.currentModule?.id) : false;
-    // Anti-skip tab-switch enforcement is active for uncompleted video lessons
-    if (isCompleted) return;
-
     // Check if video is currently playing
     let isPlaying = false;
     if (this.activeMode === "html5" && this.videoElement) {
@@ -1303,7 +1351,10 @@ class VideoPlayerController {
         this.startYouTubeSync();
       } catch (e) {}
     }
-    this.isVideoCurrentlyPlaying = false;
+    this.isVideoCurrentlyPlaying = true;
+    if (window.app && window.app.showToast) {
+      window.app.showToast("▶️ Playback resumed. Focus restored.", "info");
+    }
   }
 }
 
