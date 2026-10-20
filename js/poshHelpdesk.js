@@ -1636,3 +1636,4 @@ class PoshHelpdeskManager {
 
 // Instantiate Global PoshHelpdeskManager
 window.poshHelpdeskManager = new PoshHelpdeskManager();
+window.poshHelpdesk = window.poshHelpdeskManager;
