@@ -157,7 +157,7 @@ flowchart TD
 ### A01: Broken Access Control
 - **Risk:** Unauthorized users executing administrative functions, viewing other trainees' progress/certificates, or accessing sensitive POSH sexual harassment complaint dockets.
 - **Mitigation:**
-  - Strict Role-Based Access Control (RBAC) middleware [\`server/src/middleware/auth.js\`](file:///C:/Users/sachin.chauhan/Downloads/elearning/server/src/middleware/auth.js).
+  - Strict Role-Based Access Control (RBAC) middleware [\`server/src/middleware/auth.js\`](file:///C:/Users/sachin.chauhan/Desktop/project/elearning/server/src/middleware/auth.js).
   - Admin endpoints (\`/api/users/*\`, \`/api/enterprise/audit-logs\`, \`/api/enterprise/bulk-enroll\`, \`/api/enterprise/recertification/*\`) strictly require \`verifyToken\` AND \`requireRole('admin')\`.
   - **POSH Section 16 Strict Non-Disclosure Isolation:** Complaints filed under POSH are accessible **exclusively** to the Internal Committee (IC) Presiding Officer (\`is_presiding_officer\` or designated IC Admin). Regular instructors and standard enterprise admins are barred from viewing complainant identities, witness statements, or adjudication notes.
   - **Anonymous Whistleblower Anonymization:** When a grievance is submitted under "Anonymous Whistleblower" mode, all identity fields (\`user_id\`, \`email\`, \`client_ip\`, \`user_agent\`) are stripped and set to \`NULL\` prior to database commit. Tracking is authenticated solely via high-entropy \`Docket ID\` + bcrypt-hashed 6-digit secret PIN.

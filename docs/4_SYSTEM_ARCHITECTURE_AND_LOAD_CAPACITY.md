@@ -267,7 +267,7 @@ erDiagram
 
 ## 6. Mathematical Database Connection Pool Analysis
 
-In [`server/src/db.js`](file:///C:/Users/sachin.chauhan/Downloads/elearning/server/src/db.js), the PostgreSQL connection pool is configured with `max: 20` concurrent active sockets.
+In [`server/src/db.js`](file:///C:/Users/sachin.chauhan/Desktop/project/elearning/server/src/db.js), the PostgreSQL connection pool is configured with `max: 20` concurrent active sockets.
 
 ### Throughput Calculation:
 $$\text{Max Throughput} = \frac{\text{Pool Connections}}{\text{Average Query Latency (seconds)}}$$
