@@ -46,6 +46,24 @@ body {
   background: #334155;
 }
 
+/* Enhanced Scrollbars for Data Tables */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #090d16;
+  border-radius: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 6px;
+  border: 1px solid #1e293b;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
 /* Subtle glow effects */
 .glow-primary {
   box-shadow: 0 0 25px -5px rgba(221, 31, 54, 0.4);

@@ -1278,9 +1278,9 @@ class PoshHelpdeskManager {
           <span class="text-slate-400 font-mono text-[11px]">${cases.length} Grievances Enlisted</span>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto overflow-y-auto max-h-[65vh] custom-scrollbar">
           <table class="w-full text-left text-xs text-slate-300 divide-y divide-slate-800">
-            <thead class="bg-slate-950/70 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
+            <thead class="bg-slate-950/95 backdrop-blur-md sticky top-0 z-20 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
               <tr>
                 <th class="px-5 py-3.5">Case Docket / PIN</th>
                 <th class="px-5 py-3.5">Complainant</th>

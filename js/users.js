@@ -391,9 +391,9 @@ class UserManager {
       </div>
 
       <!-- Users Roster Table -->
-      <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl">
+      <div class="overflow-x-auto overflow-y-auto max-h-[72vh] custom-scrollbar rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl">
         <table class="w-full text-left text-xs text-slate-300">
-          <thead class="bg-slate-950/80 text-[11px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-800">
+          <thead class="bg-slate-950/95 backdrop-blur-md sticky top-0 z-20 text-[11px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-800">
             <tr>
               <th class="px-3 py-4 w-10 text-center">
                 <input 

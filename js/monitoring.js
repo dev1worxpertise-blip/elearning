@@ -652,9 +652,9 @@ class MonitoringManager {
 
         <!-- Active Sessions Table -->
         <div class="rounded-2xl border border-slate-800 bg-slate-900/80 overflow-hidden shadow-2xl">
-          <div class="overflow-x-auto">
+          <div class="overflow-x-auto overflow-y-auto max-h-[60vh] custom-scrollbar">
             <table class="w-full text-left text-xs text-slate-300 divide-y divide-slate-800">
-              <thead class="bg-slate-950/80 text-white font-bold text-[11px] uppercase tracking-wider">
+              <thead class="bg-slate-950/95 backdrop-blur-md sticky top-0 z-20 text-white font-bold text-[11px] uppercase tracking-wider">
                 <tr>
                   <th class="px-4 py-3.5">Active Trainee</th>
                   <th class="px-4 py-3.5">Role</th>
@@ -1222,9 +1222,9 @@ class MonitoringManager {
             <span class="text-slate-400 font-mono text-[11px]">${certsList.length} Certificates Found</span>
           </div>
 
-          <div class="overflow-x-auto">
+          <div class="overflow-x-auto overflow-y-auto max-h-[60vh] custom-scrollbar">
             <table class="w-full text-left text-xs text-slate-300 divide-y divide-slate-800">
-              <thead class="bg-slate-950/70 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
+              <thead class="bg-slate-950/95 backdrop-blur-md sticky top-0 z-20 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
                 <tr>
                   <th class="px-5 py-3.5">Trainee / Recipient</th>
                   <th class="px-5 py-3.5">Statutory Program</th>

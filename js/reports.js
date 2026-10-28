@@ -562,16 +562,70 @@ class ReportsManager {
     const headers = Object.keys(data[0]);
 
     container.innerHTML = `
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs text-slate-300">
-          <thead class="text-[11px] uppercase tracking-wider text-slate-400 bg-slate-950/70 border-b border-slate-800 sticky top-0">
+      <!-- Top Scroll & Quick Navigation Toolbar -->
+      <div class="px-5 py-2.5 bg-slate-950/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-40 backdrop-blur-md">
+        <div class="flex items-center space-x-2 text-xs">
+          <span class="inline-flex items-center text-indigo-400 font-bold">
+            <svg class="w-4 h-4 mr-1.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            Columns:
+          </span>
+          <button 
+            type="button" 
+            onclick="window.reportsManager.scrollTable('left')" 
+            class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 hover:text-white transition font-bold text-xs flex items-center space-x-1 cursor-pointer border border-slate-700 shadow-sm"
+            title="Scroll Columns Left (or Shift + MouseWheel)"
+          >
+            <span>◀ Scroll Left</span>
+          </button>
+          <button 
+            type="button" 
+            onclick="window.reportsManager.scrollTable('right')" 
+            class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 hover:text-white transition font-bold text-xs flex items-center space-x-1 cursor-pointer border border-slate-700 shadow-sm"
+            title="Scroll Columns Right (or Shift + MouseWheel)"
+          >
+            <span>Scroll Right ▶</span>
+          </button>
+          <button 
+            type="button" 
+            onclick="window.reportsManager.scrollTable('reset')" 
+            class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition text-[11px] cursor-pointer border border-slate-800"
+            title="Reset to first column"
+          >
+            <span>⏮ Reset</span>
+          </button>
+        </div>
+
+        <!-- Synchronized Top Scrollbar (Mirrors Table Horizontal Scroll) -->
+        <div class="flex-1 max-w-sm sm:max-w-md hidden md:flex items-center space-x-2">
+          <span class="text-[10px] uppercase font-bold text-slate-500 tracking-wider shrink-0">Top Scroll:</span>
+          <div id="reportsTopScrollbar" class="w-full overflow-x-auto overflow-y-hidden custom-scrollbar rounded-md bg-slate-900/90 border border-slate-800" style="height: 14px;">
+            <div id="reportsTopScrollContent" style="height: 1px;"></div>
+          </div>
+        </div>
+
+        <div class="text-[11px] text-slate-400 hidden xl:flex items-center space-x-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Hold <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-white">Shift</kbd> + <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-[10px] text-white">MouseWheel</kbd> to scroll columns</span>
+        </div>
+      </div>
+
+      <!-- Contained Scrollable Viewport (Keeps horizontal scrollbar on-screen without paging down) -->
+      <div id="reportsScrollContainer" class="overflow-x-auto overflow-y-auto max-h-[64vh] min-h-[380px] custom-scrollbar relative">
+        <table class="w-full text-left text-xs text-slate-300 border-collapse">
+          <thead class="text-[11px] uppercase tracking-wider text-slate-400 bg-slate-950/95 border-b border-slate-800 sticky top-0 z-20 backdrop-blur shadow-sm">
             <tr>
-              ${headers.map(h => `<th class="px-5 py-4 font-bold whitespace-nowrap">${h}</th>`).join("")}
+              ${headers.map((h, hIdx) => {
+                const isFirst = hIdx === 0;
+                const stickyClass = isFirst 
+                  ? 'sticky left-0 top-0 z-30 bg-slate-950 border-r border-slate-800 shadow-[4px_0_10px_-2px_rgba(0,0,0,0.6)]' 
+                  : '';
+                return `<th class="px-5 py-4 font-bold whitespace-nowrap ${stickyClass}">${h}</th>`;
+              }).join("")}
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-800/60 font-mono">
             ${data.map((row, rIdx) => `
-              <tr class="hover:bg-slate-800/40 transition group ${rIdx % 2 === 0 ? 'bg-slate-900/30' : 'bg-transparent'}">
+              <tr class="hover:bg-slate-800/40 transition group ${rIdx % 2 === 0 ? 'bg-slate-900/40' : 'bg-transparent'}">
                 ${headers.map((h, cIdx) => {
                   const val = row[h];
                   const str = String(val);
@@ -598,14 +652,87 @@ class ReportsManager {
                     cellContent = `<span class="text-slate-400 select-all hover:text-white font-mono text-[11px]">${val}</span>`;
                   }
 
-                  return `<td class="px-5 py-3.5 whitespace-nowrap text-slate-300 align-top">${cellContent}</td>`;
+                  const isFirst = cIdx === 0;
+                  const rowBg = rIdx % 2 === 0 ? 'bg-slate-900' : 'bg-slate-950';
+                  const stickyTdClass = isFirst 
+                    ? `sticky left-0 z-10 ${rowBg} border-r border-slate-800 shadow-[4px_0_10px_-2px_rgba(0,0,0,0.6)]` 
+                    : '';
+
+                  return `<td class="px-5 py-3.5 whitespace-nowrap text-slate-300 align-top ${stickyTdClass}">${cellContent}</td>`;
                 }).join("")}
               </tr>
             `).join("")}
           </tbody>
         </table>
       </div>
+
+      <!-- Bottom Status Bar -->
+      <div class="px-5 py-2.5 bg-slate-950/90 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+        <div class="flex items-center space-x-2">
+          <span>Showing <strong class="text-white">${data.length}</strong> records across <strong class="text-indigo-300">${headers.length}</strong> columns</span>
+        </div>
+        <div class="flex items-center space-x-2 text-slate-400">
+          <button 
+            type="button" 
+            onclick="window.reportsManager.scrollTable('left')" 
+            class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition font-medium text-[11px] cursor-pointer"
+          >◀ Left</button>
+          <span>•</span>
+          <button 
+            type="button" 
+            onclick="window.reportsManager.scrollTable('right')" 
+            class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition font-medium text-[11px] cursor-pointer"
+          >Right ▶</button>
+        </div>
+      </div>
     `;
+
+    this.attachScrollListeners();
+  }
+
+  scrollTable(action) {
+    const scroller = document.getElementById("reportsScrollContainer");
+    if (!scroller) return;
+    const distance = 360;
+    if (action === "left") {
+      scroller.scrollBy({ left: -distance, behavior: "smooth" });
+    } else if (action === "right") {
+      scroller.scrollBy({ left: distance, behavior: "smooth" });
+    } else if (action === "reset") {
+      scroller.scrollTo({ left: 0, behavior: "smooth" });
+    }
+  }
+
+  attachScrollListeners() {
+    const topScroller = document.getElementById("reportsTopScrollbar");
+    const topContent = document.getElementById("reportsTopScrollContent");
+    const tableScroller = document.getElementById("reportsScrollContainer");
+    if (!topScroller || !topContent || !tableScroller) return;
+
+    const table = tableScroller.querySelector("table");
+    if (!table) return;
+
+    const syncWidth = () => {
+      topContent.style.width = `${table.scrollWidth}px`;
+    };
+    syncWidth();
+    setTimeout(syncWidth, 150);
+
+    let isSyncing = false;
+
+    topScroller.onscroll = () => {
+      if (isSyncing) return;
+      isSyncing = true;
+      tableScroller.scrollLeft = topScroller.scrollLeft;
+      requestAnimationFrame(() => { isSyncing = false; });
+    };
+
+    tableScroller.onscroll = () => {
+      if (isSyncing) return;
+      isSyncing = true;
+      topScroller.scrollLeft = tableScroller.scrollLeft;
+      requestAnimationFrame(() => { isSyncing = false; });
+    };
   }
 
   renderSummaryKPIs(container) {
